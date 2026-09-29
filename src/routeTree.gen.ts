@@ -63,6 +63,7 @@ import { Route as PhotoEditRouteImport } from './routes/photo-edit'
 import { Route as PrevisRouteImport } from './routes/previs'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PromotionRouteImport } from './routes/promotion'
+import { Route as PromptLabRouteImport } from './routes/prompt-lab'
 import { Route as PuremixRouteImport } from './routes/puremix'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReshootRouteImport } from './routes/reshoot'
@@ -476,6 +477,11 @@ const PromotionRoute = PromotionRouteImport.update({
   path: '/promotion',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/promotion.lazy').then((d) => d.Route))
+const PromptLabRoute = PromptLabRouteImport.update({
+  id: '/prompt-lab',
+  path: '/prompt-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PuremixRoute = PuremixRouteImport.update({
   id: '/puremix',
   path: '/puremix',
@@ -1247,6 +1253,7 @@ export interface FileRoutesByFullPath {
   '/previs': typeof PrevisRoute
   '/privacy': typeof PrivacyRoute
   '/promotion': typeof PromotionRoute
+  '/prompt-lab': typeof PromptLabRoute
   '/puremix': typeof PuremixRoute
   '/reset-password': typeof ResetPasswordRoute
   '/reshoot': typeof ReshootRoute
@@ -1436,6 +1443,7 @@ export interface FileRoutesByTo {
   '/previs': typeof PrevisRoute
   '/privacy': typeof PrivacyRoute
   '/promotion': typeof PromotionRoute
+  '/prompt-lab': typeof PromptLabRoute
   '/puremix': typeof PuremixRoute
   '/reset-password': typeof ResetPasswordRoute
   '/reshoot': typeof ReshootRoute
@@ -1627,6 +1635,7 @@ export interface FileRoutesById {
   '/previs': typeof PrevisRoute
   '/privacy': typeof PrivacyRoute
   '/promotion': typeof PromotionRoute
+  '/prompt-lab': typeof PromptLabRoute
   '/puremix': typeof PuremixRoute
   '/reset-password': typeof ResetPasswordRoute
   '/reshoot': typeof ReshootRoute
@@ -1819,6 +1828,7 @@ export interface FileRouteTypes {
     | '/previs'
     | '/privacy'
     | '/promotion'
+    | '/prompt-lab'
     | '/puremix'
     | '/reset-password'
     | '/reshoot'
@@ -2008,6 +2018,7 @@ export interface FileRouteTypes {
     | '/previs'
     | '/privacy'
     | '/promotion'
+    | '/prompt-lab'
     | '/puremix'
     | '/reset-password'
     | '/reshoot'
@@ -2198,6 +2209,7 @@ export interface FileRouteTypes {
     | '/previs'
     | '/privacy'
     | '/promotion'
+    | '/prompt-lab'
     | '/puremix'
     | '/reset-password'
     | '/reshoot'
@@ -2389,6 +2401,7 @@ export interface RootRouteChildren {
   PrevisRoute: typeof PrevisRoute
   PrivacyRoute: typeof PrivacyRoute
   PromotionRoute: typeof PromotionRoute
+  PromptLabRoute: typeof PromptLabRoute
   PuremixRoute: typeof PuremixRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReshootRoute: typeof ReshootRoute
@@ -2876,6 +2889,13 @@ declare module '@tanstack/react-router' {
       path: '/promotion'
       fullPath: '/promotion'
       preLoaderRoute: typeof PromotionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prompt-lab': {
+      id: '/prompt-lab'
+      path: '/prompt-lab'
+      fullPath: '/prompt-lab'
+      preLoaderRoute: typeof PromptLabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/puremix': {
@@ -3959,6 +3979,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrevisRoute: PrevisRoute,
   PrivacyRoute: PrivacyRoute,
   PromotionRoute: PromotionRoute,
+  PromptLabRoute: PromptLabRoute,
   PuremixRoute: PuremixRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReshootRoute: ReshootRoute,
