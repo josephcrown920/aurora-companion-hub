@@ -1761,184 +1761,90 @@ function MotionStudio() {
           </div>
         )}
 
-        {/* ── Avatar Shots ──────────────────────────────────────────── */}
-        {mode === "avatar-shots" && (
+        {/* ── Guided Workflow (the second Perform Anywhere app) ─────── */}
+        {mode === "workflow" && (
           <div className="max-w-3xl mx-auto space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Avatar Shots</h1>
-              <p className="text-muted-foreground text-sm mt-1">Generate AI portraits and live videos with SeedDream, Gemini Omni, or KlingAI.</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#CCFF00" }}>Second app</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight">Perform Anywhere · Guided Workflow</h1>
+              <p className="text-muted-foreground text-sm mt-1.5 max-w-lg">
+                The step-by-step build: lock your identity with references, approve a base scene, then generate matching angles and animate each one.
+              </p>
             </div>
 
-            {/* Engine picker */}
-            <section className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">AI Engine</p>
-              <div className="grid grid-cols-3 gap-3">
-                {(
-                  [
-                    { id: "seedream" as ShotEngine, label: "SeedDream", sub: "Portrait", cost: SHOT_IMAGE_COST, icon: "🌱", kind: "image" as const },
-                    { id: "gemini" as ShotEngine, label: "Gemini Omni", sub: "Enhanced", cost: SHOT_IMAGE_COST, icon: "✨", kind: "image" as const },
-                    { id: "kling" as ShotEngine, label: "KlingAI", sub: "Live Video", cost: SHOT_KLING_COST, icon: "🎬", kind: "video" as const },
-                  ]
-                ).map((eng) => (
-                  <button
-                    key={eng.id}
-                    type="button"
-                    onClick={() => setShotEngine(eng.id)}
-                    className={`flex flex-col items-center gap-1 px-3 py-4 rounded-2xl border text-center transition-all ${
-                      shotEngine === eng.id
-                        ? "border-primary bg-primary/15 text-foreground"
-                        : "border-border bg-card/60 text-muted-foreground hover:border-primary/40"
-                    }`}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  title: "Two-angle performance",
+                  body: "Wide plate plus close-up, each matched to its own phone recording.",
+                  search: { mode: "anywhere" as const },
+                  cta: "Start guided build",
+                },
+                {
+                  title: "Build a Scene",
+                  body: "Five role references lock identity, then generate 3–5 fresh camera angles from one approved base scene.",
+                  search: { mode: "anywhere" as const, flow: "build_scene" as const },
+                  cta: "Open workflow",
+                },
+                {
+                  title: "Luxury Interior",
+                  body: "Three references place a faithful seated performance inside the vehicle, face and outfit preserved.",
+                  search: { mode: "anywhere" as const, flow: "luxury_interior" as const },
+                  cta: "Open workflow",
+                },
+                {
+                  title: "Scene Builder",
+                  body: "Design the world first — stage, rooftop, studio — then bring it back here to animate.",
+                  to: "/scene-builder" as const,
+                  cta: "Open Scene Builder",
+                },
+              ].map((card) =>
+                card.to ? (
+                  <Link
+                    key={card.title}
+                    to={card.to}
+                    className="group rounded-2xl border border-white/10 bg-white/[0.02] p-4 no-underline transition-colors hover:border-primary/40"
                   >
-                    <span className="text-xl">{eng.icon}</span>
-                    <span className="text-sm font-semibold">{eng.label}</span>
-                    <span className="text-[10px] opacity-60">{eng.sub}</span>
-                    <span className="text-xs font-medium text-primary mt-1">{eng.cost} Aura</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Prompt */}
-            <section className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Prompt</p>
-              <Textarea
-                rows={4}
-                value={shotPrompt}
-                onChange={(e) => setShotPrompt(e.target.value)}
-                placeholder={
-                  shotEngine === "kling"
-                    ? "Describe the scene: 'Rapper in neon-lit studio, confident energy, cinematic camera move…'"
-                    : "Describe your avatar shot: 'Professional rapper portrait, studio lighting, dark background…'"
-                }
-                className="resize-none bg-card/60 text-sm"
-              />
-              <Button
-                disabled={shotLoading || !shotPrompt.trim()}
-                onClick={async () => {
-                  const trimmed = shotPrompt.trim();
-                  if (!trimmed) return toast.error("Enter a prompt first");
-                  setShotLoading(true);
-                  try {
-                    const res = await shotFn({ data: { prompt: trimmed, engine: shotEngine } });
-                    if (!res.ok) {
-                      toast.error(res.error ?? "Generation failed");
-                    } else {
-                      // Trust the server's report of what ACTUALLY served the shot — when the
-                      // KlingAI→SeedDream fallback fires the result is a still, not a video.
-                      setShotResults((prev) => [
-                        { url: res.url, engine: res.engine, kind: res.mediaKind, fallbackFrom: res.fallbackFrom },
-                        ...prev,
-                      ]);
-                      if (res.fallbackFrom === "kling") toast.info(KLING_FALLBACK_TOAST);
-                      else toast.success("Shot ready!");
-                    }
-                  } catch {
-                    toast.error("Generation failed");
-                  } finally {
-                    setShotLoading(false);
-                  }
-                }}
-                variant="premium"
-                className="w-full h-12"
-              >
-                {shotLoading ? (
-                  <><Loader2 className="size-4 mr-2 animate-spin" /> Generating…</>
+                    <h3 className="text-sm font-bold text-foreground">{card.title}</h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{card.body}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                      {card.cta} <ArrowRight className="size-3" />
+                    </span>
+                  </Link>
                 ) : (
-                  <><Sparkles className="size-4 mr-2" /> Generate · {shotEngine === "kling" ? SHOT_KLING_COST : SHOT_IMAGE_COST} Aura</>
-                )}
-              </Button>
-            </section>
+                  <Link
+                    key={card.title}
+                    to="/colors-show"
+                    search={card.search}
+                    className="group rounded-2xl border border-white/10 bg-white/[0.02] p-4 no-underline transition-colors hover:border-primary/40"
+                  >
+                    <h3 className="text-sm font-bold text-foreground">{card.title}</h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{card.body}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                      {card.cta} <ArrowRight className="size-3" />
+                    </span>
+                  </Link>
+                ),
+              )}
+            </div>
 
-            {!shotLoading && <ShotResultsSection results={shotResults} />}
+            <div className="rounded-2xl border border-border bg-card/40 px-4 py-3.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">How the guided build runs</p>
+              <ol className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+                <li><span className="font-semibold text-foreground">1.</span> Add your reference photos so Aurora locks your face and outfit.</li>
+                <li><span className="font-semibold text-foreground">2.</span> Approve one base scene before any angles are generated.</li>
+                <li><span className="font-semibold text-foreground">3.</span> Generate the extra angles, then animate each with your phone clip.</li>
+              </ol>
+            </div>
 
-            {shotResults.length === 0 && !shotLoading && (
-              <div className="mx-auto max-w-sm overflow-hidden rounded-2xl border border-primary/20 bg-card/50 text-center">
-                <img
-                  src={shotEngine === "kling" ? "/gallery/josh-neon-tech.png" : "/gallery/josh-blue-portrait.png"}
-                  alt={shotEngine === "kling" ? "Neon-lit avatar video inspiration" : "Portrait generation inspiration"}
-                  loading="lazy"
-                  className="h-44 w-full object-cover"
-                />
-                <div className="px-4 py-4 text-muted-foreground/70">
-                <p className="text-sm">
-                  {shotEngine === "kling"
-                    ? "Describe a scene and KlingAI will create a live avatar video"
-                    : "Describe your avatar and get an AI-generated portrait"}
-                </p>
-                </div>
-              </div>
-            )}
+            <Link to="/perform-anywhere" className="flex items-center gap-2 rounded-xl border border-border bg-card/60 px-4 py-3 text-sm font-medium no-underline hover:border-primary/40 transition-colors">
+              <Sparkles className="size-4 text-primary" />
+              <span>See the full Perform Anywhere overview</span>
+              <span className="ml-auto text-muted-foreground text-xs">→</span>
+            </Link>
           </div>
         )}
 
-        {/* ── Live Avatar ───────────────────────────────────────────────── */}
-        {mode === "live-avatar" && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <figure className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card">
-              <img src="/gallery/josh-neon-tech.png" alt="Neon-lit creator portrait demonstrating a live avatar scene" loading="lazy" className="h-48 w-full object-cover" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-4 pb-3 pt-10 text-xs text-white/80">
-                Turn a scene direction into a talking-head performance.
-              </figcaption>
-            </figure>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Live Avatar</h1>
-              <p className="text-muted-foreground text-sm mt-1">Describe a scene and KlingAI animates your avatar as a live talking-head video.</p>
-            </div>
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm flex items-start gap-2">
-              <Zap className="size-4 text-primary shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">Powered by KlingAI</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Generates a 5-second animated avatar video. No source video required.</p>
-              </div>
-            </div>
-            <section className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Scene prompt</p>
-              <Textarea
-                rows={5}
-                value={shotPrompt}
-                onChange={(e) => setShotPrompt(e.target.value)}
-                placeholder="A confident artist in a neon-lit recording studio, gesturing expressively, cinematic slow zoom…"
-                className="resize-none bg-card/60 text-sm"
-              />
-              <Button
-                disabled={shotLoading || !shotPrompt.trim()}
-                onClick={async () => {
-                  const trimmed = shotPrompt.trim();
-                  if (!trimmed) return toast.error("Enter a prompt first");
-                  setShotLoading(true);
-                  try {
-                    const res = await shotFn({ data: { prompt: trimmed, engine: "kling" } });
-                    if (!res.ok) {
-                      toast.error(res.error ?? "Generation failed");
-                    } else {
-                      setShotResults((prev) => [
-                        { url: res.url, engine: res.engine, kind: res.mediaKind, fallbackFrom: res.fallbackFrom },
-                        ...prev,
-                      ]);
-                      if (res.fallbackFrom === "kling") toast.info(KLING_FALLBACK_TOAST);
-                      else toast.success("Live avatar ready!");
-                    }
-                  } catch {
-                    toast.error("Generation failed");
-                  } finally {
-                    setShotLoading(false);
-                  }
-                }}
-                variant="premium"
-                className="w-full h-12"
-              >
-                {shotLoading ? (
-                  <><Loader2 className="size-4 mr-2 animate-spin" /> Generating live avatar…</>
-                ) : (
-                  <><Film className="size-4 mr-2" /> Generate Live Avatar · {SHOT_KLING_COST} Aura</>
-                )}
-              </Button>
-            </section>
-
-            {!shotLoading && <ShotResultsSection results={shotResults.filter((r) => r.engine === "kling" || r.fallbackFrom === "kling")} />}
-          </div>
-        )}
 
         {/* ── Music Video ───────────────────────────────────────────────── */}
         {mode === "music-video" && (
