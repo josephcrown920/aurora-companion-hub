@@ -6,3 +6,4 @@
 
 - [x] Remove Lyric Video from both Music Video entry points.
 - [x] Redesign Aurora Canvas in the approved Director-first luminous workspace direction.
+- [x] Replace Aurora Canvas with the production node-and-connector workflow canvas.

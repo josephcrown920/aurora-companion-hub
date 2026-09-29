@@ -21,8 +21,7 @@ export const TOOL_DIRECTORY: ReadonlyArray<ToolDirectoryItem> = [
   { number: "03", name: "Aurora Video Agent", label: "Director", description: "Plan, storyboard, edit, then render", price: `From ${computeCost({ features: ["video"], model: "heygen/video-agent" }).total} Aura`, to: "/video-agent" },
   { number: "04", name: "Music Video", description: "Cinematic visual studio", price: `From ${computeCost({ features: ["image"] }).total} Aura`, to: "/music-video" },
   { number: "05", name: "Lip Sync", description: "Audio-synced video", price: `From ${LIPSYNC_TIER_AURA.budget} Aura`, to: "/lipsync" },
-  { number: "06", name: "Canvas", label: "New", description: "Build connected creative workflows", price: `From ${computeCost({ features: ["image"] }).total} Aura`, to: "/canvas" },
+  { number: "06", name: "Aurora Node Canvas", label: "New", description: "Build, connect, and run image, video, audio, and ComfyUI workflows", price: `From ${computeCost({ features: ["image"] }).total} Aura`, to: "/canvas" },
   { number: "07", name: "Prompt Lab", label: "New", description: "Turn an idea into a Seedream or Seedance prompt", price: "Free", to: "/prompt-lab" },
-  { number: "08", name: "Aurora Canvas Studio", label: "New", description: "Creative Director chat, Seedream images, Seedance video, layers editor", price: "Pay per render", to: "/aurora-canvas" },
   { number: "09", name: "Nexus Dola Agents", label: "New", description: "Dola Seed agent workspace for video production", price: "Pay per render", to: "/aurora-studio-shell" },
 ] as const;

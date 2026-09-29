@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import "@/features/aurora-canvas/aurora.css";
 import bg1 from "@/features/aurora-canvas/assets/aurora-bg-1.jpg";
@@ -26,6 +26,9 @@ import { classifySeedanceReferenceError, isLasAssetReference } from "@/features/
 import { LayersEditor } from "@/features/aurora-canvas/components/video/LayersEditor";
 
 export const Route = createFileRoute("/aurora-canvas")({
+  beforeLoad: () => {
+    throw redirect({ to: "/canvas" });
+  },
   head: () => ({
     meta: [
       { title: "Aurora Creative Studio — AI Images & Videos in Seconds" },
