@@ -1513,6 +1513,18 @@ function MotionStudio() {
         {mode === "transfer" && (
           <div className="space-y-2.5">
 
+            <div className="rounded-xl border border-primary/25 bg-primary/5 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Test ModelArk Seedance motion control</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Use your own subject image and performance video in the dedicated tester, then watch the completed render on the same screen.</p>
+                </div>
+                <Button asChild size="sm" variant="outline" className="shrink-0">
+                  <Link to="/seedance-motion">Open test</Link>
+                </Button>
+              </div>
+            </div>
+
             {/* Offline banner */}
             {!motionOnline && (
               <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-3 text-sm">
