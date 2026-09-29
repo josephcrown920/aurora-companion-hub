@@ -345,6 +345,16 @@ function AuthPage() {
       if (mode === "signup" && typeof window !== "undefined") {
         sessionStorage.setItem(OAUTH_SIGNUP_INTENT_KEY, provider);
       }
+      if (provider === "google" || provider === "apple") {
+        const { lovable } = await import("@/integrations/lovable/index");
+        const result = await lovable.auth.signInWithOAuth(provider, {
+          redirect_uri: `${window.location.origin}/auth?next=${encodeURIComponent(search.next ?? "/studio")}`,
+        });
+        if (result.error) throw result.error;
+        if (result.redirected) return;
+        window.location.assign(search.next ?? "/studio");
+        return;
+      }
       const isInFrame = typeof window !== "undefined" && window.self !== window.top;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
