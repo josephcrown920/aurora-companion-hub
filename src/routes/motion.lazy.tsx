@@ -73,6 +73,9 @@ import {
 import { useBeatDetect } from "@/hooks/use-beat-detect";
 import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
+import "@/features/creative-studio/aurora.css";
+import { MultiTrackTimeline } from "@/features/creative-studio/components/video/MultiTrackTimeline";
+import { LayersEditor } from "@/features/creative-studio/components/video/LayersEditor";
 
 export const Route = createLazyFileRoute("/motion")({ component: MotionStudio });
 
@@ -910,7 +913,10 @@ function MotionStudio() {
       <span aria-hidden className="aurora-ambient" />
       <WelcomeTour show={showTour} onDismiss={() => setShowTour(false)} />
       {/* ── Left sidebar ─────────────────────────────────────────────── */}
-      <div className="flex flex-col w-full lg:w-[300px] lg:shrink-0 lg:h-full lg:overflow-y-auto lg:border-r lg:border-white/8 scrollbar-none">
+      <div className={cn(
+        "flex flex-col w-full lg:h-full lg:overflow-y-auto lg:border-r lg:border-white/8 scrollbar-none",
+        mode === "music-video" ? "lg:flex-1" : "lg:w-[300px] lg:shrink-0",
+      )}>
 
         {/* ── Feature card (no imagery) ─────────────────────────────── */}
         <div
@@ -1788,10 +1794,10 @@ function MotionStudio() {
 
         {/* ── Music Video ───────────────────────────────────────────────── */}
         {mode === "music-video" && (
-          <div className="max-w-3xl mx-auto space-y-6">
+          <div className="mx-auto w-full max-w-7xl space-y-6">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">Music Video Maker</h1>
-              <p className="text-muted-foreground text-sm mt-1">Build cinematic music videos with AI — beat-sync, lyric video, or AI performance.</p>
+              <p className="text-muted-foreground text-sm mt-1">Generate scenes, arrange the full cut, then direct Codex with plain-language editing commands.</p>
             </div>
             <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3.5">
               <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Performance direction</span>
@@ -2004,6 +2010,26 @@ function MotionStudio() {
               <span>View your generations in Gallery</span>
               <span className="ml-auto text-muted-foreground text-xs">→</span>
             </Link>
+
+            <section className="space-y-3 border-t border-border pt-6">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Editing timeline</p>
+                <h2 className="mt-1 text-xl font-semibold">Build the cut</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Arrange video, titles, overlays, vocals, beats and effects across seven tracks.</p>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-border bg-card/40">
+                <MultiTrackTimeline />
+              </div>
+            </section>
+
+            <section className="space-y-3 border-t border-border pt-6">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Codex editor</p>
+                <h2 className="mt-1 text-xl font-semibold">Edit by chat</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Describe the change, preview Codex’s proposed timeline edits, then approve or discard them.</p>
+              </div>
+              <LayersEditor />
+            </section>
           </div>
         )}
 
@@ -2011,7 +2037,7 @@ function MotionStudio() {
       </div>{/* ← end left sidebar */}
 
       {/* ── Right panel: guidance — desktop only, no imagery ───────── */}
-      <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:h-full lg:overflow-y-auto bg-zinc-900/40 scrollbar-none">
+      <div className={cn("hidden lg:flex lg:flex-1 lg:flex-col lg:h-full lg:overflow-y-auto bg-zinc-900/40 scrollbar-none", mode === "music-video" && "lg:hidden")}>
         <div className="px-6 pt-10 pb-8 border-b border-white/5">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "#CCFF00" }}>Motion Control</p>
           <h2 className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-tight text-white">
