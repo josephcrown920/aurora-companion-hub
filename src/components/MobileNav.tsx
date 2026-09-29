@@ -75,11 +75,12 @@ const STUDIO_FEATURES: Feature[] = [
   { to: "/likeness",        label: "Locked Likeness Shoot", icon: Camera,   previewImg: "/nav-previews/avatar.jpg",        badge: "New" },
   { to: "/scene-builder",   label: "Scene Builder",         icon: Layers,   previewImg: "/nav-previews/scene-builder.jpg" },
   { to: "/agent",           label: "Video Agent",           icon: Film,     badge: "New" },
+  { to: "/comfy",           label: "ComfyUI Workflow Studio", icon: Workflow, badge: "New" },
 ];
 
 // ── Music & audio ──────────────────────────────────────────────────────────
 const MUSIC_FEATURES: Feature[] = [
-  { to: "/music-video", label: "Lyric Video", icon: Film,   previewImg: "/nav-previews/music-video.jpg" },
+  { to: "/music-video", label: "Music Video Studio", icon: Film, previewImg: "/nav-previews/music-video.jpg" },
   { to: "/puremix",     label: "PureMix",     icon: Music2, previewImg: "/nav-previews/music-video.jpg", badge: "New" },
 ];
 

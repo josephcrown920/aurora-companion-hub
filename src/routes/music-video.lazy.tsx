@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Trash2,
   Check,
+  Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -179,6 +180,10 @@ function MusicVideoPage() {
           editorOnly
         />
         <div className="flex items-center gap-4 text-sm">
+          <Link to="/comfy" className="inline-flex items-center gap-1.5 font-medium text-primary hover:text-primary/80 no-underline">
+            <Workflow className="size-4" />
+            ComfyUI Studio
+          </Link>
           <Link to="/motion" className="text-muted-foreground hover:text-foreground no-underline">
             Motion
           </Link>
