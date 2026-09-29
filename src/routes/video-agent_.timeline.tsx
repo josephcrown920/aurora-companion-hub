@@ -22,9 +22,9 @@ export const Route = createFileRoute("/video-agent_/timeline")({
 
 function TimelinePage() {
   const effects = [
-    ["Boomerang", "Loop a selected beat"], ["Bar reveal", "Animated crop reveal"],
-    ["Speed ramp", "Accelerate into the cut"], ["RGB split", "Chromatic impact hit"],
-    ["White flash", "Beat-synced transition"], ["Motion blur", "Smooth camera movement"],
+    ["freeze", "Boomerang", "Loop a selected beat"], ["zoom", "Bar reveal", "Animated crop reveal"],
+    ["speed", "Speed ramp", "Accelerate into the cut"], ["rgb", "RGB split", "Chromatic impact hit"],
+    ["flash", "White flash", "Beat-synced transition"], ["blur", "Motion blur", "Smooth camera movement"],
   ];
   const agents = [
     ["Orchestrator", "Routes every edit", "Ready"], ["GPT-6 Astra", "Creative edit planning", "Online"],
@@ -44,7 +44,16 @@ function TimelinePage() {
             <div className="aurora-editor-tabs"><button className="aurora-editor-tab active">Media</button><button className="aurora-editor-tab">Effects</button><button className="aurora-editor-tab">Presets</button></div>
             <div className="aurora-editor-section-title">Effects & transitions <span>DRAG TO TIMELINE</span></div>
             <div className="aurora-editor-assets">
-              {effects.map(([name, note]) => <div key={name} className="aurora-editor-asset effect"><b>{name}</b><small>{note}</small></div>)}
+              {effects.map(([id, name, note]) => (
+                <div
+                  key={id}
+                  className="aurora-editor-asset effect"
+                  draggable
+                  onDragStart={(event) => event.dataTransfer.setData("application/x-aurora-effect", id)}
+                >
+                  <b>{name}</b><small>{note}</small>
+                </div>
+              ))}
             </div>
             <div className="aurora-editor-section-title">Media library <span>PROJECT</span></div>
             <div className="aurora-editor-import">＋ Import or drop media</div>
