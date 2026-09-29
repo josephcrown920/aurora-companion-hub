@@ -19,6 +19,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.116",
     "@ai-sdk/google": "^3.0.121",
+    "@ai-sdk/openai": "^4.0.78",
     "@ai-sdk/openai-compatible": "^2.0.48",
     "@ai-sdk/react": "^4.0.61",
     "@cloudflare/vite-plugin": "^1.49.1",

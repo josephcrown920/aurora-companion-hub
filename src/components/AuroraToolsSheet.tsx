@@ -14,6 +14,7 @@ import {
   Sparkles,
   Users,
   Wand2,
+  Workflow,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -28,6 +29,7 @@ type ToolPath =
   | "/scene-builder"
   | "/motion"
   | "/music-video"
+  | "/comfy"
   | "/spin"
   | "/lipsync"
   | "/ads"
@@ -58,7 +60,8 @@ const SECTIONS: { title: string; tools: Tool[] }[] = [
       { label: "Colors Studio", to: "/colors", icon: Palette },
       { label: "Director's Room", to: "/director-room", icon: Clapperboard, badge: "New", dot: true },
       { label: "Motion Control", to: "/motion", icon: Wand2, dot: true },
-      { label: "Lyric Video", to: "/music-video", icon: Music },
+      { label: "Music Video Studio", to: "/music-video", icon: Music },
+      { label: "ComfyUI Workflow Studio", to: "/comfy", icon: Workflow, badge: "New", dot: true },
     ],
   },
   {
