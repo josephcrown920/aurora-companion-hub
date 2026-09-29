@@ -720,64 +720,18 @@ function Index() {
     }
   };
 
-  const collageCols: string[][] = [
-    [bg1, bg4],
-    [bg2, bg5],
-    [bg3, bg1],
-  ];
-
-  const singleBg =
-    bg === "moon" ? moonAsset.url : bg === "court" ? courtBg : chromeAsset.url;
+  const latestCreation = creations.find((creation) => creation.status === "done" && creation.url);
 
   return (
     <div className="aurora-body">
-      <div className="aurora-bg-layer">
-        {bg === "collage" ? (
-          <div className="aurora-collage">
-            {collageCols.map((col, i) => (
-              <div className={`aurora-collage-col c${i + 1}`} key={i}>
-                {col.map((src, j) => (
-                  <img
-                    key={j}
-                    src={src}
-                    alt=""
-                    width={768}
-                    height={1024}
-                    loading={i === 1 && j === 0 ? "eager" : "lazy"}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="aurora-bg-single">
-            <img src={singleBg} alt="" />
-          </div>
-        )}
-        <div className="aurora-bg-overlay" />
-      </div>
-
       <div className="aurora-logo-top">
         <div className="aurora-logo-mark">A</div>
-        Aurora
-        <div className="aurora-bg-switch" role="group" aria-label="Background">
-          {(["court", "moon", "chrome", "collage"] as BgTheme[]).map((t) => (
-            <button
-              key={t}
-              className={`aurora-bg-btn ${bg === t ? "active" : ""}`}
-              onClick={() => setBg(t)}
-              aria-pressed={bg === t}
-            >
-              {t === "court"
-                ? "Court"
-                : t === "moon"
-                  ? "Moon"
-                  : t === "chrome"
-                    ? "Chrome"
-                    : "Collage"}
-            </button>
-          ))}
-        </div>
+        <span>Aurora<br /><small>Canvas</small></span>
+        <nav aria-label="Canvas tools">
+          <button className="active" aria-label="Create"><ImageIcon /></button>
+          <button aria-label="Video" onClick={() => setMode("video")}><VideoIcon /></button>
+          <button aria-label="Open layers"><SparkMark /></button>
+        </nav>
       </div>
 
       <button
@@ -789,17 +743,19 @@ function Index() {
       </button>
 
       <div className="aurora-wrap">
+        <header className="aurora-workspace-header">
+          <div><strong>Untitled project</strong><span>Saved</span></div>
+          <p>{mode === "image" ? "Image workspace" : "Video workspace"}</p>
+        </header>
         <section className="aurora-hero">
           <div className="aurora-top-badge">
-            <span className="new-pill">New</span>
-            Seedance 2.5 &amp; Seedream 5.0 are live
+            Creative session <span className="new-pill">Live</span>
           </div>
 
-          <h1 className="aurora-h1">Create AI Images &amp; Videos in Seconds</h1>
+          <h1 className="aurora-h1">Direct the frame.</h1>
 
           <p className="aurora-subhead">
-            Seedream and Seedance models, plus a creative director in chat. Turn any idea into
-            stunning visuals — no design skills needed.
+            Plan the shot with Aurora, then shape it into a finished image or sequence.
           </p>
 
           <div className="aurora-mode-switch">
@@ -823,6 +779,25 @@ function Index() {
               <VideoIcon />
               Video
             </button>
+          </div>
+
+          <div className="aurora-stage" aria-label="Generation preview">
+            {latestCreation?.url ? (
+              latestCreation.kind === "video" ? (
+                <video src={latestCreation.url} controls playsInline preload="metadata" />
+              ) : (
+                <img src={latestCreation.url} alt={latestCreation.prompt} />
+              )
+            ) : (
+              <div className="aurora-stage-empty">
+                <SparkMark />
+                <strong>Your frame starts here</strong>
+                <span>Build a treatment with the director or write your own prompt.</span>
+              </div>
+            )}
+            <div className="aurora-stage-meta">
+              <span>{aspect}</span><span>{mode === "image" ? resolution : `${duration}s`}</span>
+            </div>
           </div>
 
           <div className="aurora-director">

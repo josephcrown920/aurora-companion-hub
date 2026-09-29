@@ -753,7 +753,7 @@ function TwoAngleWorkflow() {
                       )}
                     >
                       {uploadingSlot === slot ? <RefreshCw className="size-6 animate-spin text-primary" /> :
-                        value ? <video src={value} muted playsInline className="size-full object-cover" /> :
+                        value ? <div className="flex size-full flex-col items-center justify-center gap-2 bg-card"><Video className="size-6 text-primary" /><span className="px-2 text-xs text-muted-foreground">{label} added</span></div> :
                         <><Video className="size-6 text-white/40" /><span className="px-2 text-xs text-white/60">{label}</span><span className="text-[10px] text-white/35">3–30 seconds</span></>}
                     </button>
                     <input
@@ -868,7 +868,7 @@ function TwoAngleWorkflow() {
                         {resultUrl ? (
                           <video src={resultUrl} controls playsInline className="aspect-[9/16] w-full rounded-xl bg-black object-cover" />
                         ) : phoneVideo ? (
-                          <video src={phoneVideo} muted playsInline className="aspect-[9/16] w-full rounded-xl bg-black object-cover opacity-70" />
+                          <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-2 rounded-xl bg-card"><Video className="size-6 text-primary" /><span className="text-xs text-muted-foreground">Performance added</span></div>
                         ) : null}
                       </div>
                       <div className="flex items-center justify-between gap-2">

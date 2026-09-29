@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Reuse the Creative Studio `MultiTrackTimeline` and `LayersEditor` for music-video editing so manual and Codex-directed cuts share one editor system.
+- Keep Aurora Canvas as a Director-first creation workspace with a large live preview; use a white and deep-purple luminous-glass visual system because creators need planning and output visible together.
