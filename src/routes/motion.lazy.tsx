@@ -59,19 +59,16 @@ import { GenerationErrorCard } from "@/components/ui/GenerationErrorCard";
 import { BlurredPreview } from "@/components/ui/BlurredPreview";
 import { PerformAnywhereGuide } from "@/components/onboarding/PerformAnywhereGuide";
 import { Check, ArrowRight } from "lucide-react";
-import { generateLyricVideoFromSong } from "@/lib/captions.functions";
 import {
   MUSIC_VIDEO_STYLES,
   MUSIC_VIDEO_MODES,
   buildMusicVideoPrompt,
-  buildLyricVideoSegments,
   LOCATION_SUGGESTIONS,
   SUBJECT_SUGGESTIONS,
   type MusicVideoMode,
   type MusicVideoStyle,
 } from "@/lib/music-video-prompts";
 import { useBeatDetect } from "@/hooks/use-beat-detect";
-import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
 import "@/features/creative-studio/aurora.css";
 import { MultiTrackTimeline } from "@/features/creative-studio/components/video/MultiTrackTimeline";
@@ -366,52 +363,24 @@ function MotionStudio() {
   );
   const [mvImage, setMvImage] = useState<string | null>(null);
   const [mvVideoModel, setMvVideoModel] = useState(VIDEO_MODEL_LIST[0].value);
-  const [lyricAudioUrl, setLyricAudioUrl] = useState<string | null>(null);
-  const [lyricAudioDuration, setLyricAudioDuration] = useState<number | null>(null);
-  const [lyricsText, setLyricsText] = useState("");
 
   const beatFileRef = useRef<HTMLInputElement>(null);
   const [beatFileName, setBeatFileName] = useState<string | null>(null);
   const { state: beatState, analyze: analyzeBeat, reset: resetBeat } = useBeatDetect();
 
-  const isMvLyric = mvMode === "lyric-style";
-  const lyricBeatAnalysis = useLyricBeatAnalysis(lyricAudioUrl, isMvLyric);
   const mvCurrentMode = MUSIC_VIDEO_MODES.find((m) => m.key === mvMode)!;
   const mvVideoCost = computeCost({ features: ["video"], model: mvVideoModel, durationSeconds: 5, resolution: "720p" }).total;
-  const mvLyricCost = computeCost({ features: ["lyric_video"] }).total;
-  const mvDisplayCost = isMvLyric ? mvLyricCost : mvCurrentMode?.needsImage ? mvVideoCost : 1;
-
-  const lyricLines = lyricsText.split("\n").map((l) => l.trim()).filter(Boolean);
-  const lyricBeatTimestamps = lyricBeatAnalysis.beatTimestamps;
-  const lyricGenerationGate = lyricBeatAnalysis.gate;
-  const lyricSegments = buildLyricVideoSegments(
-    lyricAudioDuration,
-    lyricLines,
-    lyricBeatTimestamps,
-  );
+  const mvDisplayCost = mvCurrentMode?.needsImage ? mvVideoCost : 1;
 
   useEffect(() => {
     setMvPrompt(buildMusicVideoPrompt(mvMode, mvStyle, mvLocation, mvSubject));
   }, [mvMode, mvStyle, mvLocation, mvSubject]);
-
-  useEffect(() => {
-    if (!lyricAudioUrl) { setLyricAudioDuration(null); return; }
-    const audio = new Audio();
-    audio.preload = "metadata";
-    const onLoaded = () => setLyricAudioDuration(audio.duration || null);
-    const onError = () => { setLyricAudioDuration(null); toast.error("Couldn't read that audio file's duration"); };
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("error", onError);
-    audio.src = lyricAudioUrl;
-    return () => { audio.removeEventListener("loadedmetadata", onLoaded); audio.removeEventListener("error", onError); };
-  }, [lyricAudioUrl]);
 
   // Real server-side progress (task #284) for the wrapped enqueue+poll flows.
   const [poseJobProg, setPoseJobProg] = useState<{ pct: number | null; stage: string | null } | null>(null);
   const [animateJobProg, setAnimateJobProg] = useState<{ pct: number | null; stage: string | null } | null>(null);
   const genFn = usePerformanceShotJobFn({ onProgress: (u) => setPoseJobProg({ pct: u.pct, stage: u.stage }) });
   const videoFn = useVideoFromImageJobFn({ onProgress: (u) => setAnimateJobProg({ pct: u.pct, stage: u.stage }) });
-  const lyricVideoFn = useServerFn(generateLyricVideoFromSong);
   const motionFn = useServerFn(generateMimicMotion);
   const reskinFn = useServerFn(generatePerformanceReskin);
   const listFn = useServerFn(listGenerations);
@@ -1865,91 +1834,8 @@ function MotionStudio() {
               </div>
             </section>
 
-            {/* Lyric Video: song + lyrics */}
-            {isMvLyric && (
-              <section className="space-y-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Song</p>
-                <UploadSlot
-                  userId={user.id}
-                  label="Upload"
-                  hint="MP3 / WAV / M4A — your track"
-                  accept={AUDIO_ACCEPT}
-                  kind="video"
-                  value={lyricAudioUrl}
-                  onChange={setLyricAudioUrl}
-                />
-                {lyricAudioUrl && lyricAudioDuration == null && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Loader2 className="size-3 animate-spin" /> Reading duration…</p>
-                )}
-                {lyricAudioDuration != null && (
-                  <p className="text-xs text-muted-foreground">Duration: {Math.round(lyricAudioDuration)}s</p>
-                )}
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground pt-1">
-                  Lyrics{" "}
-                  <span className="ml-1 font-normal normal-case opacity-60">
-                    {lyricBeatTimestamps
-                      ? "one line per lyric — snapped to the detected beat grid"
-                      : lyricGenerationGate === "pending"
-                        ? "one line per lyric — detecting beats…"
-                        : "one line per lyric — beat detection unavailable, evenly timed"}
-                  </span>
-                </p>
-                <Textarea
-                  rows={7}
-                  value={lyricsText}
-                  onChange={(e) => setLyricsText(e.target.value)}
-                  className="resize-none bg-card/60 text-sm"
-                  placeholder={"Paste your lyrics here, one line at a time…\n\nLine one\nLine two\nLine three"}
-                />
-                {lyricLines.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {lyricLines.length} line{lyricLines.length === 1 ? "" : "s"}
-                    {lyricAudioDuration != null && lyricSegments.length > 0
-                      ? lyricBeatTimestamps
-                        ? ` · beat-aligned (${lyricBeatTimestamps.length} beats detected)`
-                        : ` · ~${(lyricAudioDuration / lyricLines.length).toFixed(1)}s per line`
-                      : ""}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground rounded-xl border border-border bg-card/40 px-3 py-2">
-                  <Zap className="size-3.5 text-primary" />
-                  Cost: <span className="text-foreground font-medium">{mvDisplayCost} Aura</span>
-                  <span className="opacity-50">·</span>
-                  ETA: <span className="text-foreground font-medium">~20–40s</span>
-                </div>
-                <Button
-                  disabled={lyricGenerationGate !== "ready" || lyricSegments.length === 0}
-                  onClick={async () => {
-                    if (!lyricAudioUrl) return toast.error("Upload a song first");
-                    if (lyricGenerationGate === "pending") {
-                      return toast.error("Beat analysis is still running — wait a moment before generating.");
-                    }
-                    if (lyricSegments.length === 0) return toast.error("Paste at least one lyric line");
-                    const res = await lyricVideoFn({ data: { audioUrl: lyricAudioUrl, lines: lyricSegments } });
-                    if (!res.ok) { toast.error(res.error); return; }
-                    markFirstGenComplete();
-                    toast.success("Lyric video queued — check your Gallery");
-                    qc.invalidateQueries({ queryKey: ["motion-gens"] });
-                  }}
-                  variant="premium"
-                  className="w-full h-12"
-                >
-                  <Wand2 className="size-4 mr-2" /> Generate Lyric Video · {mvDisplayCost} Aura
-                </Button>
-                {lyricGenerationGate === "pending" ? (
-                  <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                    <Loader2 className="size-3 animate-spin" /> Detecting the beat grid before timing your lyrics…
-                  </p>
-                ) : (!lyricAudioUrl || lyricSegments.length === 0) && (
-                  <p className="text-center text-xs text-muted-foreground">
-                    {!lyricAudioUrl ? "↑ Upload a song to continue" : "↑ Paste at least one lyric line"}
-                  </p>
-                )}
-              </section>
-            )}
-
             {/* Reference image (for modes that need it) */}
-            {!isMvLyric && mvCurrentMode?.needsImage && (
+            {mvCurrentMode?.needsImage && (
               <section className="space-y-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Reference image</p>
                 <UploadSlot userId={user.id} label="Upload" hint="Cover art, still, or footage frame" value={mvImage} onChange={setMvImage} />
@@ -1957,7 +1843,7 @@ function MotionStudio() {
             )}
 
             {/* Scene details */}
-            {!isMvLyric && (mvMode === "text-to-video" || mvMode === "ai-performance" || mvMode === "beat-sync") && (
+            {(mvMode === "text-to-video" || mvMode === "ai-performance" || mvMode === "beat-sync") && (
               <section className="space-y-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Scene details</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -1984,8 +1870,7 @@ function MotionStudio() {
             )}
 
             {/* Direction prompt + generate */}
-            {!isMvLyric && (
-              <section className="space-y-3">
+            <section className="space-y-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Direction <span className="ml-1 font-normal normal-case opacity-60">auto-built · editable</span>
                 </p>
@@ -2016,8 +1901,7 @@ function MotionStudio() {
                 >
                   <Music2 className="size-4 mr-2" /> Generate · {mvDisplayCost} Aura
                 </Button>
-              </section>
-            )}
+            </section>
 
             <Link to="/gallery" className="flex items-center gap-2 rounded-xl border border-border bg-card/60 px-4 py-3 text-sm font-medium no-underline hover:border-primary/40 hover:bg-card/80 transition-colors">
               <Sparkles className="size-4 text-primary" />
@@ -2077,7 +1961,7 @@ const MOTION_CAPABILITIES = [
   { title: "Pose → Video", body: "Stage a still into a cinematic pose, then animate it with a camera move." },
   { title: "Motion Transfer", body: "Copy the exact movement from any video onto your character image." },
   { title: "Guided Workflow", body: "Step-by-step multi-angle builds: Build a Scene and Luxury Interior." },
-  { title: "Music Video", body: "Beat-sync cuts, lyric videos and AI performance from your track." },
+  { title: "Music Video", body: "Beat-sync cuts and AI performance from your track." },
 ];
 
 function MotionInspirationBlock() {

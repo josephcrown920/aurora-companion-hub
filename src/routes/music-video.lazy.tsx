@@ -23,7 +23,6 @@ import { toast } from "sonner";
 import { listGenerations } from "@/lib/studio.functions";
 import { deleteGeneration } from "@/lib/gallery.functions";
 import { usePerformanceShotJobFn, useVideoFromImageJobFn } from "@/lib/use-job-polling";
-import { generateLyricVideoFromSong } from "@/lib/captions.functions";
 import { handleGenerationError } from "@/lib/error-toasts";
 import { markFirstGenComplete } from "@/lib/first-run";
 import { computeCost } from "@/lib/pricing";
@@ -40,14 +39,12 @@ import {
   MUSIC_VIDEO_STYLES,
   MUSIC_VIDEO_MODES,
   buildMusicVideoPrompt,
-  buildLyricVideoSegments,
   LOCATION_SUGGESTIONS,
   SUBJECT_SUGGESTIONS,
   type MusicVideoMode,
   type MusicVideoStyle,
 } from "@/lib/music-video-prompts";
 import { useBeatDetect } from "@/hooks/use-beat-detect";
-import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
 import { EditableCopy } from "@/components/EditableCopy";
 import { useSiteCopyValue } from "@/components/landing/SiteCopyProvider";
@@ -76,15 +73,7 @@ function MusicVideoPage() {
   const beatFileRef = useRef<HTMLInputElement>(null);
   const [beatFileName, setBeatFileName] = useState<string | null>(null);
   const { state: beatState, analyze: analyzeBeat, reset: resetBeat } = useBeatDetect();
-  // Lyric Video mode — the shared hook is also used by /motion, so either
-  // entry point waits for the same beat analysis before submitting a render.
-  const [lyricAudioUrl, setLyricAudioUrl] = useState<string | null>(null);
-  const [lyricAudioDuration, setLyricAudioDuration] = useState<number | null>(null);
-  const [lyricsText, setLyricsText] = useState("");
-
   const currentMode = MUSIC_VIDEO_MODES.find((m) => m.key === mode)!;
-  const isLyricVideo = mode === "lyric-style";
-  const lyricBeatAnalysis = useLyricBeatAnalysis(lyricAudioUrl, isLyricVideo);
 
   const videoCost = useMemo(
     () =>
@@ -93,20 +82,7 @@ function MusicVideoPage() {
     [videoModel],
   );
 
-  const lyricVideoCost = useMemo(() => computeCost({ features: ["lyric_video"] }).total, []);
-
-  const displayCost = isLyricVideo ? lyricVideoCost : currentMode.needsImage ? videoCost : IMAGE_COST;
-
-  const lyricLines = useMemo(
-    () => lyricsText.split("\n").map((l) => l.trim()).filter(Boolean),
-    [lyricsText],
-  );
-  const lyricBeatTimestamps = lyricBeatAnalysis.beatTimestamps;
-  const lyricGenerationGate = lyricBeatAnalysis.gate;
-  const lyricSegments = useMemo(
-    () => buildLyricVideoSegments(lyricAudioDuration, lyricLines, lyricBeatTimestamps),
-    [lyricAudioDuration, lyricLines, lyricBeatTimestamps],
-  );
+  const displayCost = currentMode.needsImage ? videoCost : IMAGE_COST;
 
   useEffect(() => {
     if (!loading && !user) void navigate({ to: "/auth", search: authNextSearch() });
@@ -116,31 +92,8 @@ function MusicVideoPage() {
     setPrompt(buildMusicVideoPrompt(mode, style, location, subject));
   }, [mode, style, location, subject]);
 
-  // Read the uploaded song's duration client-side once its signed URL is set.
-  useEffect(() => {
-    if (!lyricAudioUrl) {
-      setLyricAudioDuration(null);
-      return;
-    }
-    const audio = new Audio();
-    audio.preload = "metadata";
-    const onLoaded = () => setLyricAudioDuration(audio.duration || null);
-    const onError = () => {
-      setLyricAudioDuration(null);
-      toast.error("Couldn't read that audio file's duration — try a different file.");
-    };
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("error", onError);
-    audio.src = lyricAudioUrl;
-    return () => {
-      audio.removeEventListener("loadedmetadata", onLoaded);
-      audio.removeEventListener("error", onError);
-    };
-  }, [lyricAudioUrl]);
-
   const genFn = usePerformanceShotJobFn();
   const videoFn = useVideoFromImageJobFn();
-  const lyricVideoFn = useServerFn(generateLyricVideoFromSong);
   const listFn = useServerFn(listGenerations);
 
   const { data: history } = useQuery({
@@ -177,21 +130,6 @@ function MusicVideoPage() {
     onError: (e) => handleGenerationError(e),
   });
 
-  const lyricGenMut = useMutation({
-    mutationFn: async () => {
-      if (!lyricAudioUrl) throw new Error("Upload a song first");
-      if (lyricSegments.length === 0) throw new Error("Paste at least one lyric line");
-      const res = await lyricVideoFn({ data: { audioUrl: lyricAudioUrl, lines: lyricSegments } });
-      if (!res.ok) throw new Error(res.error);
-      return res;
-    },
-    onSuccess: () => {
-      markFirstGenComplete();
-      toast.success("Queued — view your result in Gallery");
-      qc.invalidateQueries({ queryKey: ["mv-gens"] });
-    },
-    onError: (e) => handleGenerationError(e),
-  });
 
   const delFn = useServerFn(deleteGeneration);
   const delMut = useMutation({
@@ -309,103 +247,8 @@ function MusicVideoPage() {
           </div>
         </section>
 
-        {/* Lyric Video: song + lyrics (distinct from the caption-burn tool — this
-            synthesizes a brand-new video from an uploaded song and generates its
-            own timed captions, no source video required) */}
-        {isLyricVideo && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Song
-            </h2>
-            <UploadSlot
-              userId={user.id}
-              label="Upload"
-              hint="MP3 / WAV / M4A — the track your lyrics will be timed to"
-              accept={AUDIO_ACCEPT}
-              kind="video"
-              value={lyricAudioUrl}
-              onChange={setLyricAudioUrl}
-            />
-            {lyricAudioUrl && lyricAudioDuration == null && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Loader2 className="size-3 animate-spin" /> Reading duration…
-              </p>
-            )}
-            {lyricAudioDuration != null && (
-              <p className="text-xs text-muted-foreground">
-                Duration: {Math.round(lyricAudioDuration)}s
-              </p>
-            )}
-
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground pt-2">
-              Lyrics
-              <span className="ml-2 text-[10px] font-normal normal-case opacity-60">
-                {lyricBeatTimestamps
-                  ? "one line per lyric — snapped to the detected beat grid"
-                  : lyricGenerationGate === "pending"
-                    ? "one line per lyric — detecting beats…"
-                    : "one line per lyric — beat detection unavailable, evenly timed"}
-              </span>
-            </h2>
-            <Textarea
-              rows={8}
-              value={lyricsText}
-              onChange={(e) => setLyricsText(e.target.value)}
-              className="resize-none bg-card/60 text-sm"
-              placeholder={"Paste your lyrics here, one line at a time…\n\nLine one\nLine two\nLine three"}
-            />
-            {lyricLines.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {lyricLines.length} line{lyricLines.length === 1 ? "" : "s"}
-                {lyricAudioDuration != null && lyricSegments.length > 0
-                  ? lyricBeatTimestamps
-                    ? ` · beat-aligned (${lyricBeatTimestamps.length} beats detected)`
-                    : ` · ~${(lyricAudioDuration / lyricLines.length).toFixed(1)}s per line`
-                  : ""}
-              </p>
-            )}
-
-            <div className="flex items-center gap-2 text-xs text-muted-foreground rounded-xl border border-border bg-card/40 px-3 py-2">
-              <Zap className="size-3.5 text-primary" />
-              Cost: <span className="text-foreground font-medium">{displayCost} Aura</span>
-              <span className="opacity-50">·</span>
-              ETA: <span className="text-foreground font-medium">~20–40s</span>
-            </div>
-
-            <Button
-              disabled={
-                lyricGenMut.isPending ||
-                lyricGenerationGate !== "ready" ||
-                lyricSegments.length === 0
-              }
-              onClick={() => lyricGenMut.mutate()}
-              className="w-full h-14 text-base font-medium shadow-[var(--shadow-glow)]"
-              style={{ background: "var(--gradient-hero)" }}
-            >
-              {lyricGenMut.isPending ? (
-                <>
-                  <Loader2 className="size-5 mr-2 animate-spin" /> Generating…
-                </>
-              ) : (
-                <>
-                  <Wand2 className="size-5 mr-2" /> Generate · {displayCost} Aura
-                </>
-              )}
-            </Button>
-            {lyricGenerationGate === "pending" ? (
-              <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                <Loader2 className="size-3 animate-spin" /> Detecting the beat grid before timing your lyrics…
-              </p>
-            ) : (!lyricAudioUrl || lyricSegments.length === 0) && (
-              <p className="text-center text-xs text-muted-foreground">
-                {!lyricAudioUrl ? "↑ Upload a song to continue" : "↑ Paste at least one lyric line"}
-              </p>
-            )}
-          </section>
-        )}
-
         {/* Reference image (for modes that need it) */}
-        {!isLyricVideo && currentMode.needsImage && (
+        {currentMode.needsImage && (
           <section className="space-y-3">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Reference image
@@ -548,8 +391,7 @@ function MusicVideoPage() {
         )}
 
         {/* Prompt preview (always shown, always editable) */}
-        {!isLyricVideo && (
-          <section className="space-y-2">
+        <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Direction{" "}
               <span className="font-normal normal-case opacity-60 text-[10px]">auto-built · editable</span>
@@ -561,12 +403,10 @@ function MusicVideoPage() {
               className="resize-none bg-card/60 text-sm"
               placeholder="Your prompt will appear here…"
             />
-          </section>
-        )}
+        </section>
 
         {/* Model + cost */}
-        {!isLyricVideo && (
-          <section className="space-y-3">
+        <section className="space-y-3">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {currentMode.needsImage ? "Video model" : "Image model"}
             </h2>
@@ -598,12 +438,10 @@ function MusicVideoPage() {
                 {currentMode.needsImage ? "~20–40s" : "~10–20s"}
               </span>
             </div>
-          </section>
-        )}
+        </section>
 
         {/* Generate */}
-        {!isLyricVideo && (
-          <Button
+        <Button
             disabled={genMut.isPending || (currentMode.needsImage && !image)}
             onClick={() => genMut.mutate()}
             className="w-full h-14 text-base font-medium shadow-[var(--shadow-glow)]"
@@ -616,10 +454,9 @@ function MusicVideoPage() {
             ) : (
               <><Wand2 className="size-5 mr-2" /> {musicVideoGenerateCta} · {displayCost} Aura</>
             )}
-          </Button>
-        )}
+        </Button>
 
-        {!isLyricVideo && currentMode.needsImage && !image && (
+        {currentMode.needsImage && !image && (
           <p className="text-center text-xs text-muted-foreground -mt-4">
             ↑ Upload a reference image to enable video generation
           </p>
