@@ -346,10 +346,9 @@ function AuthPage() {
         sessionStorage.setItem(OAUTH_SIGNUP_INTENT_KEY, provider);
       }
       if (provider === "google" || provider === "apple") {
-        sessionStorage.setItem("aurora-oauth-next", search.next ?? "/studio");
         const { lovable } = await import("@/integrations/lovable/index");
         const result = await lovable.auth.signInWithOAuth(provider, {
-          redirect_uri: window.location.origin + "/auth",
+          redirect_uri: `${window.location.origin}/auth?next=${encodeURIComponent(search.next ?? "/studio")}`,
         });
         if (result.error) throw result.error;
         if (result.redirected) return;
