@@ -16,7 +16,7 @@ import {
   type Clip,
   type TimelineDoc,
   type TrackId,
-} from "@/lib/timeline-state";
+} from "@/features/creative-studio/lib/timeline-state";
 import { EFFECTS, LOOKS, TOOLS, VIDEO_PRESETS } from "@/features/creative-studio/lib/pro-presets";
 import { buildCapCutDraft, buildEdl } from "@/features/creative-studio/lib/capcut-export";
 
