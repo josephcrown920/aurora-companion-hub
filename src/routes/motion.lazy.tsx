@@ -1031,8 +1031,7 @@ function MotionStudio() {
               { m: "reskin"       as Mode, label: "Performance Shot", Icon: Users        },
               { m: "pose"         as Mode, label: "Pose → Video",     Icon: Wand2        },
               { m: "transfer"     as Mode, label: "Motion Transfer",  Icon: Clapperboard },
-              { m: "avatar-shots" as Mode, label: "Avatar Shots",     Icon: Sparkles     },
-              { m: "live-avatar"  as Mode, label: "Live Avatar",      Icon: Film         },
+              { m: "workflow"     as Mode, label: "Guided Workflow",  Icon: Sparkles     },
               { m: "music-video"  as Mode, label: "Music Video",      Icon: Music2       },
             ]).map(({ m, label, Icon }) => (
               <button
