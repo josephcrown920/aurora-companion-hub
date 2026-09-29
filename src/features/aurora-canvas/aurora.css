@@ -1,6 +1,6 @@
 /* Aurora Creative Studio — frosted-glass design (per user reference screenshot) */
 
-.aurora-body {
+.aurora-body.aurora-canvas-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, sans-serif;
   background: #000;
   color: #fff;
@@ -1161,8 +1161,8 @@
   letter-spacing: 0;
 }
 
-.aurora-body::before,
-.aurora-body::after {
+.aurora-body.aurora-canvas-page::before,
+.aurora-body.aurora-canvas-page::after {
   content: "";
   position: fixed;
   z-index: 0;
@@ -1170,11 +1170,11 @@
   border-radius: 50%;
   filter: blur(100px);
 }
-.aurora-body::before { width: 34rem; height: 34rem; left: -15rem; top: -15rem; background: oklch(0.48 0.22 303 / .12); }
-.aurora-body::after { width: 28rem; height: 28rem; right: -12rem; bottom: -12rem; background: oklch(0.61 0.18 320 / .1); }
-.aurora-bg-layer { display: none; }
+.aurora-body.aurora-canvas-page::before { width: 34rem; height: 34rem; left: -15rem; top: -15rem; background: oklch(0.48 0.22 303 / .12); }
+.aurora-body.aurora-canvas-page::after { width: 28rem; height: 28rem; right: -12rem; bottom: -12rem; background: oklch(0.61 0.18 320 / .1); }
+.aurora-canvas-page .aurora-bg-layer { display: none; }
 
-.aurora-logo-top {
+.aurora-canvas-page .aurora-logo-top {
   top: 0;
   left: 0;
   bottom: 0;
@@ -1192,22 +1192,22 @@
   line-height: 1.1;
   text-align: center;
 }
-.aurora-logo-top small { color: var(--canvas-muted); font-size: 8px; font-weight: 500; }
-.aurora-logo-mark { width: 38px; height: 38px; background: var(--canvas-purple); color: white; border-radius: 8px; }
-.aurora-logo-top nav { display: grid; gap: 12px; margin-top: 28px; }
-.aurora-logo-top nav button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--canvas-muted); }
-.aurora-logo-top nav button.active { color: var(--canvas-purple); background: var(--canvas-purple-soft); border-color: oklch(0.72 0.1 303); }
-.aurora-logo-top nav svg { width: 19px; height: 19px; }
-.aurora-settings-fab { top: 13px; right: 18px; background: white; border-color: var(--canvas-line); color: var(--canvas-purple); box-shadow: 0 8px 28px oklch(0.3 0.08 303 / .12); }
+.aurora-canvas-page .aurora-logo-top small { color: var(--canvas-muted); font-size: 8px; font-weight: 500; }
+.aurora-canvas-page .aurora-logo-mark { width: 38px; height: 38px; background: var(--canvas-purple); color: white; border-radius: 8px; }
+.aurora-canvas-page .aurora-logo-top nav { display: grid; gap: 12px; margin-top: 28px; }
+.aurora-canvas-page .aurora-logo-top nav button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--canvas-muted); }
+.aurora-canvas-page .aurora-logo-top nav button.active { color: var(--canvas-purple); background: var(--canvas-purple-soft); border-color: oklch(0.72 0.1 303); }
+.aurora-canvas-page .aurora-logo-top nav svg { width: 19px; height: 19px; }
+.aurora-canvas-page .aurora-settings-fab { top: 13px; right: 18px; background: white; border-color: var(--canvas-line); color: var(--canvas-purple); box-shadow: 0 8px 28px oklch(0.3 0.08 303 / .12); }
 
-.aurora-wrap { padding-left: 76px; min-height: 100dvh; }
+.aurora-canvas-page .aurora-wrap { padding-left: 76px; min-height: 100dvh; }
 .aurora-workspace-header { height: 66px; display: flex; align-items: center; justify-content: space-between; padding: 0 84px 0 28px; border-bottom: 1px solid var(--canvas-line); background: oklch(1 0 0 / .68); backdrop-filter: blur(26px); }
 .aurora-workspace-header div { display: flex; align-items: center; gap: 12px; }
 .aurora-workspace-header strong { font-size: 12px; }
 .aurora-workspace-header span { padding: 4px 7px; border-radius: 5px; color: var(--canvas-purple); background: var(--canvas-purple-soft); font-size: 8px; text-transform: uppercase; }
 .aurora-workspace-header p { margin: 0; color: var(--canvas-muted); font-size: 10px; text-transform: uppercase; }
 
-.aurora-hero {
+.aurora-canvas-page .aurora-hero {
   flex: none;
   display: grid;
   grid-template-columns: minmax(270px, .72fr) minmax(500px, 1.5fr);
