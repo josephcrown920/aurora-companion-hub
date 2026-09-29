@@ -20,6 +20,7 @@ import {
 import { agentEdit, type EditorOp } from "@/features/creative-studio/lib/agent-editor.functions";
 import { deleteCapcutDraft, listCapcutDrafts, saveCapcutDraft } from "@/features/creative-studio/lib/capcut-drafts.functions";
 import { buildCapCutDraft, buildEdl, type CapCutRatio } from "@/features/creative-studio/lib/capcut-export";
+import type { TimelineDoc } from "@/features/creative-studio/lib/timeline-state";
 
 export type LayerItem = {
   id: string;
@@ -173,6 +174,21 @@ export function LayersEditor() {
   const [drafts, setDrafts] = useState<SavedDraft[]>([]);
   const [draftMsg, setDraftMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    const sync = (event: Event) => {
+      const doc = (event as CustomEvent<TimelineDoc>).detail;
+      if (!doc?.clips) return;
+      setLayersRaw((previous) => doc.clips.map((clip) => {
+        const old = previous.find((layer) => layer.id === clip.id);
+        return { ...newLayer(clip.kind, 0), ...old, id: clip.id, type: clip.kind, name: clip.name, start: clip.start, duration: clip.duration, locked: !!clip.locked };
+      }));
+    };
+    window.addEventListener("aurora:timeline-change", sync);
+    return () => window.removeEventListener("aurora:timeline-change", sync);
+  }, []);
+
+  const sendToTimeline = (next: LayerItem[]) => window.dispatchEvent(new CustomEvent("aurora:apply-layers", { detail: next }));
+
   /** Records a history step. Rapid edits with the same key (e.g. slider drags) merge into one step. */
   const commit = (next: LayerItem[], key = "edit") => {
     const now = Date.now();
@@ -183,6 +199,7 @@ export function LayersEditor() {
       setFuture([]);
     }
     setLayersRaw(next);
+    sendToTimeline(next);
   };
   const undo = () => {
     const prev = past[past.length - 1];
@@ -190,6 +207,7 @@ export function LayersEditor() {
     setPast((p) => p.slice(0, -1));
     setFuture((f) => [layers, ...f]);
     setLayersRaw(prev);
+    sendToTimeline(prev);
     lastCommit.current = { key: "", t: 0 };
   };
   const redo = () => {
@@ -198,6 +216,7 @@ export function LayersEditor() {
     setFuture((f) => f.slice(1));
     setPast((p) => [...p, layers]);
     setLayersRaw(nxt);
+    sendToTimeline(nxt);
     lastCommit.current = { key: "", t: 0 };
   };
 
@@ -322,8 +341,8 @@ export function LayersEditor() {
     <section className="aurora-layers-panel">
       <div className="aurora-layers-head">
         <div>
-          <strong>Codex Video Editor</strong>
-          <small>Tell the editor what to change, preview it, then send it to CapCut.</small>
+          <strong>AI Video Editor</strong>
+          <small>Tell the editor what to change, preview it, then apply it to the timeline.</small>
         </div>
         <div className="aurora-history">
           <button onClick={undo} disabled={!past.length} title="Undo (Ctrl/Cmd+Z)" aria-label="Undo">

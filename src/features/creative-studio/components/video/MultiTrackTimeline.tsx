@@ -43,7 +43,29 @@ export function MultiTrackTimeline() {
   const lane = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag>(null);
 
-  useEffect(() => saveTimeline(doc), [doc]);
+  useEffect(() => {
+    saveTimeline(doc);
+    window.dispatchEvent(new CustomEvent("aurora:timeline-change", { detail: doc }));
+  }, [doc]);
+
+  useEffect(() => {
+    const applyLayers = (event: Event) => {
+      const layers = (event as CustomEvent<Array<{ id: string; type: Clip["kind"]; name: string; start: number; duration: number; locked: boolean }>>).detail;
+      if (!Array.isArray(layers)) return;
+      setDoc((current) => {
+        setPast((history) => [...history.slice(-49), current]);
+        setFuture([]);
+        const existing = new Map(current.clips.map((clip) => [clip.id, clip]));
+        return { ...current, clips: layers.map((layer) => clampClip({
+          ...existing.get(layer.id), id: layer.id, name: layer.name,
+          track: existing.get(layer.id)?.track ?? (layer.type === "audio" ? "A1" : layer.type === "text" ? "V3" : layer.type === "overlay" ? "V4" : "V1"),
+          kind: layer.type, start: layer.start, duration: layer.duration, locked: layer.locked,
+        }, current.seconds)) };
+      });
+    };
+    window.addEventListener("aurora:apply-layers", applyLayers);
+    return () => window.removeEventListener("aurora:apply-layers", applyLayers);
+  }, []);
 
   useEffect(() => {
     const importMedia = (event: Event) => {

@@ -15,7 +15,7 @@ const CREATOR_TOOLS = [
   { to: "/comfy", name: "ComfyUI Apps" },
   { to: "/lipsync", name: "Lip Sync" },
   { to: "/motion", name: "Perform Anywhere" },
-  { to: "/canvas", name: "Node Canvas / Krea" },
+  { to: "/canvas", name: "Node Canvas" },
   { to: "/spin", name: "TikTok30" },
 ] as const;
 

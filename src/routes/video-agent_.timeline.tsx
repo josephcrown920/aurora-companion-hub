@@ -49,7 +49,7 @@ function TimelinePage() {
     ["flash", "White flash", "Beat-synced transition"], ["blur", "Motion blur", "Smooth camera movement"],
   ];
   const agents = [
-    ["AI edit planner", "Preview and approve changes below"], ["GPT-6 Astra", "Current AI editor model"],
+    ["AI edit planner", "Preview and approve changes below"], ["GPT-6 Astra", "AI editor model"],
     ["ModelArk director", "Open Generator & Director to plan shots"],
   ];
   return (
@@ -58,7 +58,7 @@ function TimelinePage() {
       <main className="aurora-editor-shell">
         <header className="aurora-editor-titlebar">
           <div><h1>Aurora Agent Editor</h1><p>AI-directed desktop video workstation</p></div>
-          <div className="aurora-editor-status">Timeline saved in this browser</div>
+          <div className="aurora-editor-status">Edits saved locally · Reimport files after refresh</div>
         </header>
         <section className="aurora-editor-upper">
           <aside className="aurora-editor-pane">
