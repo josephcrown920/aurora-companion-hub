@@ -19,6 +19,8 @@ import { Route as AdultRouteImport } from './routes/adult'
 import { Route as AffiliateRouteImport } from './routes/affiliate'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AuroraAdultRouteImport } from './routes/aurora-adult'
+import { Route as AuroraCanvasRouteImport } from './routes/aurora-canvas'
+import { Route as AuroraStudioShellRouteImport } from './routes/aurora-studio-shell'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AvatarRouteImport } from './routes/avatar'
 import { Route as BillingRouteImport } from './routes/billing'
@@ -136,6 +138,17 @@ import { Route as ApiAiGatewayLagunaRouteImport } from './routes/api/ai-gateway/
 import { Route as ApiAiGatewayModelsRouteImport } from './routes/api/ai-gateway/models'
 import { Route as ApiAudioMasterRouteImport } from './routes/api/audio/master'
 import { Route as ApiAudioUploadRouteImport } from './routes/api/audio/upload'
+import { Route as ApiCanvasAgentRouteImport } from './routes/api/canvas/agent'
+import { Route as ApiCanvasArkRouteImport } from './routes/api/canvas/ark'
+import { Route as ApiCanvasAssistantRouteImport } from './routes/api/canvas/assistant'
+import { Route as ApiCanvasChatStreamRouteImport } from './routes/api/canvas/chat-stream'
+import { Route as ApiCanvasComfyRouteImport } from './routes/api/canvas/comfy'
+import { Route as ApiCanvasContentAgentRouteImport } from './routes/api/canvas/content-agent'
+import { Route as ApiCanvasModelarkRouteImport } from './routes/api/canvas/modelark'
+import { Route as ApiCanvasModelarkDirectorRouteImport } from './routes/api/canvas/modelark-director'
+import { Route as ApiCanvasReferenceUploadRouteImport } from './routes/api/canvas/reference-upload'
+import { Route as ApiCanvasSpeechRouteImport } from './routes/api/canvas/speech'
+import { Route as ApiCanvasZenmuxRouteImport } from './routes/api/canvas/zenmux'
 import { Route as ApiDirectorsBoardBrainRouteImport } from './routes/api/directors-board/brain'
 import { Route as ApiDirectorsBoardChatRouteImport } from './routes/api/directors-board/chat'
 import { Route as ApiDirectorsBoardGenerateImageRouteImport } from './routes/api/directors-board/generate-image'
@@ -242,6 +255,16 @@ const AgentRoute = AgentRouteImport.update({
 const AuroraAdultRoute = AuroraAdultRouteImport.update({
   id: '/aurora-adult',
   path: '/aurora-adult',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuroraCanvasRoute = AuroraCanvasRouteImport.update({
+  id: '/aurora-canvas',
+  path: '/aurora-canvas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuroraStudioShellRoute = AuroraStudioShellRouteImport.update({
+  id: '/aurora-studio-shell',
+  path: '/aurora-studio-shell',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -875,6 +898,63 @@ const ApiAudioUploadRoute = ApiAudioUploadRouteImport.update({
   path: '/api/audio/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCanvasAgentRoute = ApiCanvasAgentRouteImport.update({
+  id: '/api/canvas/agent',
+  path: '/api/canvas/agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasArkRoute = ApiCanvasArkRouteImport.update({
+  id: '/api/canvas/ark',
+  path: '/api/canvas/ark',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasAssistantRoute = ApiCanvasAssistantRouteImport.update({
+  id: '/api/canvas/assistant',
+  path: '/api/canvas/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasChatStreamRoute = ApiCanvasChatStreamRouteImport.update({
+  id: '/api/canvas/chat-stream',
+  path: '/api/canvas/chat-stream',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasComfyRoute = ApiCanvasComfyRouteImport.update({
+  id: '/api/canvas/comfy',
+  path: '/api/canvas/comfy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasContentAgentRoute = ApiCanvasContentAgentRouteImport.update({
+  id: '/api/canvas/content-agent',
+  path: '/api/canvas/content-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasModelarkRoute = ApiCanvasModelarkRouteImport.update({
+  id: '/api/canvas/modelark',
+  path: '/api/canvas/modelark',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasModelarkDirectorRoute =
+  ApiCanvasModelarkDirectorRouteImport.update({
+    id: '/api/canvas/modelark-director',
+    path: '/api/canvas/modelark-director',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCanvasReferenceUploadRoute =
+  ApiCanvasReferenceUploadRouteImport.update({
+    id: '/api/canvas/reference-upload',
+    path: '/api/canvas/reference-upload',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCanvasSpeechRoute = ApiCanvasSpeechRouteImport.update({
+  id: '/api/canvas/speech',
+  path: '/api/canvas/speech',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCanvasZenmuxRoute = ApiCanvasZenmuxRouteImport.update({
+  id: '/api/canvas/zenmux',
+  path: '/api/canvas/zenmux',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDirectorsBoardBrainRoute = ApiDirectorsBoardBrainRouteImport.update({
   id: '/api/directors-board/brain',
   path: '/api/directors-board/brain',
@@ -1209,6 +1289,8 @@ export interface FileRoutesByFullPath {
   '/affiliate': typeof AffiliateRoute
   '/agent': typeof AgentRoute
   '/aurora-adult': typeof AuroraAdultRoute
+  '/aurora-canvas': typeof AuroraCanvasRoute
+  '/aurora-studio-shell': typeof AuroraStudioShellRoute
   '/auth': typeof AuthRoute
   '/avatar': typeof AvatarRoute
   '/billing': typeof BillingRoute
@@ -1329,6 +1411,17 @@ export interface FileRoutesByFullPath {
   '/api/ai-gateway/models': typeof ApiAiGatewayModelsRoute
   '/api/audio/master': typeof ApiAudioMasterRouteWithChildren
   '/api/audio/upload': typeof ApiAudioUploadRoute
+  '/api/canvas/agent': typeof ApiCanvasAgentRoute
+  '/api/canvas/ark': typeof ApiCanvasArkRoute
+  '/api/canvas/assistant': typeof ApiCanvasAssistantRoute
+  '/api/canvas/chat-stream': typeof ApiCanvasChatStreamRoute
+  '/api/canvas/comfy': typeof ApiCanvasComfyRoute
+  '/api/canvas/content-agent': typeof ApiCanvasContentAgentRoute
+  '/api/canvas/modelark': typeof ApiCanvasModelarkRoute
+  '/api/canvas/modelark-director': typeof ApiCanvasModelarkDirectorRoute
+  '/api/canvas/reference-upload': typeof ApiCanvasReferenceUploadRoute
+  '/api/canvas/speech': typeof ApiCanvasSpeechRoute
+  '/api/canvas/zenmux': typeof ApiCanvasZenmuxRoute
   '/api/directors-board/brain': typeof ApiDirectorsBoardBrainRoute
   '/api/directors-board/chat': typeof ApiDirectorsBoardChatRoute
   '/api/directors-board/generate-image': typeof ApiDirectorsBoardGenerateImageRoute
@@ -1399,6 +1492,8 @@ export interface FileRoutesByTo {
   '/affiliate': typeof AffiliateRoute
   '/agent': typeof AgentRoute
   '/aurora-adult': typeof AuroraAdultRoute
+  '/aurora-canvas': typeof AuroraCanvasRoute
+  '/aurora-studio-shell': typeof AuroraStudioShellRoute
   '/auth': typeof AuthRoute
   '/avatar': typeof AvatarRoute
   '/billing': typeof BillingRoute
@@ -1519,6 +1614,17 @@ export interface FileRoutesByTo {
   '/api/ai-gateway/models': typeof ApiAiGatewayModelsRoute
   '/api/audio/master': typeof ApiAudioMasterRouteWithChildren
   '/api/audio/upload': typeof ApiAudioUploadRoute
+  '/api/canvas/agent': typeof ApiCanvasAgentRoute
+  '/api/canvas/ark': typeof ApiCanvasArkRoute
+  '/api/canvas/assistant': typeof ApiCanvasAssistantRoute
+  '/api/canvas/chat-stream': typeof ApiCanvasChatStreamRoute
+  '/api/canvas/comfy': typeof ApiCanvasComfyRoute
+  '/api/canvas/content-agent': typeof ApiCanvasContentAgentRoute
+  '/api/canvas/modelark': typeof ApiCanvasModelarkRoute
+  '/api/canvas/modelark-director': typeof ApiCanvasModelarkDirectorRoute
+  '/api/canvas/reference-upload': typeof ApiCanvasReferenceUploadRoute
+  '/api/canvas/speech': typeof ApiCanvasSpeechRoute
+  '/api/canvas/zenmux': typeof ApiCanvasZenmuxRoute
   '/api/directors-board/brain': typeof ApiDirectorsBoardBrainRoute
   '/api/directors-board/chat': typeof ApiDirectorsBoardChatRoute
   '/api/directors-board/generate-image': typeof ApiDirectorsBoardGenerateImageRoute
@@ -1591,6 +1697,8 @@ export interface FileRoutesById {
   '/affiliate': typeof AffiliateRoute
   '/agent': typeof AgentRoute
   '/aurora-adult': typeof AuroraAdultRoute
+  '/aurora-canvas': typeof AuroraCanvasRoute
+  '/aurora-studio-shell': typeof AuroraStudioShellRoute
   '/auth': typeof AuthRoute
   '/avatar': typeof AvatarRoute
   '/billing': typeof BillingRoute
@@ -1711,6 +1819,17 @@ export interface FileRoutesById {
   '/api/ai-gateway/models': typeof ApiAiGatewayModelsRoute
   '/api/audio/master': typeof ApiAudioMasterRouteWithChildren
   '/api/audio/upload': typeof ApiAudioUploadRoute
+  '/api/canvas/agent': typeof ApiCanvasAgentRoute
+  '/api/canvas/ark': typeof ApiCanvasArkRoute
+  '/api/canvas/assistant': typeof ApiCanvasAssistantRoute
+  '/api/canvas/chat-stream': typeof ApiCanvasChatStreamRoute
+  '/api/canvas/comfy': typeof ApiCanvasComfyRoute
+  '/api/canvas/content-agent': typeof ApiCanvasContentAgentRoute
+  '/api/canvas/modelark': typeof ApiCanvasModelarkRoute
+  '/api/canvas/modelark-director': typeof ApiCanvasModelarkDirectorRoute
+  '/api/canvas/reference-upload': typeof ApiCanvasReferenceUploadRoute
+  '/api/canvas/speech': typeof ApiCanvasSpeechRoute
+  '/api/canvas/zenmux': typeof ApiCanvasZenmuxRoute
   '/api/directors-board/brain': typeof ApiDirectorsBoardBrainRoute
   '/api/directors-board/chat': typeof ApiDirectorsBoardChatRoute
   '/api/directors-board/generate-image': typeof ApiDirectorsBoardGenerateImageRoute
@@ -1784,6 +1903,8 @@ export interface FileRouteTypes {
     | '/affiliate'
     | '/agent'
     | '/aurora-adult'
+    | '/aurora-canvas'
+    | '/aurora-studio-shell'
     | '/auth'
     | '/avatar'
     | '/billing'
@@ -1904,6 +2025,17 @@ export interface FileRouteTypes {
     | '/api/ai-gateway/models'
     | '/api/audio/master'
     | '/api/audio/upload'
+    | '/api/canvas/agent'
+    | '/api/canvas/ark'
+    | '/api/canvas/assistant'
+    | '/api/canvas/chat-stream'
+    | '/api/canvas/comfy'
+    | '/api/canvas/content-agent'
+    | '/api/canvas/modelark'
+    | '/api/canvas/modelark-director'
+    | '/api/canvas/reference-upload'
+    | '/api/canvas/speech'
+    | '/api/canvas/zenmux'
     | '/api/directors-board/brain'
     | '/api/directors-board/chat'
     | '/api/directors-board/generate-image'
@@ -1974,6 +2106,8 @@ export interface FileRouteTypes {
     | '/affiliate'
     | '/agent'
     | '/aurora-adult'
+    | '/aurora-canvas'
+    | '/aurora-studio-shell'
     | '/auth'
     | '/avatar'
     | '/billing'
@@ -2094,6 +2228,17 @@ export interface FileRouteTypes {
     | '/api/ai-gateway/models'
     | '/api/audio/master'
     | '/api/audio/upload'
+    | '/api/canvas/agent'
+    | '/api/canvas/ark'
+    | '/api/canvas/assistant'
+    | '/api/canvas/chat-stream'
+    | '/api/canvas/comfy'
+    | '/api/canvas/content-agent'
+    | '/api/canvas/modelark'
+    | '/api/canvas/modelark-director'
+    | '/api/canvas/reference-upload'
+    | '/api/canvas/speech'
+    | '/api/canvas/zenmux'
     | '/api/directors-board/brain'
     | '/api/directors-board/chat'
     | '/api/directors-board/generate-image'
@@ -2165,6 +2310,8 @@ export interface FileRouteTypes {
     | '/affiliate'
     | '/agent'
     | '/aurora-adult'
+    | '/aurora-canvas'
+    | '/aurora-studio-shell'
     | '/auth'
     | '/avatar'
     | '/billing'
@@ -2285,6 +2432,17 @@ export interface FileRouteTypes {
     | '/api/ai-gateway/models'
     | '/api/audio/master'
     | '/api/audio/upload'
+    | '/api/canvas/agent'
+    | '/api/canvas/ark'
+    | '/api/canvas/assistant'
+    | '/api/canvas/chat-stream'
+    | '/api/canvas/comfy'
+    | '/api/canvas/content-agent'
+    | '/api/canvas/modelark'
+    | '/api/canvas/modelark-director'
+    | '/api/canvas/reference-upload'
+    | '/api/canvas/speech'
+    | '/api/canvas/zenmux'
     | '/api/directors-board/brain'
     | '/api/directors-board/chat'
     | '/api/directors-board/generate-image'
@@ -2357,6 +2515,8 @@ export interface RootRouteChildren {
   AffiliateRoute: typeof AffiliateRoute
   AgentRoute: typeof AgentRoute
   AuroraAdultRoute: typeof AuroraAdultRoute
+  AuroraCanvasRoute: typeof AuroraCanvasRoute
+  AuroraStudioShellRoute: typeof AuroraStudioShellRoute
   AuthRoute: typeof AuthRoute
   AvatarRoute: typeof AvatarRoute
   BillingRoute: typeof BillingRoute
@@ -2457,6 +2617,17 @@ export interface RootRouteChildren {
   ApiAiGatewayModelsRoute: typeof ApiAiGatewayModelsRoute
   ApiAudioMasterRoute: typeof ApiAudioMasterRouteWithChildren
   ApiAudioUploadRoute: typeof ApiAudioUploadRoute
+  ApiCanvasAgentRoute: typeof ApiCanvasAgentRoute
+  ApiCanvasArkRoute: typeof ApiCanvasArkRoute
+  ApiCanvasAssistantRoute: typeof ApiCanvasAssistantRoute
+  ApiCanvasChatStreamRoute: typeof ApiCanvasChatStreamRoute
+  ApiCanvasComfyRoute: typeof ApiCanvasComfyRoute
+  ApiCanvasContentAgentRoute: typeof ApiCanvasContentAgentRoute
+  ApiCanvasModelarkRoute: typeof ApiCanvasModelarkRoute
+  ApiCanvasModelarkDirectorRoute: typeof ApiCanvasModelarkDirectorRoute
+  ApiCanvasReferenceUploadRoute: typeof ApiCanvasReferenceUploadRoute
+  ApiCanvasSpeechRoute: typeof ApiCanvasSpeechRoute
+  ApiCanvasZenmuxRoute: typeof ApiCanvasZenmuxRoute
   ApiDirectorsBoardBrainRoute: typeof ApiDirectorsBoardBrainRoute
   ApiDirectorsBoardChatRoute: typeof ApiDirectorsBoardChatRoute
   ApiDirectorsBoardGenerateImageRoute: typeof ApiDirectorsBoardGenerateImageRoute
@@ -2574,6 +2745,20 @@ declare module '@tanstack/react-router' {
       path: '/aurora-adult'
       fullPath: '/aurora-adult'
       preLoaderRoute: typeof AuroraAdultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aurora-canvas': {
+      id: '/aurora-canvas'
+      path: '/aurora-canvas'
+      fullPath: '/aurora-canvas'
+      preLoaderRoute: typeof AuroraCanvasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aurora-studio-shell': {
+      id: '/aurora-studio-shell'
+      path: '/aurora-studio-shell'
+      fullPath: '/aurora-studio-shell'
+      preLoaderRoute: typeof AuroraStudioShellRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -3416,6 +3601,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAudioUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/canvas/agent': {
+      id: '/api/canvas/agent'
+      path: '/api/canvas/agent'
+      fullPath: '/api/canvas/agent'
+      preLoaderRoute: typeof ApiCanvasAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/ark': {
+      id: '/api/canvas/ark'
+      path: '/api/canvas/ark'
+      fullPath: '/api/canvas/ark'
+      preLoaderRoute: typeof ApiCanvasArkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/assistant': {
+      id: '/api/canvas/assistant'
+      path: '/api/canvas/assistant'
+      fullPath: '/api/canvas/assistant'
+      preLoaderRoute: typeof ApiCanvasAssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/chat-stream': {
+      id: '/api/canvas/chat-stream'
+      path: '/api/canvas/chat-stream'
+      fullPath: '/api/canvas/chat-stream'
+      preLoaderRoute: typeof ApiCanvasChatStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/comfy': {
+      id: '/api/canvas/comfy'
+      path: '/api/canvas/comfy'
+      fullPath: '/api/canvas/comfy'
+      preLoaderRoute: typeof ApiCanvasComfyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/content-agent': {
+      id: '/api/canvas/content-agent'
+      path: '/api/canvas/content-agent'
+      fullPath: '/api/canvas/content-agent'
+      preLoaderRoute: typeof ApiCanvasContentAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/modelark': {
+      id: '/api/canvas/modelark'
+      path: '/api/canvas/modelark'
+      fullPath: '/api/canvas/modelark'
+      preLoaderRoute: typeof ApiCanvasModelarkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/modelark-director': {
+      id: '/api/canvas/modelark-director'
+      path: '/api/canvas/modelark-director'
+      fullPath: '/api/canvas/modelark-director'
+      preLoaderRoute: typeof ApiCanvasModelarkDirectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/reference-upload': {
+      id: '/api/canvas/reference-upload'
+      path: '/api/canvas/reference-upload'
+      fullPath: '/api/canvas/reference-upload'
+      preLoaderRoute: typeof ApiCanvasReferenceUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/speech': {
+      id: '/api/canvas/speech'
+      path: '/api/canvas/speech'
+      fullPath: '/api/canvas/speech'
+      preLoaderRoute: typeof ApiCanvasSpeechRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/canvas/zenmux': {
+      id: '/api/canvas/zenmux'
+      path: '/api/canvas/zenmux'
+      fullPath: '/api/canvas/zenmux'
+      preLoaderRoute: typeof ApiCanvasZenmuxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/directors-board/brain': {
       id: '/api/directors-board/brain'
       path: '/api/directors-board/brain'
@@ -3935,6 +4197,8 @@ const rootRouteChildren: RootRouteChildren = {
   AffiliateRoute: AffiliateRoute,
   AgentRoute: AgentRoute,
   AuroraAdultRoute: AuroraAdultRoute,
+  AuroraCanvasRoute: AuroraCanvasRoute,
+  AuroraStudioShellRoute: AuroraStudioShellRoute,
   AuthRoute: AuthRoute,
   AvatarRoute: AvatarRoute,
   BillingRoute: BillingRoute,
@@ -4035,6 +4299,17 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiGatewayModelsRoute: ApiAiGatewayModelsRoute,
   ApiAudioMasterRoute: ApiAudioMasterRouteWithChildren,
   ApiAudioUploadRoute: ApiAudioUploadRoute,
+  ApiCanvasAgentRoute: ApiCanvasAgentRoute,
+  ApiCanvasArkRoute: ApiCanvasArkRoute,
+  ApiCanvasAssistantRoute: ApiCanvasAssistantRoute,
+  ApiCanvasChatStreamRoute: ApiCanvasChatStreamRoute,
+  ApiCanvasComfyRoute: ApiCanvasComfyRoute,
+  ApiCanvasContentAgentRoute: ApiCanvasContentAgentRoute,
+  ApiCanvasModelarkRoute: ApiCanvasModelarkRoute,
+  ApiCanvasModelarkDirectorRoute: ApiCanvasModelarkDirectorRoute,
+  ApiCanvasReferenceUploadRoute: ApiCanvasReferenceUploadRoute,
+  ApiCanvasSpeechRoute: ApiCanvasSpeechRoute,
+  ApiCanvasZenmuxRoute: ApiCanvasZenmuxRoute,
   ApiDirectorsBoardBrainRoute: ApiDirectorsBoardBrainRoute,
   ApiDirectorsBoardChatRoute: ApiDirectorsBoardChatRoute,
   ApiDirectorsBoardGenerateImageRoute: ApiDirectorsBoardGenerateImageRoute,
