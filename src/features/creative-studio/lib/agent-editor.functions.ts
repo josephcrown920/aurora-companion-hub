@@ -66,7 +66,7 @@ export const agentEdit = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured for this studio yet. Add AI access and retry.");
 
-    const { generateText } = await import("ai");
+    const { generateObject } = await import("ai");
     const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
 
     const system = `${buildSystemPrompt(["cinematic"], [])}
@@ -91,12 +91,12 @@ Rules:
 - When the request needs new footage, emit an add_layer with a generation prompt instead of inventing assets that do not exist.
 - Never combine edits that contradict each other. Keep the plan minimal — the smallest reliable set of operations.`;
 
-    const { text } = await generateText({
+    const { object: result } = await generateObject({
       model: createLovableAiGatewayProvider(apiKey)("google/gemini-2.5-flash"),
-      system: `${system}\nReturn only JSON matching {"reply":"short explanation","ops":[{"op":"update_layer","id":"exact id","name":"new name"}]}. Include nullable fields as null when not used.`,
+      schema: agentSchema,
+      system,
       prompt: `Current layers:\n${JSON.stringify(data.layers)}\n\nInstruction: ${data.instruction}`,
     });
-    const result = agentSchema.parse(JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim()));
 
     const ops = result.ops
       .map((o) => ({ ...o, op: (o.op || "").trim() }))
