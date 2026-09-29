@@ -481,7 +481,7 @@ const PromptLabRoute = PromptLabRouteImport.update({
   id: '/prompt-lab',
   path: '/prompt-lab',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/prompt-lab.lazy').then((d) => d.Route))
 const PuremixRoute = PuremixRouteImport.update({
   id: '/puremix',
   path: '/puremix',
