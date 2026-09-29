@@ -93,7 +93,7 @@ export const MOTION_EXAMPLE_PRESETS: ToolPreset[] = [
   },
 ];
 
-const LIPSYNC_DEMO_VIDEO = "/__l5e/assets-v1/7a355f0a-3435-4950-8e12-15a1507a5f1d/hero-lipsync.mp4";
+const LIPSYNC_DEMO_VIDEO = "/__l5e/assets-v1/c6af8a11-b62c-406d-84e6-4d4d8fd688a5/hero-lipsync.mp4";
 const LIPSYNC_DEMO_AUDIO = "/__l5e/assets-v1/47f5baf7-c85b-43cc-b2bc-e65072bbf30b/the-one-hook.mp3";
 
 export const LIPSYNC_EXAMPLE_PRESETS: ToolPreset[] = [

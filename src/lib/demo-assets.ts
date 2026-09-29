@@ -47,7 +47,7 @@ export const DEMO_ASSETS = {
       image("ugc-campaign", "/landing-client-5.png", "Styled campaign image for a creator brief", "Campaign still"),
     ],
     colors: [
-      image("colors-grade", "/colors/colors-6.png", "Cinematic color grade variations in Aurora Colors Studio", "Color grade"),
+      image("colors-grade", "/__l5e/assets-v1/d255a7d3-5d19-49b5-a779-e971a6aea48d/colors-6.png", "Cinematic color grade variations in Aurora Colors Studio", "Color grade"),
       image("colors-scene", "/landing-photo-6.png", "Artist portrait with a rich violet color treatment", "Palette output"),
       image("colors-editorial", "/landing-client-7.png", "Editorial image with an Aurora color finish", "Finished still"),
     ],
@@ -76,7 +76,7 @@ export const DEMO_ASSETS = {
   ugc: {
     hero: video("ugc-hero", "/videos/face-sings-hero.mp4", "Creator portrait animated into a UGC clip", "/videos/landing-demo-reel-poster.jpg"),
     gallery: [
-      video("ugc-lipsync", "/videos/photo2-lipsync-sample.mp4", "Creator-style product performance video", "/videos/landing-demo-reel-poster.jpg", "Creator result"),
+      video("ugc-lipsync", "/__l5e/assets-v1/1c8f9f6e-9a55-496b-9748-de56c3219f1c/photo2-lipsync-sample.mp4", "Creator-style product performance video", "/videos/landing-demo-reel-poster.jpg", "Creator result"),
       image("ugc-product", "/sample-photos/green-car.png", "Product-led creator visual", "Product focus"),
       image("ugc-campaign", "/landing-client-5.png", "Campaign visual made for a UGC brief", "Campaign"),
     ],
@@ -92,16 +92,16 @@ export const DEMO_ASSETS = {
   colors: {
     hero: video("colors-hero", "/videos/landing-demo-reel.mp4", "Color-treated Aurora cinematic output", "/videos/landing-demo-reel-poster.jpg"),
     gallery: [
-      image("colors-grade", "/colors/colors-6.png", "Aurora Colors Studio grade variations", "Color grade"),
+      image("colors-grade", "/__l5e/assets-v1/d255a7d3-5d19-49b5-a779-e971a6aea48d/colors-6.png", "Aurora Colors Studio grade variations", "Color grade"),
       image("colors-scene", "/landing-photo-6.png", "Artist portrait with a tuned color palette", "Palette"),
       image("colors-editorial", "/landing-client-7.png", "Editorial portrait with a finished Aurora grade", "Finished still"),
     ],
   },
   lipsync: {
-    hero: video("lipsync-hero", "/videos/balloon-lipsync-demo.mp4", "A portrait lip syncing a performance", "/videos/landing-demo-reel-poster.jpg"),
+    hero: video("lipsync-hero", "/__l5e/assets-v1/0b056a79-d7c1-4393-bef5-036389956cc0/balloon-lipsync-demo.mp4", "A portrait lip syncing a performance", "/videos/landing-demo-reel-poster.jpg"),
     gallery: [
-      video("lipsync-balloon", "/videos/balloon-lipsync-demo.mp4", "Lip synced balloon performance", "/videos/landing-demo-reel-poster.jpg", "Photo to performance"),
-      video("lipsync-photo", "/videos/photo2-lipsync-sample.mp4", "Portrait lip sync output", "/videos/landing-demo-reel-poster.jpg", "Portrait performance"),
+      video("lipsync-balloon", "/__l5e/assets-v1/0b056a79-d7c1-4393-bef5-036389956cc0/balloon-lipsync-demo.mp4", "Lip synced balloon performance", "/videos/landing-demo-reel-poster.jpg", "Photo to performance"),
+      video("lipsync-photo", "/__l5e/assets-v1/1c8f9f6e-9a55-496b-9748-de56c3219f1c/photo2-lipsync-sample.mp4", "Portrait lip sync output", "/videos/landing-demo-reel-poster.jpg", "Portrait performance"),
       image("lipsync-reference", "/josh/identity-reference.jpeg", "Reference portrait used to direct a performance", "Reference"),
     ],
   },
@@ -116,12 +116,12 @@ export const DEMO_ASSETS = {
 
 export const UGC_ANGLE_THUMBNAILS: Record<string, DemoMediaAsset> = {
   testimonial: image("testimonial", "/landing-client-2.png", "Testimonial-style creator performance"),
-  "before/after": image("before-after", "/colors/colors-6.png", "Before and after visual comparison"),
+  "before/after": image("before-after", "/__l5e/assets-v1/d255a7d3-5d19-49b5-a779-e971a6aea48d/colors-6.png", "Before and after visual comparison"),
   "myth-bust": image("myth-bust", "/landing-client-7.png", "Myth-busting creator reaction visual"),
   unboxing: image("unboxing", "/sample-photos/green-car.png", "Creator unboxing visual"),
   day_in_life: image("day-in-life", "/sample-photos/dj-party.png", "Day in the life creator visual"),
   pov: image("pov", "/josh/looping-officers-sunset.png", "POV cinematic creator frame"),
-  comparison: image("comparison", "/colors/colors-6.png", "Side-by-side comparison concept"),
+  comparison: image("comparison", "/__l5e/assets-v1/d255a7d3-5d19-49b5-a779-e971a6aea48d/colors-6.png", "Side-by-side comparison concept"),
   reaction: image("reaction", "/landing-client-3.png", "Creator reaction visual"),
   tutorial: image("tutorial", "/nav-previews/live-studio.jpg", "Creator tutorial setup"),
 };
