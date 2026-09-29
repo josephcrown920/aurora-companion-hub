@@ -3,7 +3,6 @@ import { authNextSearch } from "@/lib/auth-return-path";
 import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AutoplayVideo } from "@/components/ui/AutoplayVideo";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ExampleOutputGrid } from "@/components/studio/ExampleOutputGrid";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,11 +59,6 @@ import { GenerationErrorCard } from "@/components/ui/GenerationErrorCard";
 import { BlurredPreview } from "@/components/ui/BlurredPreview";
 import { PerformAnywhereGuide } from "@/components/onboarding/PerformAnywhereGuide";
 import { Check, ArrowRight } from "lucide-react";
-import {
-  generateAvatarShot,
-  SHOT_IMAGE_COST,
-  SHOT_KLING_COST,
-} from "@/lib/platform-template.functions";
 import { generateLyricVideoFromSong } from "@/lib/captions.functions";
 import {
   MUSIC_VIDEO_STYLES,
@@ -79,7 +73,6 @@ import {
 import { useBeatDetect } from "@/hooks/use-beat-detect";
 import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
-import { HiggsHero, HiggsDivider, FanPhotos } from "@/components/studio/HiggsLayout";
 
 export const Route = createLazyFileRoute("/motion")({ component: MotionStudio });
 
@@ -124,9 +117,7 @@ const MOTION_CAMERA = [
   { v: "handheld", label: "Handheld" },
 ];
 
-type Mode = "pose" | "transfer" | "reskin" | "avatar-shots" | "live-avatar" | "music-video";
-type ShotEngine = "seedream" | "gemini" | "kling";
-type ShotResult = { url: string; engine: ShotEngine; kind: "image" | "video"; fallbackFrom?: ShotEngine };
+type Mode = "pose" | "transfer" | "reskin" | "workflow" | "music-video";
 
 const ANIMATE_DURATION_SECONDS = 5;
 
@@ -143,59 +134,6 @@ type AnimatePreviewKeyInput = {
 /** Stable identity for the inputs bound to an animation preview ticket. */
 function buildAnimatePreviewKey(input: AnimatePreviewKeyInput): string {
   return JSON.stringify(input);
-}
-
-const SHOT_ENGINE_LABEL: Record<ShotEngine, string> = { seedream: "SeedDream", gemini: "Gemini Omni", kling: "KlingAI" };
-
-const KLING_FALLBACK_TOAST = "KlingAI unavailable — generated a SeedDream portrait instead";
-
-function shotResultLabel(r: ShotResult): string {
-  return r.fallbackFrom ? `${SHOT_ENGINE_LABEL[r.engine]} (fallback)` : SHOT_ENGINE_LABEL[r.engine];
-}
-
-/**
- * Result cards for Avatar Shots / Live Avatar. Branches on the media kind the
- * server ACTUALLY served — a KlingAI request that fell back to SeedDream is a
- * still image, so it must never be poured into a <video> element.
- */
-function ShotResultsSection({ results }: { results: ShotResult[] }) {
-  if (results.length === 0) return null;
-  return (
-    <section className="space-y-3" aria-label="Generated avatar shots">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Results</p>
-        <Link to="/gallery" className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 text-xs font-semibold text-emerald-400 no-underline hover:bg-emerald-500/20 transition-colors">
-          <Check className="size-3.5" /> Saved to Gallery
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {results.map((r, i) => (
-          <div key={`${r.url}-${i}`} className="rounded-2xl border border-border bg-card/60 overflow-hidden" data-testid={`shot-result-${r.kind}`}>
-            {r.kind === "video" ? (
-              <video src={r.url} controls playsInline preload="metadata" className="w-full aspect-video object-cover bg-black" />
-            ) : (
-              <img src={r.url} alt={`${shotResultLabel(r)} avatar shot ${i + 1}`} className="w-full aspect-square object-cover" loading="lazy" />
-            )}
-            <div className="p-2 flex items-center justify-between gap-2">
-              <span
-                className={cn("text-[10px] font-medium", r.fallbackFrom ? "text-amber-400" : "text-muted-foreground")}
-                title={r.fallbackFrom ? `${SHOT_ENGINE_LABEL[r.fallbackFrom]} was unavailable, so ${SHOT_ENGINE_LABEL[r.engine]} served this shot` : undefined}
-              >
-                {shotResultLabel(r)}
-              </span>
-              <button
-                type="button"
-                onClick={() => void saveAssetToDisk(r.url, `shot-${Date.now()}.${r.kind === "video" ? "mp4" : "jpg"}`)}
-                className="text-xs text-primary flex items-center gap-1"
-              >
-                <Download className="size-3" /> Save
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
 }
 
 function MotionStudio() {
@@ -414,10 +352,6 @@ function MotionStudio() {
   }, [user, loading, navigate]);
 
   // ── Avatar Shots state ────────────────────────────────────────────────────
-  const [shotEngine, setShotEngine] = useState<ShotEngine>("seedream");
-  const [shotPrompt, setShotPrompt] = useState("");
-  const [shotResults, setShotResults] = useState<ShotResult[]>([]);
-  const [shotLoading, setShotLoading] = useState(false);
 
   // ── Music Video (embedded) state ──────────────────────────────────────────
   const [mvStyle, setMvStyle] = useState<MusicVideoStyle>("trap");
@@ -474,7 +408,6 @@ function MotionStudio() {
   const [animateJobProg, setAnimateJobProg] = useState<{ pct: number | null; stage: string | null } | null>(null);
   const genFn = usePerformanceShotJobFn({ onProgress: (u) => setPoseJobProg({ pct: u.pct, stage: u.stage }) });
   const videoFn = useVideoFromImageJobFn({ onProgress: (u) => setAnimateJobProg({ pct: u.pct, stage: u.stage }) });
-  const shotFn = useServerFn(generateAvatarShot);
   const lyricVideoFn = useServerFn(generateLyricVideoFromSong);
   const motionFn = useServerFn(generateMimicMotion);
   const reskinFn = useServerFn(generatePerformanceReskin);
@@ -979,20 +912,15 @@ function MotionStudio() {
       {/* ── Left sidebar ─────────────────────────────────────────────── */}
       <div className="flex flex-col w-full lg:w-[300px] lg:shrink-0 lg:h-full lg:overflow-y-auto lg:border-r lg:border-white/8 scrollbar-none">
 
-        {/* ── Feature card ──────────────────────────────────────────── */}
+        {/* ── Feature card (no imagery) ─────────────────────────────── */}
         <div
-          className="relative overflow-hidden m-3 mb-0 rounded-2xl flex-shrink-0"
-          style={{ minHeight: 144, background: "#111" }}
+          className="relative overflow-hidden m-3 mb-0 rounded-2xl flex-shrink-0 border border-white/10"
+          style={{ minHeight: 144, background: "linear-gradient(140deg, #14160c 0%, #0c0c0e 55%, #0a0a0a 100%)" }}
         >
-          <img
-            src="/josh/josh-concert-performance.webp"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: 0.55 }}
-          />
           <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.25) 65%, transparent 100%)" }}
+            aria-hidden
+            className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full blur-3xl"
+            style={{ background: "rgba(204,255,0,0.14)" }}
           />
           <div className="relative flex flex-col p-3.5" style={{ minHeight: 144 }}>
             <div className="flex items-center justify-between">
@@ -1031,8 +959,7 @@ function MotionStudio() {
               { m: "reskin"       as Mode, label: "Performance Shot", Icon: Users        },
               { m: "pose"         as Mode, label: "Pose → Video",     Icon: Wand2        },
               { m: "transfer"     as Mode, label: "Motion Transfer",  Icon: Clapperboard },
-              { m: "avatar-shots" as Mode, label: "Avatar Shots",     Icon: Sparkles     },
-              { m: "live-avatar"  as Mode, label: "Live Avatar",      Icon: Film         },
+              { m: "workflow"     as Mode, label: "Guided Workflow",  Icon: Sparkles     },
               { m: "music-video"  as Mode, label: "Music Video",      Icon: Music2       },
             ]).map(({ m, label, Icon }) => (
               <button
@@ -1301,17 +1228,24 @@ function MotionStudio() {
           <div className="grid lg:grid-cols-[1fr_1fr] gap-8">
             <section className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Pose → Video</h1>
-                <p className="text-muted-foreground text-sm mt-1">Stage a selfie into a cinematic pose, then animate it. Two steps, two retry buttons.</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#CCFF00" }}>Stage, then animate</p>
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight">Pose → Video</h1>
+                <p className="text-muted-foreground text-sm mt-1.5 max-w-lg">Stage a still into a cinematic pose, then animate it with a camera move. Each step can be re-run on its own.</p>
               </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Stage a pose</p>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">1</span>
+                  <p className="text-sm font-semibold text-foreground">Stage the pose</p>
+                  <span className="ml-auto text-[10px] uppercase tracking-widest text-muted-foreground">Images</span>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   <UploadSlot userId={user.id} label="You" hint="Selfie" value={selfie} onChange={setSelfie} />
                   <UploadSlot userId={user.id} label="Outfit" hint="Wear" value={outfit} onChange={setOutfit} />
                   <UploadSlot userId={user.id} label="Pose ref" hint="Reference photo" value={poseRef} onChange={setPoseRef} />
                 </div>
               </div>
+
 
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
@@ -1389,6 +1323,12 @@ function MotionStudio() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <span className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">2</span>
+                <p className="text-sm font-semibold text-foreground">Animate it</p>
+                <span className="ml-auto text-[10px] uppercase tracking-widest text-muted-foreground">Motion</span>
               </div>
 
               <div className="space-y-2">
@@ -1761,184 +1701,90 @@ function MotionStudio() {
           </div>
         )}
 
-        {/* ── Avatar Shots ──────────────────────────────────────────── */}
-        {mode === "avatar-shots" && (
+        {/* ── Guided Workflow (the second Perform Anywhere app) ─────── */}
+        {mode === "workflow" && (
           <div className="max-w-3xl mx-auto space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Avatar Shots</h1>
-              <p className="text-muted-foreground text-sm mt-1">Generate AI portraits and live videos with SeedDream, Gemini Omni, or KlingAI.</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#CCFF00" }}>Second app</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight">Perform Anywhere · Guided Workflow</h1>
+              <p className="text-muted-foreground text-sm mt-1.5 max-w-lg">
+                The step-by-step build: lock your identity with references, approve a base scene, then generate matching angles and animate each one.
+              </p>
             </div>
 
-            {/* Engine picker */}
-            <section className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">AI Engine</p>
-              <div className="grid grid-cols-3 gap-3">
-                {(
-                  [
-                    { id: "seedream" as ShotEngine, label: "SeedDream", sub: "Portrait", cost: SHOT_IMAGE_COST, icon: "🌱", kind: "image" as const },
-                    { id: "gemini" as ShotEngine, label: "Gemini Omni", sub: "Enhanced", cost: SHOT_IMAGE_COST, icon: "✨", kind: "image" as const },
-                    { id: "kling" as ShotEngine, label: "KlingAI", sub: "Live Video", cost: SHOT_KLING_COST, icon: "🎬", kind: "video" as const },
-                  ]
-                ).map((eng) => (
-                  <button
-                    key={eng.id}
-                    type="button"
-                    onClick={() => setShotEngine(eng.id)}
-                    className={`flex flex-col items-center gap-1 px-3 py-4 rounded-2xl border text-center transition-all ${
-                      shotEngine === eng.id
-                        ? "border-primary bg-primary/15 text-foreground"
-                        : "border-border bg-card/60 text-muted-foreground hover:border-primary/40"
-                    }`}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  title: "Two-angle performance",
+                  body: "Wide plate plus close-up, each matched to its own phone recording.",
+                  search: { mode: "anywhere" as const },
+                  cta: "Start guided build",
+                },
+                {
+                  title: "Build a Scene",
+                  body: "Five role references lock identity, then generate 3–5 fresh camera angles from one approved base scene.",
+                  search: { mode: "anywhere" as const, flow: "build_scene" as const },
+                  cta: "Open workflow",
+                },
+                {
+                  title: "Luxury Interior",
+                  body: "Three references place a faithful seated performance inside the vehicle, face and outfit preserved.",
+                  search: { mode: "anywhere" as const, flow: "luxury_interior" as const },
+                  cta: "Open workflow",
+                },
+                {
+                  title: "Scene Builder",
+                  body: "Design the world first — stage, rooftop, studio — then bring it back here to animate.",
+                  to: "/scene-builder" as const,
+                  cta: "Open Scene Builder",
+                },
+              ].map((card) =>
+                card.to ? (
+                  <Link
+                    key={card.title}
+                    to={card.to}
+                    className="group rounded-2xl border border-white/10 bg-white/[0.02] p-4 no-underline transition-colors hover:border-primary/40"
                   >
-                    <span className="text-xl">{eng.icon}</span>
-                    <span className="text-sm font-semibold">{eng.label}</span>
-                    <span className="text-[10px] opacity-60">{eng.sub}</span>
-                    <span className="text-xs font-medium text-primary mt-1">{eng.cost} Aura</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Prompt */}
-            <section className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Prompt</p>
-              <Textarea
-                rows={4}
-                value={shotPrompt}
-                onChange={(e) => setShotPrompt(e.target.value)}
-                placeholder={
-                  shotEngine === "kling"
-                    ? "Describe the scene: 'Rapper in neon-lit studio, confident energy, cinematic camera move…'"
-                    : "Describe your avatar shot: 'Professional rapper portrait, studio lighting, dark background…'"
-                }
-                className="resize-none bg-card/60 text-sm"
-              />
-              <Button
-                disabled={shotLoading || !shotPrompt.trim()}
-                onClick={async () => {
-                  const trimmed = shotPrompt.trim();
-                  if (!trimmed) return toast.error("Enter a prompt first");
-                  setShotLoading(true);
-                  try {
-                    const res = await shotFn({ data: { prompt: trimmed, engine: shotEngine } });
-                    if (!res.ok) {
-                      toast.error(res.error ?? "Generation failed");
-                    } else {
-                      // Trust the server's report of what ACTUALLY served the shot — when the
-                      // KlingAI→SeedDream fallback fires the result is a still, not a video.
-                      setShotResults((prev) => [
-                        { url: res.url, engine: res.engine, kind: res.mediaKind, fallbackFrom: res.fallbackFrom },
-                        ...prev,
-                      ]);
-                      if (res.fallbackFrom === "kling") toast.info(KLING_FALLBACK_TOAST);
-                      else toast.success("Shot ready!");
-                    }
-                  } catch {
-                    toast.error("Generation failed");
-                  } finally {
-                    setShotLoading(false);
-                  }
-                }}
-                variant="premium"
-                className="w-full h-12"
-              >
-                {shotLoading ? (
-                  <><Loader2 className="size-4 mr-2 animate-spin" /> Generating…</>
+                    <h3 className="text-sm font-bold text-foreground">{card.title}</h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{card.body}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                      {card.cta} <ArrowRight className="size-3" />
+                    </span>
+                  </Link>
                 ) : (
-                  <><Sparkles className="size-4 mr-2" /> Generate · {shotEngine === "kling" ? SHOT_KLING_COST : SHOT_IMAGE_COST} Aura</>
-                )}
-              </Button>
-            </section>
+                  <Link
+                    key={card.title}
+                    to="/colors-show"
+                    search={card.search}
+                    className="group rounded-2xl border border-white/10 bg-white/[0.02] p-4 no-underline transition-colors hover:border-primary/40"
+                  >
+                    <h3 className="text-sm font-bold text-foreground">{card.title}</h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{card.body}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                      {card.cta} <ArrowRight className="size-3" />
+                    </span>
+                  </Link>
+                ),
+              )}
+            </div>
 
-            {!shotLoading && <ShotResultsSection results={shotResults} />}
+            <div className="rounded-2xl border border-border bg-card/40 px-4 py-3.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">How the guided build runs</p>
+              <ol className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+                <li><span className="font-semibold text-foreground">1.</span> Add your reference photos so Aurora locks your face and outfit.</li>
+                <li><span className="font-semibold text-foreground">2.</span> Approve one base scene before any angles are generated.</li>
+                <li><span className="font-semibold text-foreground">3.</span> Generate the extra angles, then animate each with your phone clip.</li>
+              </ol>
+            </div>
 
-            {shotResults.length === 0 && !shotLoading && (
-              <div className="mx-auto max-w-sm overflow-hidden rounded-2xl border border-primary/20 bg-card/50 text-center">
-                <img
-                  src={shotEngine === "kling" ? "/gallery/josh-neon-tech.png" : "/gallery/josh-blue-portrait.png"}
-                  alt={shotEngine === "kling" ? "Neon-lit avatar video inspiration" : "Portrait generation inspiration"}
-                  loading="lazy"
-                  className="h-44 w-full object-cover"
-                />
-                <div className="px-4 py-4 text-muted-foreground/70">
-                <p className="text-sm">
-                  {shotEngine === "kling"
-                    ? "Describe a scene and KlingAI will create a live avatar video"
-                    : "Describe your avatar and get an AI-generated portrait"}
-                </p>
-                </div>
-              </div>
-            )}
+            <Link to="/perform-anywhere" className="flex items-center gap-2 rounded-xl border border-border bg-card/60 px-4 py-3 text-sm font-medium no-underline hover:border-primary/40 transition-colors">
+              <Sparkles className="size-4 text-primary" />
+              <span>See the full Perform Anywhere overview</span>
+              <span className="ml-auto text-muted-foreground text-xs">→</span>
+            </Link>
           </div>
         )}
 
-        {/* ── Live Avatar ───────────────────────────────────────────────── */}
-        {mode === "live-avatar" && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <figure className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card">
-              <img src="/gallery/josh-neon-tech.png" alt="Neon-lit creator portrait demonstrating a live avatar scene" loading="lazy" className="h-48 w-full object-cover" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-4 pb-3 pt-10 text-xs text-white/80">
-                Turn a scene direction into a talking-head performance.
-              </figcaption>
-            </figure>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Live Avatar</h1>
-              <p className="text-muted-foreground text-sm mt-1">Describe a scene and KlingAI animates your avatar as a live talking-head video.</p>
-            </div>
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm flex items-start gap-2">
-              <Zap className="size-4 text-primary shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">Powered by KlingAI</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Generates a 5-second animated avatar video. No source video required.</p>
-              </div>
-            </div>
-            <section className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Scene prompt</p>
-              <Textarea
-                rows={5}
-                value={shotPrompt}
-                onChange={(e) => setShotPrompt(e.target.value)}
-                placeholder="A confident artist in a neon-lit recording studio, gesturing expressively, cinematic slow zoom…"
-                className="resize-none bg-card/60 text-sm"
-              />
-              <Button
-                disabled={shotLoading || !shotPrompt.trim()}
-                onClick={async () => {
-                  const trimmed = shotPrompt.trim();
-                  if (!trimmed) return toast.error("Enter a prompt first");
-                  setShotLoading(true);
-                  try {
-                    const res = await shotFn({ data: { prompt: trimmed, engine: "kling" } });
-                    if (!res.ok) {
-                      toast.error(res.error ?? "Generation failed");
-                    } else {
-                      setShotResults((prev) => [
-                        { url: res.url, engine: res.engine, kind: res.mediaKind, fallbackFrom: res.fallbackFrom },
-                        ...prev,
-                      ]);
-                      if (res.fallbackFrom === "kling") toast.info(KLING_FALLBACK_TOAST);
-                      else toast.success("Live avatar ready!");
-                    }
-                  } catch {
-                    toast.error("Generation failed");
-                  } finally {
-                    setShotLoading(false);
-                  }
-                }}
-                variant="premium"
-                className="w-full h-12"
-              >
-                {shotLoading ? (
-                  <><Loader2 className="size-4 mr-2 animate-spin" /> Generating live avatar…</>
-                ) : (
-                  <><Film className="size-4 mr-2" /> Generate Live Avatar · {SHOT_KLING_COST} Aura</>
-                )}
-              </Button>
-            </section>
-
-            {!shotLoading && <ShotResultsSection results={shotResults.filter((r) => r.engine === "kling" || r.fallbackFrom === "kling")} />}
-          </div>
-        )}
 
         {/* ── Music Video ───────────────────────────────────────────────── */}
         {mode === "music-video" && (
@@ -1947,13 +1793,11 @@ function MotionStudio() {
               <h1 className="text-2xl font-semibold tracking-tight">Music Video Maker</h1>
               <p className="text-muted-foreground text-sm mt-1">Build cinematic music videos with AI — beat-sync, lyric video, or AI performance.</p>
             </div>
-            <figure className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card">
-              <img src="/gallery/josh-pink-mic.png" alt="Performance portrait demonstrating an AI music video direction" loading="lazy" className="h-52 w-full object-cover" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-4 pb-3 pt-12">
-                <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Performance direction</span>
-                <span className="block text-sm font-semibold text-white">Start with a look. Build the cut around the song.</span>
-              </figcaption>
-            </figure>
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3.5">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Performance direction</span>
+              <span className="mt-1 block text-sm font-semibold text-foreground">Start with a look. Build the cut around the song.</span>
+            </div>
+
 
             {/* Genre / Style */}
             <section className="space-y-3">
@@ -2166,23 +2010,20 @@ function MotionStudio() {
         </div>{/* ← end mode panels */}
       </div>{/* ← end left sidebar */}
 
-      {/* ── Right panel: hero + inspiration — desktop only ─────────── */}
+      {/* ── Right panel: guidance — desktop only, no imagery ───────── */}
       <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:h-full lg:overflow-y-auto bg-zinc-900/40 scrollbar-none">
-        <HiggsHero
-          kicker="Motion Control"
-          lines={["RECREATE ANY", "MOTION", "WITH YOUR IMAGE"]}
-          bracketWord="MOTION"
-          description="Copy the exact movement from any video and place your character into the same performance."
-        />
-        <FanPhotos
-          photos={[
-            { src: "/josh/josh-concert-performance.webp", alt: "Live performance" },
-            { src: "/josh/josh-pink-mic-portrait.jpg",    alt: "Stage energy" },
-            { src: "/josh/josh-blue-portrait.webp",       alt: "Cinematic shot" },
-          ]}
-        />
-        <HiggsDivider label="MOTION LIBRARY" />
-        <div className="px-4 pb-8">
+        <div className="px-6 pt-10 pb-8 border-b border-white/5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "#CCFF00" }}>Motion Control</p>
+          <h2 className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-tight text-white">
+            Recreate any<br />
+            <span style={{ color: "#CCFF00" }}>[ motion ]</span><br />
+            with your image
+          </h2>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/45">
+            Copy the exact movement from any video and place your character into the same performance — no studio, no crew.
+          </p>
+        </div>
+        <div className="px-6 py-8">
           <MotionInspirationBlock />
         </div>
       </div>
@@ -2190,80 +2031,30 @@ function MotionStudio() {
   );
 }
 
-// ── Motion inspiration block ──────────────────────────────────────────────────
-const MOTION_BEFORE_AFTER = [
-  {
-    before: { src: "/josh/josh-orange-performance.jpg",    label: "Reference image" },
-    after:  { src: "/josh/josh-concert-performance.webp",  label: "Animated result" },
-    caption: "Performance Shot — motion transferred to your avatar",
-  },
-  {
-    before: { src: "/josh/josh-red-angle1.png",            label: "Reference image" },
-    after:  { src: "/josh/josh-red-angle3.png",            label: "New angle" },
-    caption: "Pose → Video — pose staged then animated",
-  },
-  {
-    before: { src: "/josh/josh-pink-mic-portrait.jpg",     label: "Identity ref" },
-    after:  { src: "/josh/josh-pink-leather-mic.jpg",      label: "Motion output" },
-    caption: "Motion Transfer — driving video applied to still",
-  },
-];
-
-const MOTION_EXAMPLES = [
-  { src: "/josh/josh-concert-performance.webp",  label: "Live performance",  caption: "Motion Transfer" },
-  { src: "/josh/josh-orange-performance.jpg",    label: "Stage energy",      caption: "Performance Shot" },
-  { src: "/josh/josh-red-angle2.png",            label: "Low angle hero",    caption: "Pose → Video" },
-  { src: "/josh/josh-red-angle4.png",            label: "Profile shot",      caption: "Avatar Shots" },
-  { src: "/josh/josh-pink-mic-fullbody.jpg",     label: "Full body",         caption: "Music Video" },
-  { src: "/josh/josh-blue-portrait.webp",        label: "Blue cinematic",    caption: "Performance Shot" },
+// ── Motion capability block (text-only, no stock imagery) ────────────────────
+const MOTION_CAPABILITIES = [
+  { title: "Performance Shot", body: "Your phone clip drives a new take. Face, outfit and scene stay locked." },
+  { title: "Pose → Video", body: "Stage a still into a cinematic pose, then animate it with a camera move." },
+  { title: "Motion Transfer", body: "Copy the exact movement from any video onto your character image." },
+  { title: "Guided Workflow", body: "Step-by-step multi-angle builds: Build a Scene and Luxury Interior." },
+  { title: "Music Video", body: "Beat-sync cuts, lyric videos and AI performance from your track." },
 ];
 
 function MotionInspirationBlock() {
   return (
-    <div className="space-y-8">
-      <style>{`
-        @keyframes divider-pulse {
-          0%, 100% { opacity: 0.4; transform: scaleY(0.85); }
-          50% { opacity: 1; transform: scaleY(1); }
-        }
-        .divider-anim { animation: divider-pulse 2s ease-in-out infinite; }
-      `}</style>
-
-      {/* Before → After comparison row */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Before → After</p>
-          <p className="text-[10px] text-muted-foreground">3 example transformations</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {MOTION_BEFORE_AFTER.map((item) => (
-            <div key={item.caption} className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
-              <div className="grid grid-cols-[1fr_auto_1fr]">
-                <div className="aspect-[3/4] relative overflow-hidden">
-                  <img src={item.before.src} alt={item.before.label} loading="lazy" className="absolute inset-0 size-full object-cover" />
-                  <span className="absolute top-1.5 left-1.5 text-[9px] font-bold uppercase tracking-widest bg-black/60 text-white/80 px-1.5 py-0.5 rounded">Before</span>
-                </div>
-                <div className="flex items-center justify-center px-1.5">
-                  <div className="divider-anim w-px bg-gradient-to-b from-transparent via-primary to-transparent h-12 rounded-full" />
-                </div>
-                <div className="aspect-[3/4] relative overflow-hidden">
-                  <img src={item.after.src} alt={item.after.label} loading="lazy" className="absolute inset-0 size-full object-cover" />
-                  <span className="absolute top-1.5 left-1.5 text-[9px] font-bold uppercase tracking-widest bg-primary/80 text-white px-1.5 py-0.5 rounded">After</span>
-                </div>
-              </div>
-              <p className="text-[10px] text-muted-foreground px-2.5 py-2 leading-snug">{item.caption}</p>
-            </div>
-          ))}
-        </div>
+    <div className="space-y-4">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">What you can build here</p>
+      <div className="grid gap-2.5">
+        {MOTION_CAPABILITIES.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-primary/35"
+          >
+            <p className="text-sm font-semibold text-foreground">{item.title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
+          </div>
+        ))}
       </div>
-
-      {/* Output grid */}
-      <ExampleOutputGrid
-        items={MOTION_EXAMPLES}
-        title="Motion outputs — what you can create"
-        subtitle="Performance Shot, Motion Transfer, Pose → Video, Avatar Shots, Music Video."
-        columns={3}
-      />
     </div>
   );
 }
