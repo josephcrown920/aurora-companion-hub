@@ -96,6 +96,7 @@ function AuthPage() {
     setFormError(null);
   }, []);
   const [resetBusy, setResetBusy] = useState(false);
+  const [magicBusy, setMagicBusy] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -219,6 +220,34 @@ function AuthPage() {
       toast.error(describeAuthError(err, "Could not send reset email"));
     } finally {
       setResetBusy(false);
+    }
+  };
+
+  // Passwordless: email a one-tap sign-in link. Works without any third-party
+  // provider credentials, so it's always available as an alternative method.
+  const handleMagicLink = async () => {
+    if (!authAvailable) {
+      toast.error(AUTH_UNAVAILABLE_MESSAGE);
+      return;
+    }
+    if (!email) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setMagicBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth?next=${encodeURIComponent(search.next ?? "/studio")}`,
+        },
+      });
+      if (error) throw error;
+      toast.success("Sign-in link sent — check your inbox.");
+    } catch (err) {
+      toast.error(describeAuthError(err, "Could not send the sign-in link"));
+    } finally {
+      setMagicBusy(false);
     }
   };
 
