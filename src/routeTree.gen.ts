@@ -90,6 +90,7 @@ import { Route as TutorialRouteImport } from './routes/tutorial'
 import { Route as UgcRouteImport } from './routes/ugc'
 import { Route as UgcLineRouteImport } from './routes/ugc-line'
 import { Route as VideoAgentRouteImport } from './routes/video-agent'
+import { Route as VideoAgentClassicRouteImport } from './routes/video-agent-classic'
 import { Route as VideoAgentEditRouteImport } from './routes/video-agent-edit'
 import { Route as VideoAgentProcessRouteImport } from './routes/video-agent-process'
 import { Route as VideoEditorRouteImport } from './routes/video-editor'
@@ -126,6 +127,10 @@ import { Route as SoulGenerateRouteImport } from './routes/soul.generate'
 import { Route as SoulLibraryRouteImport } from './routes/soul.library'
 import { Route as SoulTrainRouteImport } from './routes/soul.train'
 import { Route as SoulVibeRouteImport } from './routes/soul.vibe'
+import { Route as VideoAgentBeatDirectorRouteImport } from './routes/video-agent_.beat-director'
+import { Route as VideoAgentPhotoLabRouteImport } from './routes/video-agent_.photo-lab'
+import { Route as VideoAgentTimelineRouteImport } from './routes/video-agent_.timeline'
+import { Route as VideoAgentWorkflowsRouteImport } from './routes/video-agent_.workflows'
 import { Route as ApiAdminFeatureVisibilityRouteImport } from './routes/api/admin/feature-visibility'
 import { Route as ApiAdminRunSmokeStep14RouteImport } from './routes/api/admin/run-smoke-step14'
 import { Route as ApiAdminUploadImageRouteImport } from './routes/api/admin/upload-image'
@@ -625,7 +630,14 @@ const VideoAgentRoute = VideoAgentRouteImport.update({
   id: '/video-agent',
   path: '/video-agent',
   getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/video-agent.lazy').then((d) => d.Route))
+} as any)
+const VideoAgentClassicRoute = VideoAgentClassicRouteImport.update({
+  id: '/video-agent-classic',
+  path: '/video-agent-classic',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/video-agent-classic.lazy').then((d) => d.Route),
+)
 const VideoAgentEditRoute = VideoAgentEditRouteImport.update({
   id: '/video-agent-edit',
   path: '/video-agent-edit',
@@ -836,6 +848,26 @@ const SoulVibeRoute = SoulVibeRouteImport.update({
   path: '/vibe',
   getParentRoute: () => SoulRoute,
 } as any).lazy(() => import('./routes/soul.vibe.lazy').then((d) => d.Route))
+const VideoAgentBeatDirectorRoute = VideoAgentBeatDirectorRouteImport.update({
+  id: '/video-agent_/beat-director',
+  path: '/video-agent/beat-director',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideoAgentPhotoLabRoute = VideoAgentPhotoLabRouteImport.update({
+  id: '/video-agent_/photo-lab',
+  path: '/video-agent/photo-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideoAgentTimelineRoute = VideoAgentTimelineRouteImport.update({
+  id: '/video-agent_/timeline',
+  path: '/video-agent/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideoAgentWorkflowsRoute = VideoAgentWorkflowsRouteImport.update({
+  id: '/video-agent_/workflows',
+  path: '/video-agent/workflows',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminFeatureVisibilityRoute =
   ApiAdminFeatureVisibilityRouteImport.update({
     id: '/api/admin/feature-visibility',
@@ -1353,6 +1385,7 @@ export interface FileRoutesByFullPath {
   '/ugc': typeof UgcRoute
   '/ugc-line': typeof UgcLineRoute
   '/video-agent': typeof VideoAgentRoute
+  '/video-agent-classic': typeof VideoAgentClassicRoute
   '/video-agent-edit': typeof VideoAgentEditRoute
   '/video-agent-process': typeof VideoAgentProcessRoute
   '/video-editor': typeof VideoEditorRoute
@@ -1388,6 +1421,10 @@ export interface FileRoutesByFullPath {
   '/soul/library': typeof SoulLibraryRoute
   '/soul/train': typeof SoulTrainRoute
   '/soul/vibe': typeof SoulVibeRoute
+  '/video-agent/beat-director': typeof VideoAgentBeatDirectorRoute
+  '/video-agent/photo-lab': typeof VideoAgentPhotoLabRoute
+  '/video-agent/timeline': typeof VideoAgentTimelineRoute
+  '/video-agent/workflows': typeof VideoAgentWorkflowsRoute
   '/admin/observability': typeof AdminObservabilityLazyRoute
   '/cli/': typeof CliIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -1555,6 +1592,7 @@ export interface FileRoutesByTo {
   '/ugc': typeof UgcRoute
   '/ugc-line': typeof UgcLineRoute
   '/video-agent': typeof VideoAgentRoute
+  '/video-agent-classic': typeof VideoAgentClassicRoute
   '/video-agent-edit': typeof VideoAgentEditRoute
   '/video-agent-process': typeof VideoAgentProcessRoute
   '/video-editor': typeof VideoEditorRoute
@@ -1590,6 +1628,10 @@ export interface FileRoutesByTo {
   '/soul/library': typeof SoulLibraryRoute
   '/soul/train': typeof SoulTrainRoute
   '/soul/vibe': typeof SoulVibeRoute
+  '/video-agent/beat-director': typeof VideoAgentBeatDirectorRoute
+  '/video-agent/photo-lab': typeof VideoAgentPhotoLabRoute
+  '/video-agent/timeline': typeof VideoAgentTimelineRoute
+  '/video-agent/workflows': typeof VideoAgentWorkflowsRoute
   '/admin/observability': typeof AdminObservabilityLazyRoute
   '/cli': typeof CliIndexRoute
   '/guides': typeof GuidesIndexRoute
@@ -1759,6 +1801,7 @@ export interface FileRoutesById {
   '/ugc': typeof UgcRoute
   '/ugc-line': typeof UgcLineRoute
   '/video-agent': typeof VideoAgentRoute
+  '/video-agent-classic': typeof VideoAgentClassicRoute
   '/video-agent-edit': typeof VideoAgentEditRoute
   '/video-agent-process': typeof VideoAgentProcessRoute
   '/video-editor': typeof VideoEditorRoute
@@ -1794,6 +1837,10 @@ export interface FileRoutesById {
   '/soul/library': typeof SoulLibraryRoute
   '/soul/train': typeof SoulTrainRoute
   '/soul/vibe': typeof SoulVibeRoute
+  '/video-agent_/beat-director': typeof VideoAgentBeatDirectorRoute
+  '/video-agent_/photo-lab': typeof VideoAgentPhotoLabRoute
+  '/video-agent_/timeline': typeof VideoAgentTimelineRoute
+  '/video-agent_/workflows': typeof VideoAgentWorkflowsRoute
   '/admin/observability': typeof AdminObservabilityLazyRoute
   '/cli/': typeof CliIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -1964,6 +2011,7 @@ export interface FileRouteTypes {
     | '/ugc'
     | '/ugc-line'
     | '/video-agent'
+    | '/video-agent-classic'
     | '/video-agent-edit'
     | '/video-agent-process'
     | '/video-editor'
@@ -1999,6 +2047,10 @@ export interface FileRouteTypes {
     | '/soul/library'
     | '/soul/train'
     | '/soul/vibe'
+    | '/video-agent/beat-director'
+    | '/video-agent/photo-lab'
+    | '/video-agent/timeline'
+    | '/video-agent/workflows'
     | '/admin/observability'
     | '/cli/'
     | '/guides/'
@@ -2166,6 +2218,7 @@ export interface FileRouteTypes {
     | '/ugc'
     | '/ugc-line'
     | '/video-agent'
+    | '/video-agent-classic'
     | '/video-agent-edit'
     | '/video-agent-process'
     | '/video-editor'
@@ -2201,6 +2254,10 @@ export interface FileRouteTypes {
     | '/soul/library'
     | '/soul/train'
     | '/soul/vibe'
+    | '/video-agent/beat-director'
+    | '/video-agent/photo-lab'
+    | '/video-agent/timeline'
+    | '/video-agent/workflows'
     | '/admin/observability'
     | '/cli'
     | '/guides'
@@ -2369,6 +2426,7 @@ export interface FileRouteTypes {
     | '/ugc'
     | '/ugc-line'
     | '/video-agent'
+    | '/video-agent-classic'
     | '/video-agent-edit'
     | '/video-agent-process'
     | '/video-editor'
@@ -2404,6 +2462,10 @@ export interface FileRouteTypes {
     | '/soul/library'
     | '/soul/train'
     | '/soul/vibe'
+    | '/video-agent_/beat-director'
+    | '/video-agent_/photo-lab'
+    | '/video-agent_/timeline'
+    | '/video-agent_/workflows'
     | '/admin/observability'
     | '/cli/'
     | '/guides/'
@@ -2573,6 +2635,7 @@ export interface RootRouteChildren {
   UgcRoute: typeof UgcRoute
   UgcLineRoute: typeof UgcLineRoute
   VideoAgentRoute: typeof VideoAgentRoute
+  VideoAgentClassicRoute: typeof VideoAgentClassicRoute
   VideoAgentEditRoute: typeof VideoAgentEditRoute
   VideoAgentProcessRoute: typeof VideoAgentProcessRoute
   VideoEditorRoute: typeof VideoEditorRoute
@@ -2590,6 +2653,10 @@ export interface RootRouteChildren {
   GuidesSlugRoute: typeof GuidesSlugRoute
   LegalSlugRoute: typeof LegalSlugRoute
   RTokenRoute: typeof RTokenRoute
+  VideoAgentBeatDirectorRoute: typeof VideoAgentBeatDirectorRoute
+  VideoAgentPhotoLabRoute: typeof VideoAgentPhotoLabRoute
+  VideoAgentTimelineRoute: typeof VideoAgentTimelineRoute
+  VideoAgentWorkflowsRoute: typeof VideoAgentWorkflowsRoute
   CliIndexRoute: typeof CliIndexRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiAdminFeatureVisibilityRoute: typeof ApiAdminFeatureVisibilityRoute
@@ -3237,6 +3304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideoAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/video-agent-classic': {
+      id: '/video-agent-classic'
+      path: '/video-agent-classic'
+      fullPath: '/video-agent-classic'
+      preLoaderRoute: typeof VideoAgentClassicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/video-agent-edit': {
       id: '/video-agent-edit'
       path: '/video-agent-edit'
@@ -3502,6 +3576,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/soul/vibe'
       preLoaderRoute: typeof SoulVibeRouteImport
       parentRoute: typeof SoulRoute
+    }
+    '/video-agent_/beat-director': {
+      id: '/video-agent_/beat-director'
+      path: '/video-agent/beat-director'
+      fullPath: '/video-agent/beat-director'
+      preLoaderRoute: typeof VideoAgentBeatDirectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/video-agent_/photo-lab': {
+      id: '/video-agent_/photo-lab'
+      path: '/video-agent/photo-lab'
+      fullPath: '/video-agent/photo-lab'
+      preLoaderRoute: typeof VideoAgentPhotoLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/video-agent_/timeline': {
+      id: '/video-agent_/timeline'
+      path: '/video-agent/timeline'
+      fullPath: '/video-agent/timeline'
+      preLoaderRoute: typeof VideoAgentTimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/video-agent_/workflows': {
+      id: '/video-agent_/workflows'
+      path: '/video-agent/workflows'
+      fullPath: '/video-agent/workflows'
+      preLoaderRoute: typeof VideoAgentWorkflowsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/admin/feature-visibility': {
       id: '/api/admin/feature-visibility'
@@ -4247,6 +4349,7 @@ const rootRouteChildren: RootRouteChildren = {
   UgcRoute: UgcRoute,
   UgcLineRoute: UgcLineRoute,
   VideoAgentRoute: VideoAgentRoute,
+  VideoAgentClassicRoute: VideoAgentClassicRoute,
   VideoAgentEditRoute: VideoAgentEditRoute,
   VideoAgentProcessRoute: VideoAgentProcessRoute,
   VideoEditorRoute: VideoEditorRoute,
@@ -4264,6 +4367,10 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesSlugRoute: GuidesSlugRoute,
   LegalSlugRoute: LegalSlugRoute,
   RTokenRoute: RTokenRoute,
+  VideoAgentBeatDirectorRoute: VideoAgentBeatDirectorRoute,
+  VideoAgentPhotoLabRoute: VideoAgentPhotoLabRoute,
+  VideoAgentTimelineRoute: VideoAgentTimelineRoute,
+  VideoAgentWorkflowsRoute: VideoAgentWorkflowsRoute,
   CliIndexRoute: CliIndexRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiAdminFeatureVisibilityRoute: ApiAdminFeatureVisibilityRoute,

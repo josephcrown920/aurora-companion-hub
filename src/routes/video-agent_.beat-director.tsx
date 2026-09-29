@@ -8,7 +8,7 @@ import { beatDirector } from "@/features/creative-studio/lib/studio-agents.funct
 import { LOOKS } from "@/features/creative-studio/lib/pro-presets";
 import { loadTimeline, newId, saveTimeline, type Clip, type TimelineDoc } from "@/features/creative-studio/lib/timeline-state";
 
-export const Route = createFileRoute("/video-agent/beat-director")({
+export const Route = createFileRoute("/video-agent_/beat-director")({
   head: () => ({
     meta: [
       { title: "Beat Sync Director — Aurora Studio" },

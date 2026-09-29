@@ -5,7 +5,7 @@ import { StudioNav } from "@/features/creative-studio/components/studio/StudioNa
 import { MultiTrackTimeline } from "@/features/creative-studio/components/video/MultiTrackTimeline";
 import { LayersEditor } from "@/features/creative-studio/components/video/LayersEditor";
 
-export const Route = createFileRoute("/video-agent/timeline")({
+export const Route = createFileRoute("/video-agent_/timeline")({
   head: () => ({
     meta: [
       { title: "Multi-Track Timeline — Aurora Studio" },

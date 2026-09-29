@@ -21,7 +21,7 @@ import {
 } from "@/features/creative-studio/lib/workflow-engine";
 import { loadTimeline, newId, saveTimeline, type Clip, type TrackId } from "@/features/creative-studio/lib/timeline-state";
 
-export const Route = createFileRoute("/video-agent/workflows")({
+export const Route = createFileRoute("/video-agent_/workflows")({
   head: () => ({
     meta: [
       { title: "Workflows — Aurora Studio" },
