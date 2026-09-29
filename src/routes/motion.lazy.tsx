@@ -986,10 +986,12 @@ function MotionStudio() {
         </div>
 
         {/* ── Mobile: inspiration ───────────────────────────────────── */}
-        <div className="lg:hidden p-4 space-y-6">
-          <MotionInspirationBlock />
-          <PerformAnywhereGuide />
-        </div>
+        {mode !== "music-video" && (
+          <div className="lg:hidden p-4 space-y-6">
+            <MotionInspirationBlock />
+            <PerformAnywhereGuide />
+          </div>
+        )}
 
         {/* ── Mode panels ───────────────────────────────────────────── */}
         <div className="p-3 space-y-4 flex-1 overflow-y-auto scrollbar-none">
