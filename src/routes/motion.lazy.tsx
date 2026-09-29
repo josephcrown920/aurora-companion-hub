@@ -1325,6 +1325,12 @@ function MotionStudio() {
                 </div>
               </div>
 
+              <div className="flex items-center gap-2 pt-1">
+                <span className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">2</span>
+                <p className="text-sm font-semibold text-foreground">Animate it</p>
+                <span className="ml-auto text-[10px] uppercase tracking-widest text-muted-foreground">Motion</span>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1.5"><Camera className="size-3.5" /> Camera move</label>
                 <Select value={cameraMovement} onValueChange={setCameraMovement}>
