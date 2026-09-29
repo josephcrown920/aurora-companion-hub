@@ -7,7 +7,7 @@ export const WORKSPACES = [
   { to: "/video-agent", icon: "🎨", name: "Generator & Director", note: "Images, video and the creative director" },
   { to: "/video-agent/timeline", icon: "🎬", name: "Multi-Track Timeline", note: "V1–V4, A1–A3, beat markers, effects" },
   { to: "/video-agent/beat-director", icon: "⚡", name: "Beat Sync Director", note: "Upload a track, get a cut on the beat" },
-  { to: "/video-agent/workflows", icon: "🧩", name: "Workflows", note: "ComfyUI import, build and run" },
+  { to: "/video-agent_/workflows", icon: "🧩", name: "Workflows", note: "ComfyUI import, build and run" },
   { to: "/video-agent/photo-lab", icon: "📸", name: "Photo Lab", note: "Filters, retouch and upscale" },
 ] as const;
 
