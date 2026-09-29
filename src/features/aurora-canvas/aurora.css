@@ -1147,7 +1147,7 @@
 }
 
 /* ---------- Luminous director-first workspace ---------- */
-.aurora-body {
+.aurora-body.aurora-canvas-page {
   --canvas-ink: oklch(0.18 0.04 305);
   --canvas-muted: oklch(0.5 0.04 305);
   --canvas-purple: oklch(0.38 0.2 303);
@@ -1244,7 +1244,7 @@
 .aurora-stage-meta { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; }
 .aurora-stage-meta span { padding: 5px 7px; border-radius: 4px; background: oklch(0.08 0.02 303 / .68); border: 1px solid oklch(1 0 0 / .14); color: white; font-size: 8px; }
 
-.aurora-director { grid-area: director; width: 100%; max-width: none; margin: 0; padding: 16px; border-radius: 8px; background: oklch(1 0 0 / .7); border-color: var(--canvas-line); box-shadow: 0 16px 44px oklch(0.3 0.08 303 / .08); color: var(--canvas-ink); }
+.aurora-canvas-page .aurora-director { grid-area: director; width: 100%; max-width: none; margin: 0; padding: 16px; border-radius: 8px; background: oklch(1 0 0 / .74); border-color: var(--canvas-line); box-shadow: 0 16px 44px oklch(0.3 0.08 303 / .08); color: var(--canvas-ink); }
 .aurora-dir-title { color: var(--canvas-ink); text-transform: uppercase; font-size: 10px; }
 .aurora-dir-model,.aurora-model-pill { border-radius: 6px; background: var(--canvas-purple-soft); border-color: oklch(0.76 0.08 303); color: var(--canvas-purple); }
 .aurora-dir-input { min-height: 116px; border-radius: 6px; background: white; border-color: var(--canvas-line); color: var(--canvas-ink); font-family: "Work Sans", sans-serif; }
@@ -1253,7 +1253,7 @@
 .aurora-btn-s { border-radius: 6px; border-color: var(--canvas-line); color: var(--canvas-muted); background: white; }
 .aurora-dir-out { border-radius: 6px; background: var(--canvas-purple-soft); border-color: var(--canvas-line); color: var(--canvas-ink); font-family: "Work Sans", sans-serif; }
 
-.aurora-prompt-card { grid-area: prompt; max-width: none; margin: 0; border-radius: 8px; padding: 14px; background: white; border-color: var(--canvas-line); box-shadow: 0 16px 44px oklch(0.3 0.08 303 / .08); color: var(--canvas-ink); }
+.aurora-canvas-page .aurora-prompt-card { grid-area: prompt; max-width: none; margin: 0; border-radius: 8px; padding: 14px; background: oklch(1 0 0 / .82); border-color: var(--canvas-line); box-shadow: 0 16px 44px oklch(0.3 0.08 303 / .08); color: var(--canvas-ink); }
 .aurora-prompt-input { color: var(--canvas-ink); font-family: "Work Sans", sans-serif; min-height: 70px; padding: 12px 0; }
 .aurora-prompt-input::placeholder { color: var(--canvas-muted); }
 .aurora-add-btn,.aurora-seg-control { border-radius: 6px; background: var(--canvas-purple-soft); border-color: var(--canvas-line); color: var(--canvas-purple); }
@@ -1275,7 +1275,7 @@
 .aurora-stat-num { color: var(--canvas-purple); }
 .aurora-stat-label { color: var(--canvas-muted); }
 
-.aurora-gallery { width: calc(100% - 76px); max-width: 1424px; margin-left: 76px; padding: 30px clamp(22px, 4vw, 64px) 70px; color: var(--canvas-ink); }
+.aurora-canvas-page .aurora-gallery { width: calc(100% - 76px); max-width: 1424px; margin-left: 76px; padding: 30px clamp(22px, 4vw, 64px) 70px; color: var(--canvas-ink); }
 .aurora-gallery h2 { text-shadow: none; text-transform: uppercase; }
 .aurora-empty,.aurora-g-card { border-radius: 8px; background: white; border-color: var(--canvas-line); color: var(--canvas-muted); box-shadow: 0 14px 40px oklch(0.3 0.08 303 / .07); }
 .aurora-empty h3,.aurora-g-prompt { color: var(--canvas-ink); }
