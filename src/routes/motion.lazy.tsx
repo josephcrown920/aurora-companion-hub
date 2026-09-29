@@ -1947,13 +1947,11 @@ function MotionStudio() {
               <h1 className="text-2xl font-semibold tracking-tight">Music Video Maker</h1>
               <p className="text-muted-foreground text-sm mt-1">Build cinematic music videos with AI — beat-sync, lyric video, or AI performance.</p>
             </div>
-            <figure className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card">
-              <img src="/gallery/josh-pink-mic.png" alt="Performance portrait demonstrating an AI music video direction" loading="lazy" className="h-52 w-full object-cover" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-4 pb-3 pt-12">
-                <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Performance direction</span>
-                <span className="block text-sm font-semibold text-white">Start with a look. Build the cut around the song.</span>
-              </figcaption>
-            </figure>
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3.5">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Performance direction</span>
+              <span className="mt-1 block text-sm font-semibold text-foreground">Start with a look. Build the cut around the song.</span>
+            </div>
+
 
             {/* Genre / Style */}
             <section className="space-y-3">
