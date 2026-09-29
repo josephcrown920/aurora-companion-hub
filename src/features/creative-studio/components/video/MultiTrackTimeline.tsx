@@ -45,6 +45,22 @@ export function MultiTrackTimeline() {
 
   useEffect(() => saveTimeline(doc), [doc]);
 
+  useEffect(() => {
+    const importMedia = (event: Event) => {
+      const media = (event as CustomEvent<{ name: string; src: string; kind: string }>).detail;
+      if (!media?.src) return;
+      const track: TrackId = media.kind === "audio" ? "A1" : "V1";
+      const clip: Clip = { id: newId(), track, start: 0, duration: 5, name: media.name, kind: media.kind === "audio" ? "audio" : media.kind === "image" ? "image" : "video", src: media.src };
+      setDoc((current) => {
+        setPast((history) => [...history.slice(-49), current]);
+        return { ...current, clips: [...current.clips, clip] };
+      });
+      setSelected(clip.id);
+    };
+    window.addEventListener("aurora:import-media", importMedia);
+    return () => window.removeEventListener("aurora:import-media", importMedia);
+  }, []);
+
   const grid = useMemo(() => {
     const beats = beatTimes(doc.bpm, doc.seconds);
     const onsets = doc.hits.map((h) => h.t);
@@ -129,6 +145,7 @@ export function MultiTrackTimeline() {
     e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setSelected(clip.id);
+    if (clip.src) window.dispatchEvent(new CustomEvent("aurora:select-clip", { detail: { src: clip.src, kind: clip.kind } }));
     drag.current = mode === "move" ? { mode, id: clip.id, grabOffset: xToTime(e.clientX) - clip.start } : { mode, id: clip.id };
   };
 
