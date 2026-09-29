@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CANONICAL_ORIGIN } from "@/lib/seo";
-import { Plus, Play, ArrowUpRight, ChevronDown, Sparkles, Palette, Film, Wand2, Mic, Music2, Brush, Megaphone, UserCircle2, Workflow, Layers, Flame, Clapperboard, Check, Download, type LucideIcon } from "lucide-react";
+import { Plus, Play, Pause, SkipForward, SkipBack, ArrowUpRight, ChevronDown, Sparkles, Palette, Film, Wand2, Mic, Music2, Brush, Megaphone, UserCircle2, Workflow, Layers, Flame, Clapperboard, Check, Download, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HiddenBadge, useFeatureVisibility } from "@/components/FeatureVisibilityProvider";
 import { featureKeyForRoute, type FeatureKey } from "@/lib/feature-visibility";
@@ -380,11 +380,19 @@ function LandingPage() {
   const [slideIdx, setSlideIdx] = useState(0);
   const [demoOpen, setDemoOpen] = useState(false);
   const slideCount = heroSlides.length;
+  // Autoplay runs every 10s and can be paused/stepped with the hero controls.
+  const [slidesPlaying, setSlidesPlaying] = useState(true);
+  const goToNextSlide = useCallback(() => {
+    setSlideIdx((i) => (slideCount === 0 ? 0 : (i + 1) % slideCount));
+  }, [slideCount]);
+  const goToPrevSlide = useCallback(() => {
+    setSlideIdx((i) => (slideCount === 0 ? 0 : (i - 1 + slideCount) % slideCount));
+  }, [slideCount]);
   useEffect(() => {
-    if (introVisible || slideCount === 0) return;
-    const t = setInterval(() => setSlideIdx((i) => (i + 1) % slideCount), 7000);
+    if (introVisible || slideCount === 0 || !slidesPlaying) return;
+    const t = setInterval(() => setSlideIdx((i) => (i + 1) % slideCount), 10000);
     return () => clearInterval(t);
-  }, [introVisible, slideCount]);
+  }, [introVisible, slideCount, slidesPlaying]);
   // Keep the index in range when the slide list shrinks after the live
   // visibility state arrives.
   useEffect(() => {
