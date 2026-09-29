@@ -758,9 +758,7 @@ function Index() {
         <div className="aurora-bg-overlay" />
       </div>
 
-      <div className="aurora-logo-top">
-        <div className="aurora-logo-mark">A</div>
-        Aurora
+      <div className="aurora-logo-top aurora-theme-picker">
         <div className="aurora-bg-switch" role="group" aria-label="Background">
           {(["court", "moon", "chrome", "collage"] as BgTheme[]).map((t) => (
             <button

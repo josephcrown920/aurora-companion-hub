@@ -2,13 +2,22 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { LLMS, type LlmId } from "@/features/creative-studio/lib/pro-presets";
+import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 
 export const WORKSPACES = [
   { to: "/video-agent", icon: "🎨", name: "Generator & Director", note: "Images, video and the creative director" },
   { to: "/video-agent/timeline", icon: "🎬", name: "Multi-Track Timeline", note: "V1–V4, A1–A3, beat markers, effects" },
   { to: "/video-agent/beat-director", icon: "⚡", name: "Beat Sync Director", note: "Upload a track, get a cut on the beat" },
-  { to: "/video-agent_/workflows", icon: "🧩", name: "Workflows", note: "ComfyUI import, build and run" },
+  { to: "/video-agent/workflows", icon: "🧩", name: "Workflow Builder", note: "Import ComfyUI JSON and build node pipelines" },
   { to: "/video-agent/photo-lab", icon: "📸", name: "Photo Lab", note: "Filters, retouch and upscale" },
+] as const;
+
+const CREATOR_TOOLS = [
+  { to: "/comfy", name: "ComfyUI Apps" },
+  { to: "/lipsync", name: "Lip Sync" },
+  { to: "/motion", name: "Perform Anywhere" },
+  { to: "/canvas", name: "Node Canvas / Krea" },
+  { to: "/spin", name: "TikTok30" },
 ] as const;
 
 export const LLM_KEY = "aurora_llm";
@@ -49,9 +58,19 @@ export function StudioNav() {
 
   return (
     <div className="aurora-nav" ref={wrap}>
-      <Link to="/video-agent" className="aurora-nav-brand">
-        <span className="dot" /> Aurora Studio
+      <Link to="/video-agent" className="aurora-nav-brand" aria-label="Aurora Studio home">
+        <img src={auroraLogo.url} alt="" width={34} height={34} /> <span>Aurora Studio</span>
       </Link>
+
+      <nav className="aurora-nav-links" aria-label="Studio workspaces">
+        {WORKSPACES.map((w) => (
+          <Link key={w.to} to={w.to} className={`aurora-nav-link${w.to === path ? " active" : ""}`}>{w.name}</Link>
+        ))}
+      </nav>
+
+      <nav className="aurora-nav-tools" aria-label="Creator tools">
+        {CREATOR_TOOLS.map((tool) => <Link key={tool.to} to={tool.to} className="aurora-nav-link">{tool.name}</Link>)}
+      </nav>
 
       <div className="aurora-nav-switch">
         <button className="aurora-nav-current" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
