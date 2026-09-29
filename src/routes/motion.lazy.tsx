@@ -1228,17 +1228,24 @@ function MotionStudio() {
           <div className="grid lg:grid-cols-[1fr_1fr] gap-8">
             <section className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Pose → Video</h1>
-                <p className="text-muted-foreground text-sm mt-1">Stage a selfie into a cinematic pose, then animate it. Two steps, two retry buttons.</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#CCFF00" }}>Stage, then animate</p>
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight">Pose → Video</h1>
+                <p className="text-muted-foreground text-sm mt-1.5 max-w-lg">Stage a still into a cinematic pose, then animate it with a camera move. Each step can be re-run on its own.</p>
               </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Stage a pose</p>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">1</span>
+                  <p className="text-sm font-semibold text-foreground">Stage the pose</p>
+                  <span className="ml-auto text-[10px] uppercase tracking-widest text-muted-foreground">Images</span>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   <UploadSlot userId={user.id} label="You" hint="Selfie" value={selfie} onChange={setSelfie} />
                   <UploadSlot userId={user.id} label="Outfit" hint="Wear" value={outfit} onChange={setOutfit} />
                   <UploadSlot userId={user.id} label="Pose ref" hint="Reference photo" value={poseRef} onChange={setPoseRef} />
                 </div>
               </div>
+
 
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
