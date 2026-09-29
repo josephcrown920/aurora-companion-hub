@@ -2190,80 +2190,30 @@ function MotionStudio() {
   );
 }
 
-// ── Motion inspiration block ──────────────────────────────────────────────────
-const MOTION_BEFORE_AFTER = [
-  {
-    before: { src: "/josh/josh-orange-performance.jpg",    label: "Reference image" },
-    after:  { src: "/josh/josh-concert-performance.webp",  label: "Animated result" },
-    caption: "Performance Shot — motion transferred to your avatar",
-  },
-  {
-    before: { src: "/josh/josh-red-angle1.png",            label: "Reference image" },
-    after:  { src: "/josh/josh-red-angle3.png",            label: "New angle" },
-    caption: "Pose → Video — pose staged then animated",
-  },
-  {
-    before: { src: "/josh/josh-pink-mic-portrait.jpg",     label: "Identity ref" },
-    after:  { src: "/josh/josh-pink-leather-mic.jpg",      label: "Motion output" },
-    caption: "Motion Transfer — driving video applied to still",
-  },
-];
-
-const MOTION_EXAMPLES = [
-  { src: "/josh/josh-concert-performance.webp",  label: "Live performance",  caption: "Motion Transfer" },
-  { src: "/josh/josh-orange-performance.jpg",    label: "Stage energy",      caption: "Performance Shot" },
-  { src: "/josh/josh-red-angle2.png",            label: "Low angle hero",    caption: "Pose → Video" },
-  { src: "/josh/josh-red-angle4.png",            label: "Profile shot",      caption: "Avatar Shots" },
-  { src: "/josh/josh-pink-mic-fullbody.jpg",     label: "Full body",         caption: "Music Video" },
-  { src: "/josh/josh-blue-portrait.webp",        label: "Blue cinematic",    caption: "Performance Shot" },
+// ── Motion capability block (text-only, no stock imagery) ────────────────────
+const MOTION_CAPABILITIES = [
+  { title: "Performance Shot", body: "Your phone clip drives a new take. Face, outfit and scene stay locked." },
+  { title: "Pose → Video", body: "Stage a still into a cinematic pose, then animate it with a camera move." },
+  { title: "Motion Transfer", body: "Copy the exact movement from any video onto your character image." },
+  { title: "Guided Workflow", body: "Step-by-step multi-angle builds: Build a Scene and Luxury Interior." },
+  { title: "Music Video", body: "Beat-sync cuts, lyric videos and AI performance from your track." },
 ];
 
 function MotionInspirationBlock() {
   return (
-    <div className="space-y-8">
-      <style>{`
-        @keyframes divider-pulse {
-          0%, 100% { opacity: 0.4; transform: scaleY(0.85); }
-          50% { opacity: 1; transform: scaleY(1); }
-        }
-        .divider-anim { animation: divider-pulse 2s ease-in-out infinite; }
-      `}</style>
-
-      {/* Before → After comparison row */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Before → After</p>
-          <p className="text-[10px] text-muted-foreground">3 example transformations</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {MOTION_BEFORE_AFTER.map((item) => (
-            <div key={item.caption} className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
-              <div className="grid grid-cols-[1fr_auto_1fr]">
-                <div className="aspect-[3/4] relative overflow-hidden">
-                  <img src={item.before.src} alt={item.before.label} loading="lazy" className="absolute inset-0 size-full object-cover" />
-                  <span className="absolute top-1.5 left-1.5 text-[9px] font-bold uppercase tracking-widest bg-black/60 text-white/80 px-1.5 py-0.5 rounded">Before</span>
-                </div>
-                <div className="flex items-center justify-center px-1.5">
-                  <div className="divider-anim w-px bg-gradient-to-b from-transparent via-primary to-transparent h-12 rounded-full" />
-                </div>
-                <div className="aspect-[3/4] relative overflow-hidden">
-                  <img src={item.after.src} alt={item.after.label} loading="lazy" className="absolute inset-0 size-full object-cover" />
-                  <span className="absolute top-1.5 left-1.5 text-[9px] font-bold uppercase tracking-widest bg-primary/80 text-white px-1.5 py-0.5 rounded">After</span>
-                </div>
-              </div>
-              <p className="text-[10px] text-muted-foreground px-2.5 py-2 leading-snug">{item.caption}</p>
-            </div>
-          ))}
-        </div>
+    <div className="space-y-4">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">What you can build here</p>
+      <div className="grid gap-2.5">
+        {MOTION_CAPABILITIES.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-primary/35"
+          >
+            <p className="text-sm font-semibold text-foreground">{item.title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
+          </div>
+        ))}
       </div>
-
-      {/* Output grid */}
-      <ExampleOutputGrid
-        items={MOTION_EXAMPLES}
-        title="Motion outputs — what you can create"
-        subtitle="Performance Shot, Motion Transfer, Pose → Video, Avatar Shots, Music Video."
-        columns={3}
-      />
     </div>
   );
 }
