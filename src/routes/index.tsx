@@ -605,8 +605,36 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Carousel dot indicators */}
-        <div className="absolute bottom-8 right-5 z-10 flex items-center gap-1.5">
+        {/* Carousel playback controls + dot indicators */}
+        <div className="absolute bottom-8 right-5 z-10 flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-full border border-white/15 bg-black/45 px-1 py-1 backdrop-blur">
+            <button
+              type="button"
+              aria-label="Previous slide"
+              onClick={goToPrevSlide}
+              className="grid size-7 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              <SkipBack className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              aria-label={slidesPlaying ? "Pause slideshow" : "Play slideshow"}
+              aria-pressed={slidesPlaying}
+              onClick={() => setSlidesPlaying((p) => !p)}
+              className="grid size-7 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              {slidesPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+            </button>
+            <button
+              type="button"
+              aria-label="Next slide"
+              onClick={goToNextSlide}
+              className="grid size-7 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              <SkipForward className="size-3.5" />
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5">
           {heroSlides.map((_, i) => (
             <button
               key={i}
