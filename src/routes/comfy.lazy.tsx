@@ -990,8 +990,8 @@ function NewTemplateForm({
       const fields = Object.entries(graph).flatMap(([id, node]) => {
         const inputs = (node as { inputs?: Record<string, unknown> }).inputs ?? {};
         return Object.entries(inputs)
-          .filter(([key, value]) => /^(text|prompt|seed|steps|cfg|image|video|filename_prefix)$/i.test(key) && (typeof value === "string" || typeof value === "number"))
-          .map(([key, value]) => ({ key: `${id}.${key}`, label: key.replace(/_/g, " "), type: /seed/i.test(key) ? "seed" : typeof value === "number" ? "number" : /image|video/i.test(key) ? "image" : "text", default: value }));
+          .filter(([key, value]) => /^(text|prompt|seed|steps|cfg|filename_prefix)$/i.test(key) && (typeof value === "string" || typeof value === "number"))
+          .map(([key, value]) => ({ key: `${id}.${key}`, label: key.replace(/_/g, " "), type: /seed/i.test(key) ? "seed" : typeof value === "number" ? "number" : "text", default: value }));
       });
       setWorkflowText(JSON.stringify(graph, null, 2));
       setInputsText(JSON.stringify(fields, null, 2));
