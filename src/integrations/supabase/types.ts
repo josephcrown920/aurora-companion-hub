@@ -20,7 +20,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      __aurora_setup_exec: { Args: { sql: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
