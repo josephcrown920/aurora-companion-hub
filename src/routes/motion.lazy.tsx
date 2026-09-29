@@ -979,20 +979,15 @@ function MotionStudio() {
       {/* ── Left sidebar ─────────────────────────────────────────────── */}
       <div className="flex flex-col w-full lg:w-[300px] lg:shrink-0 lg:h-full lg:overflow-y-auto lg:border-r lg:border-white/8 scrollbar-none">
 
-        {/* ── Feature card ──────────────────────────────────────────── */}
+        {/* ── Feature card (no imagery) ─────────────────────────────── */}
         <div
-          className="relative overflow-hidden m-3 mb-0 rounded-2xl flex-shrink-0"
-          style={{ minHeight: 144, background: "#111" }}
+          className="relative overflow-hidden m-3 mb-0 rounded-2xl flex-shrink-0 border border-white/10"
+          style={{ minHeight: 144, background: "linear-gradient(140deg, #14160c 0%, #0c0c0e 55%, #0a0a0a 100%)" }}
         >
-          <img
-            src="/josh/josh-concert-performance.webp"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: 0.55 }}
-          />
           <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.25) 65%, transparent 100%)" }}
+            aria-hidden
+            className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full blur-3xl"
+            style={{ background: "rgba(204,255,0,0.14)" }}
           />
           <div className="relative flex flex-col p-3.5" style={{ minHeight: 144 }}>
             <div className="flex items-center justify-between">
