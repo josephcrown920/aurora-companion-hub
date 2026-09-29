@@ -39,6 +39,7 @@ export function MultiTrackTimeline() {
   const [muted, setMuted] = useState<TrackId[]>([]);
   const [locked, setLocked] = useState<TrackId[]>([]);
   const [note, setNote] = useState("");
+  const [dropTrack, setDropTrack] = useState<TrackId | null>(null);
   const lane = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag>(null);
 
@@ -195,6 +196,30 @@ export function MultiTrackTimeline() {
     setNote(`${p.name} loaded — ${p.seconds}s at ${p.bpm} BPM.`);
   };
 
+  const dropEffect = (track: TrackId, effectId: string, at: number) => {
+    const effect = EFFECTS.find((item) => item.id === effectId);
+    if (!effect || track.startsWith("A")) {
+      setNote("Drop effects on a video, title, or overlay track.");
+      return;
+    }
+    const underPlayhead = doc.clips.find(
+      (clip) => clip.track === track && at >= clip.start && at <= clip.start + clip.duration,
+    );
+    if (underPlayhead) {
+      setClips(doc.clips.map((clip) => (clip.id === underPlayhead.id ? { ...clip, effect: effect.id } : clip)));
+      setSelected(underPlayhead.id);
+      setNote(`${effect.name} applied to ${underPlayhead.name}.`);
+      return;
+    }
+    const clip: Clip = clampClip({
+      id: newId(), track, start: at, duration: Math.min(1, Math.max(0.2, doc.seconds - at)),
+      name: effect.name, kind: track === "V3" ? "text" : "overlay", effect: effect.id,
+    }, doc.seconds);
+    setClips([...doc.clips, clip]);
+    setSelected(clip.id);
+    setNote(`${effect.name} added at ${fmtTime(at)}.`);
+  };
+
   const width = Math.max(600, doc.seconds * zoom + 40);
 
   return (
@@ -233,6 +258,16 @@ export function MultiTrackTimeline() {
       <div className="aurora-tl-presets">
         {VIDEO_PRESETS.map((p) => (
           <button key={p.id} onClick={() => applyPreset(p.id)}>{p.name}</button>
+        ))}
+        {EFFECTS.slice(0, 8).map((effect) => (
+          <button
+            key={effect.id}
+            draggable
+            title={`Drag ${effect.name} onto a video track`}
+            onDragStart={(event) => event.dataTransfer.setData("application/x-aurora-effect", effect.id)}
+          >
+            {effect.name}
+          </button>
         ))}
       </div>
 
@@ -276,9 +311,21 @@ export function MultiTrackTimeline() {
             {TRACKS.map((t) => (
               <div
                 key={t}
-                className={`aurora-tl-lane${locked.includes(t) ? " locked" : ""}`}
+                className={`aurora-tl-lane${locked.includes(t) ? " locked" : ""}${dropTrack === t ? " effect-drop" : ""}`}
                 style={{ height: ROW_H }}
                 onDoubleClick={(e) => addClip(t, xToTime(e.clientX))}
+                onDragOver={(event) => {
+                  if (!event.dataTransfer.types.includes("application/x-aurora-effect")) return;
+                  event.preventDefault();
+                  setDropTrack(t);
+                }}
+                onDragLeave={() => setDropTrack((current) => current === t ? null : current)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const effectId = event.dataTransfer.getData("application/x-aurora-effect");
+                  setDropTrack(null);
+                  dropEffect(t, effectId, xToTime(event.clientX));
+                }}
               >
                 {doc.clips
                   .filter((c) => c.track === t)

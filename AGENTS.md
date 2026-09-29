@@ -11,3 +11,4 @@
 
 - Reuse the Creative Studio `MultiTrackTimeline` and `LayersEditor` for music-video editing so manual and Codex-directed cuts share one editor system.
 - Use `/canvas` as the single Aurora Canvas: a node-and-connector workspace powered by the existing production workflow engine; redirect legacy `/aurora-canvas` links there to avoid two competing editors.
+- Keep `/video-agent/timeline` as the desktop-style agent editor, reusing `MultiTrackTimeline` and `LayersEditor`; effects and presets must operate on that shared timeline so manual and AI edits stay reversible.
