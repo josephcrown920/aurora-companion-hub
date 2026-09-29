@@ -1027,6 +1027,42 @@ export type Database = {
           },
         ]
       }
+      colors_gateway_previews: {
+        Row: {
+          created_at: string
+          gateway_job_id: string
+          id: string
+          image_path: string
+          result_path: string | null
+          scene: string
+          updated_at: string
+          user_id: string
+          video_path: string
+        }
+        Insert: {
+          created_at?: string
+          gateway_job_id: string
+          id?: string
+          image_path: string
+          result_path?: string | null
+          scene?: string
+          updated_at?: string
+          user_id: string
+          video_path: string
+        }
+        Update: {
+          created_at?: string
+          gateway_job_id?: string
+          id?: string
+          image_path?: string
+          result_path?: string | null
+          scene?: string
+          updated_at?: string
+          user_id?: string
+          video_path?: string
+        }
+        Relationships: []
+      }
       comfy_runs: {
         Row: {
           created_at: string
