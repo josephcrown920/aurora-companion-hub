@@ -5,4 +5,4 @@
 - [x] Verify the updated Perform Anywhere workflow.
 
 - [x] Remove Lyric Video from both Music Video entry points.
-- [ ] Redesign Aurora Canvas after visual direction approval.
+- [x] Redesign Aurora Canvas in the approved Director-first luminous workspace direction.
