@@ -312,6 +312,9 @@ User command: ${data.userMessage}`;
       prompt,
       schema: ChatResponseSchema,
       category: "VIDEO_DIRECTION",
+      // The editor agent runs on the ModelArk brain first; the normal
+      // category chain stays in place as the fallback.
+      preferredProviders: ["modelark"],
     });
     return { summary: output.summary, mutations: output.mutations as EditorMutation[] };
   });

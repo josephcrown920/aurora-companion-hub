@@ -96,6 +96,7 @@ function AuthPage() {
     setFormError(null);
   }, []);
   const [resetBusy, setResetBusy] = useState(false);
+  const [magicBusy, setMagicBusy] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -219,6 +220,34 @@ function AuthPage() {
       toast.error(describeAuthError(err, "Could not send reset email"));
     } finally {
       setResetBusy(false);
+    }
+  };
+
+  // Passwordless: email a one-tap sign-in link. Works without any third-party
+  // provider credentials, so it's always available as an alternative method.
+  const handleMagicLink = async () => {
+    if (!authAvailable) {
+      toast.error(AUTH_UNAVAILABLE_MESSAGE);
+      return;
+    }
+    if (!email) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setMagicBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth?next=${encodeURIComponent(search.next ?? "/studio")}`,
+        },
+      });
+      if (error) throw error;
+      toast.success("Sign-in link sent — check your inbox.");
+    } catch (err) {
+      toast.error(describeAuthError(err, "Could not send the sign-in link"));
+    } finally {
+      setMagicBusy(false);
     }
   };
 
@@ -756,6 +785,25 @@ function AuthPage() {
             After you create your account, we'll ask if you want to enable Face ID / fingerprint sign-in.
           </p>
         )}
+
+        <div className="mt-5 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">or</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={magicBusy || !authAvailable}
+          onClick={handleMagicLink}
+          className="mt-3 w-full h-11"
+        >
+          {magicBusy ? (
+            <><Loader2 className="mr-2 size-4 animate-spin" /> Sending link…</>
+          ) : (
+            <><MailCheck className="mr-2 size-4" /> Email me a sign-in link</>
+          )}
+        </Button>
 
         {anyOAuthEnabled && (
           <div className="mt-5 flex items-center gap-3">

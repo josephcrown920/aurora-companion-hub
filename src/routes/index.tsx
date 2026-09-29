@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CANONICAL_ORIGIN } from "@/lib/seo";
-import { Plus, Play, ArrowUpRight, ChevronDown, Sparkles, Palette, Film, Wand2, Mic, Music2, Brush, Megaphone, UserCircle2, Workflow, Layers, Flame, Clapperboard, Check, Download, type LucideIcon } from "lucide-react";
+import { Plus, Play, Pause, SkipForward, SkipBack, ArrowUpRight, ChevronDown, Sparkles, Palette, Film, Wand2, Mic, Music2, Brush, Megaphone, UserCircle2, Workflow, Layers, Flame, Clapperboard, Check, Download, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HiddenBadge, useFeatureVisibility } from "@/components/FeatureVisibilityProvider";
 import { featureKeyForRoute, type FeatureKey } from "@/lib/feature-visibility";
@@ -380,11 +380,19 @@ function LandingPage() {
   const [slideIdx, setSlideIdx] = useState(0);
   const [demoOpen, setDemoOpen] = useState(false);
   const slideCount = heroSlides.length;
+  // Autoplay runs every 10s and can be paused/stepped with the hero controls.
+  const [slidesPlaying, setSlidesPlaying] = useState(true);
+  const goToNextSlide = useCallback(() => {
+    setSlideIdx((i) => (slideCount === 0 ? 0 : (i + 1) % slideCount));
+  }, [slideCount]);
+  const goToPrevSlide = useCallback(() => {
+    setSlideIdx((i) => (slideCount === 0 ? 0 : (i - 1 + slideCount) % slideCount));
+  }, [slideCount]);
   useEffect(() => {
-    if (introVisible || slideCount === 0) return;
-    const t = setInterval(() => setSlideIdx((i) => (i + 1) % slideCount), 7000);
+    if (introVisible || slideCount === 0 || !slidesPlaying) return;
+    const t = setInterval(() => setSlideIdx((i) => (i + 1) % slideCount), 10000);
     return () => clearInterval(t);
-  }, [introVisible, slideCount]);
+  }, [introVisible, slideCount, slidesPlaying]);
   // Keep the index in range when the slide list shrinks after the live
   // visibility state arrives.
   useEffect(() => {
@@ -597,8 +605,36 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Carousel dot indicators */}
-        <div className="absolute bottom-8 right-5 z-10 flex items-center gap-1.5">
+        {/* Carousel playback controls + dot indicators */}
+        <div className="absolute bottom-8 right-5 z-10 flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-full border border-white/15 bg-black/45 px-1 py-1 backdrop-blur">
+            <button
+              type="button"
+              aria-label="Previous slide"
+              onClick={goToPrevSlide}
+              className="grid size-7 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              <SkipBack className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              aria-label={slidesPlaying ? "Pause slideshow" : "Play slideshow"}
+              aria-pressed={slidesPlaying}
+              onClick={() => setSlidesPlaying((p) => !p)}
+              className="grid size-7 place-items-center rounded-full text-white/90 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              {slidesPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+            </button>
+            <button
+              type="button"
+              aria-label="Next slide"
+              onClick={goToNextSlide}
+              className="grid size-7 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              <SkipForward className="size-3.5" />
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5">
           {heroSlides.map((_, i) => (
             <button
               key={i}
@@ -612,6 +648,7 @@ function LandingPage() {
               }`}
             />
           ))}
+          </div>
         </div>
       </header>
 
