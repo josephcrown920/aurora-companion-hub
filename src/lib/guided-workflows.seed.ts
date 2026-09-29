@@ -1,0 +1,1677 @@
+import type { GuidedWorkflowContent } from "./guided-workflows.schema";
+
+/**
+ * Default Guided Workflow content — distilled from the creator prompt guides
+ * the owner supplied (@therealwavman / Aurora Studio prompt packs, InVideo
+ * Agent One tutorials, Freepik guides, Realism Formula, Character Sheet
+ * prompt shares). Prompt language is kept faithful to the source guides —
+ * the technical photography phrasing (ARRI, bokeh, film grain…) is what makes
+ * the outputs look cinematic, so it is intentionally not paraphrased.
+ *
+ * These rows are seeded/upserted by slug via the admin "Restore defaults"
+ * action and the one-off seed script. Admins can edit or unpublish any of
+ * them afterwards — user edits are preserved unless defaults are restored.
+ */
+export const DEFAULT_GUIDED_WORKFLOWS: GuidedWorkflowContent[] = [
+  // ── 1. Phone Lip Sync Performance ─────────────────────────────────────────
+  {
+    slug: "phone-lipsync-performance",
+    title: "Phone Lip Sync Performance",
+    tagline: "Look like someone caught you performing on their phone",
+    description:
+      "Record a simple performance of yourself, then have AI place a phone with a green screen in front of your face — held by someone else's hand. Animate it, then motion-track your real lip sync footage onto the phone in CapCut. The result looks like viral candid phone footage from an incredible location.",
+    category: "performance",
+    icon: "📱",
+    sourceCredit: "@therealwavman",
+    isPublished: true,
+    sortOrder: 10,
+    steps: [
+      {
+        id: "record-source",
+        title: "Record your source video",
+        kind: "instruction",
+        description:
+          "Film yourself performing / lip syncing your song at any location — a phone camera works perfectly. Dress for the scene: whatever you wear carries over to the AI output. Then take a screenshot of yourself from the video (this becomes your identity reference) and pick a location image (gas station, rooftop, concert backstage — think visually striking).",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Whatever you're wearing in the source video is exactly what appears in the AI output.",
+          "The more unique your location reference, the more viral the result.",
+          "Record ONE performance, then swap different location images to generate multiple scenes.",
+        ],
+        variants: [],
+      },
+      {
+        id: "green-screen-image",
+        title: "Generate the green-screen phone image",
+        kind: "image",
+        description:
+          "Upload your screenshot (you) and the location image. The AI adds a phone with a bright green chroma screen held in front of your mouth — the green screen is your compositing target for CapCut later.",
+        promptTemplate:
+          "Use the first image as the exact base frame. Do not change the environment, pose, lighting, or camera angle. Keep [YOUR DESCRIPTION]'s identity, expression, and ultra-realistic skin texture the same. Add a realistic modern smartphone held [POSITION] directly in front of [HIS/HER] mouth with a bright green chroma screen. Include [HAND DESCRIPTION] entering from the side holding the phone. Match scale, perspective, reflections, and contact shadows so the phone and hand blend naturally with the [YOUR SCENE] lighting.",
+        placeholders: [
+          { key: "YOUR DESCRIPTION", label: "Describe yourself", example: "man in camo hoodie, arms crossed, eyes closed" },
+          { key: "POSITION", label: "Phone position", example: "horizontally" },
+          { key: "HIS/HER", label: "his / her", example: "his" },
+          { key: "HAND DESCRIPTION", label: "Whose hand holds the phone", example: "a woman's hand with tattoos and a metallic watch" },
+          { key: "YOUR SCENE", label: "Scene / lighting", example: "nighttime gas station" },
+        ],
+        referenceSlots: [
+          { key: "face", label: "You (screenshot from your video)", description: "Locks in your exact appearance, outfit, and features.", required: true },
+          { key: "location", label: "Location image", description: "The environment you want to be placed in.", required: false },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "The more specific your description, the better the result — tell the AI exactly what to keep and what to add.",
+          "Too much control? Try the simple version instead: \"put a girl holding a phone in front of his mouth\".",
+        ],
+        variants: [
+          { label: "Simple version", prompt: "put a girl holding a phone in front of his mouth" },
+        ],
+      },
+      {
+        id: "animate-hand",
+        title: "Animate the hand entering the frame",
+        kind: "video",
+        description:
+          "Animate your generated image: the hand with the green-screen phone travels naturally into place in front of your mouth while everything else stays locked.",
+        promptTemplate:
+          "Start with the first frame as the exact base: [YOUR PERSON AND POSE] at [YOUR LOCATION], background unchanged. Maintain identical lighting, camera angle, depth of field, and ultra-realistic skin texture. From the [SIDE] of frame, animate [HAND DESCRIPTION] smoothly moving into the scene while holding a modern smartphone horizontally with a bright green screen. The hand should travel naturally toward the face and stop with the phone positioned directly in front of the mouth, matching perspective, scale, and lighting reflections. Ensure realistic motion easing, subtle wrist rotation, natural finger grip, and correct contact shadows. No change to body pose or expression; only the hand and phone animate into place.",
+        placeholders: [
+          { key: "YOUR PERSON AND POSE", label: "You + your pose", example: "man seated in chair, arms crossed, eyes closed" },
+          { key: "YOUR LOCATION", label: "Location", example: "nighttime gas station" },
+          { key: "SIDE", label: "Which side the hand enters from", example: "right side" },
+          { key: "HAND DESCRIPTION", label: "Hand description", example: "a woman's hand with visible tattoos and a metallic watch" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["Vertical 9:16 works best for Reels/TikTok."],
+        variants: [],
+      },
+      {
+        id: "capcut-tracking",
+        title: "Motion-track your lip sync in CapCut",
+        kind: "instruction",
+        description:
+          "Import the generated video into CapCut. Use motion tracking on the green phone screen to lock your real lip-sync footage to the phone. This is the finishing touch that sells the illusion.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "The AI-generated green screen gives you a clean compositing target.",
+          "Without tracking you still have a great clip — with it, you have a viral video.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 2. Colors-Style Performance ───────────────────────────────────────────
+  {
+    slug: "colors-style-performance",
+    title: "Colors-Style Performance Video",
+    tagline: "Bold single-color set, hanging vintage mic, two angles",
+    description:
+      "Create a professional Colors-inspired performance video with just your phone: generate a wide and a close-up angle of yourself on a seamless single-color cyclorama with the iconic hanging mic, record your real performance from the same two angles, then bring the images to life with Motion Control.",
+    category: "performance",
+    icon: "🎤",
+    sourceCredit: "Aurora Studio",
+    isPublished: true,
+    sortOrder: 20,
+    steps: [
+      {
+        id: "gather-refs",
+        title: "Find your reference images",
+        kind: "instruction",
+        description:
+          "Screenshot two angles from any Colors Show performance — one wide/full-body shot and one medium close-up. These set the composition for your AI images. Also grab a clear photo of yourself as the subject reference.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: ["Aurora's Colors Studio can also generate these sets for you — check the Colors tool."],
+        toolLink: { label: "Open Colors Studio", to: "/colors" },
+        variants: [],
+      },
+      {
+        id: "wide-angle",
+        title: "Generate the wide angle (full body)",
+        kind: "image",
+        description: "Upload your Colors wide reference + your photo, then generate.",
+        promptTemplate:
+          "Place the subject ([SUBJECT DESCRIPTION]) into a minimalist studio performance scene. Full-body side profile pose, arms slightly extended forward as if performing. Use the exact suspended vintage studio microphone from the reference — identical shape, size, material, cable — hanging from ceiling at chest level. Keep microphone photorealistic to reference. Environment is a seamless [COLOR] cyclorama studio — background and floor are one continuous [COLOR] color, no visible edges or corners. Soft even glossy lighting with smooth gradient. Subject stands on a circular performance platform matching the [COLOR] tone, slightly elevated with subtle shadow and faint reflective sheen. Preserve exact facial likeness, beard, skin tone, hairstyle, body proportions. Outfit identical: [OUTFIT DESCRIPTION]. Cinematic studio lighting, gentle floor shadow, rim light separation, ultra-realistic skin texture, natural pores, sharp clothing detail, high-end music video aesthetic, 4K photoreal quality.",
+        placeholders: [
+          { key: "SUBJECT DESCRIPTION", label: "Subject", example: "man in yellow jacket" },
+          { key: "COLOR", label: "Set color", example: "hot pink" },
+          { key: "OUTFIT DESCRIPTION", label: "Outfit", example: "yellow jacket, black shorts, white socks, black shoes, all accessories" },
+        ],
+        referenceSlots: [
+          { key: "wide-ref", label: "Colors wide-angle reference", description: "Screenshot of a wide/full-body Colors shot.", required: true },
+          { key: "you", label: "Photo of you", description: "Subject/identity reference.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: ["Change the color to any vibe — red, blue, green, orange. Make it yours."],
+        variants: [],
+      },
+      {
+        id: "close-up",
+        title: "Generate the close-up angle",
+        kind: "image",
+        description: "Same process, new prompt — upload the close-up reference + your photo.",
+        promptTemplate:
+          "Place the subject ([SUBJECT DESCRIPTION]) into a studio performance scene. Medium close-up from chest up. Subject turned slightly to side but mostly facing camera — approximately 30-45° angled pose, majority of face visible (both eyes, nose bridge mostly facing camera, slight cheek contour). Use the exact suspended vintage studio microphone from reference — identical design, metallic finish, hanging cable — positioned in front at mouth level with same spacing as reference. Environment is a seamless continuous [COLOR] cyclorama background filling entire frame top to bottom, no visible floor line, corners, or edges. Preserve exact facial likeness, beard, hairstyle, skin tone, proportions from reference. Outfit identical: [OUTFIT DESCRIPTION]. Pose natural and expressive as if mid-performance, hands slightly raised or gesturing. Soft even studio lighting, gentle shadows, subtle rim light separation, ultra-realistic skin texture with natural pores, sharp clothing detail, shallow depth of field but subject fully crisp, high-end music video aesthetic, 4K photoreal quality.",
+        placeholders: [
+          { key: "SUBJECT DESCRIPTION", label: "Subject", example: "man in yellow jacket" },
+          { key: "COLOR", label: "Set color", example: "super hot pink" },
+          { key: "OUTFIT DESCRIPTION", label: "Outfit", example: "yellow jacket, black shorts, accessories unchanged" },
+        ],
+        referenceSlots: [
+          { key: "closeup-ref", label: "Colors close-up reference", description: "Screenshot of a medium close-up Colors shot.", required: true },
+          { key: "you", label: "Photo of you", description: "Subject/identity reference.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "record-performance",
+        title: "Record your performance",
+        kind: "instruction",
+        description:
+          "Using your phone, record yourself performing your song from the exact same two angles as the generated images. Match the pose and framing as closely as possible.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "No studio needed — just match your body angle and framing to the generated images.",
+          "Perform with energy — the motion transfer picks up on your movement.",
+        ],
+        variants: [],
+      },
+      {
+        id: "motion-control",
+        title: "Animate with Motion Control",
+        kind: "motion",
+        description:
+          "For each angle: upload the AI image as the source, your phone performance video as the motion reference, and a short context prompt. Generate — the AI brings your image to life with your real movements.",
+        promptTemplate: "man performing and singing expressively",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["The closer your recorded angles match the generated images, the better the motion transfer."],
+        toolLink: { label: "Open Motion Control", to: "/motion" },
+        variants: [],
+      },
+      {
+        id: "edit-export",
+        title: "Edit & export",
+        kind: "instruction",
+        description:
+          "Combine both angles in any editor (CapCut, Premiere…). Cut between the wide and close-up to match the energy of your performance, add your song audio, export.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 3. Luxury Car Music Video ─────────────────────────────────────────────
+  {
+    slug: "luxury-car-music-video",
+    title: "Luxury Car Music Video",
+    tagline: "Put yourself in a Maybach without leaving your couch",
+    description:
+      "Generate a photorealistic image of yourself inside a luxury car interior — Maybach, Rolls, Bentley, even a private jet — then record yourself performing in the same seated position and use Motion Control to animate the scene with your real movements.",
+    category: "music-video",
+    icon: "🚘",
+    sourceCredit: "@therealwavman",
+    isPublished: true,
+    sortOrder: 30,
+    steps: [
+      {
+        id: "gather-refs",
+        title: "Gather your 3 reference images",
+        kind: "instruction",
+        description:
+          "Image 1 — composition: a photo showing the exact camera angle you want (someone sitting in a car seen through the window). Image 2 — the luxury interior you want (starlight ceiling, quilted leather, ambient LEDs). Image 3 — a clear photo of yourself; your outfit carries over.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Night scenes hit harder — ambient LEDs and starlight ceilings create natural contrast.",
+          "Dress for the scene when you take your identity photo.",
+        ],
+        variants: [],
+      },
+      {
+        id: "scene-image",
+        title: "Generate the luxury car scene",
+        kind: "image",
+        description:
+          "Upload composition + interior + identity references and generate. Re-run until your face looks accurate and the interior matches.",
+        promptTemplate:
+          "Use Image 1 as the composition reference, Image 2 as the luxury [VEHICLE TYPE] interior reference, and Image 3 as the identity reference for the person. Replace the person in Image 1 with the [MAN/WOMAN] from Image 3 while preserving their exact facial identity — same facial structure, skin tone, [FACIAL FEATURES], and proportions. The face must match the identity reference one-to-one without altering facial features. They are seated naturally in the [SEAT POSITION] of the vehicle, viewed through [CAMERA ANGLE], maintaining the same camera angle and framing as Image 1. They must be wearing the same [YOUR OUTFIT DESCRIPTION] from Image 3, [POSTURE]. Transform the vehicle interior so it matches the ultra-luxury [VEHICLE TYPE] interior from Image 2: [INTERIOR DETAILS]. Cinematography should look like it was captured on an ARRI Alexa 35 cinema camera with a Cooke anamorphic cinema lens. Lighting should feel cinematic and natural, with subtle reflections on the car window glass and soft luxury interior lighting illuminating the subject. Depth of field should be very shallow, creating creamy optical bokeh in the background, with the luxury ambient lights and starlight ceiling softly blooming into cinematic light circles. Focus should be tack sharp on the subject's face, while the interior lights blur smoothly in the background with natural lens bokeh characteristics. Ultra-photorealistic skin rendering: visible pores, natural skin texture, subtle imperfections, realistic light falloff across the face. Luxury editorial photography aesthetic, high-end automotive lifestyle shot, natural reflections in glass, cinematic contrast, filmic highlight roll-off. 8K photorealism, ARRI Alexa cinematic color science, shallow depth of field, natural lens bokeh, subtle film grain, realistic optical lens imperfections.",
+        placeholders: [
+          { key: "VEHICLE TYPE", label: "Vehicle", example: "Mercedes-Maybach" },
+          { key: "MAN/WOMAN", label: "man / woman", example: "man" },
+          { key: "FACIAL FEATURES", label: "Your facial features", example: "beard, lips, eye shape" },
+          { key: "SEAT POSITION", label: "Seat", example: "backseat" },
+          { key: "CAMERA ANGLE", label: "Viewed through…", example: "the slightly lowered car window" },
+          { key: "YOUR OUTFIT DESCRIPTION", label: "Outfit", example: "pink designer hoodie and matching sweatpants" },
+          { key: "POSTURE", label: "Posture", example: "relaxed posture with hands resting naturally" },
+          { key: "INTERIOR DETAILS", label: "Interior details", example: "white quilted leather executive seats, luxury center console, ambient LED lighting, fiber-optic starlight headliner ceiling" },
+        ],
+        referenceSlots: [
+          { key: "composition", label: "Composition reference", description: "The exact camera angle and framing you want.", required: true },
+          { key: "interior", label: "Luxury interior reference", description: "Sets the vibe — starlight ceiling, quilted leather…", required: true },
+          { key: "identity", label: "Your identity photo", description: "Locks your face, skin tone, outfit, style.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "The ARRI + Cooke trick: naming real cinema cameras and lenses triggers cinematic color science and realistic lens character.",
+          "One identity photo, many cars — re-run with different interiors: Maybach, Rolls, Lambo, private jet.",
+        ],
+        variants: [],
+      },
+      {
+        id: "record-motion",
+        title: "Record your motion reference video",
+        kind: "instruction",
+        description:
+          "Study the generated image, then film yourself performing in the same seated position — couch, chair, car seat, whatever works. Keep your body within frame the same way it appears in the AI image.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Position matching is critical — the closer the match, the better the Motion Control lock.",
+          "Your background and outfit in this video don't matter — only position and movement.",
+        ],
+        variants: [],
+      },
+      {
+        id: "motion-control",
+        title: "Motion Control with a context prompt",
+        kind: "motion",
+        description:
+          "Upload the AI scene as the source image and your recording as the motion source. The context prompt is crucial — it tells the AI you're INSIDE a car so hands don't morph through the window.",
+        promptTemplate: "A [MAN/WOMAN] [ACTION] inside of a [VEHICLE]",
+        placeholders: [
+          { key: "MAN/WOMAN", label: "man / woman", example: "man" },
+          { key: "ACTION", label: "Action", example: "rapping" },
+          { key: "VEHICLE", label: "Vehicle", example: "car" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "Keep the context prompt simple — it just needs to know the person is inside a vehicle.",
+          "Keep movements contained within the window/seat area.",
+        ],
+        toolLink: { label: "Open Motion Control", to: "/motion" },
+        variants: [],
+      },
+      {
+        id: "final",
+        title: "Add your track",
+        kind: "instruction",
+        description: "Layer your song over the final video, sync the performance, post everywhere.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 4. Five-Reference Music Video ─────────────────────────────────────────
+  {
+    slug: "one-scene-every-angle",
+    title: "One Scene, Every Angle",
+    tagline: "Build a full music video scene from 5 references",
+    description:
+      "Gather 5 reference images — your selfie, outfit, location, pose and a car/prop — and composite them into one hyper-real cinematic base scene. Then re-shoot that scene from new camera angles with one-line prompts, and animate every angle with your original phone recording via Motion Control.",
+    category: "music-video",
+    icon: "🎬",
+    sourceCredit: "@therealwavman",
+    isPublished: true,
+    sortOrder: 40,
+    steps: [
+      {
+        id: "gather",
+        title: "Record + gather your 5 references",
+        kind: "instruction",
+        description:
+          "Record a simple performance video on your phone (anywhere — the background gets replaced). Then gather: 1) a clear selfie, 2) your outfit (flat lay or photo), 3) the location, 4) a pose/staging reference, 5) a car or prop.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: ["Each image tells the AI a different piece of your scene."],
+        variants: [],
+      },
+      {
+        id: "base-scene",
+        title: "Generate the base scene",
+        kind: "image",
+        description:
+          "Upload all 5 references and run the master compositing prompt. Swap the bracketed parts for YOUR scene — keep every technical photography term as-is.",
+        promptTemplate:
+          "Create a hyper-realistic composite image using the five provided reference images, using the [MAN/WOMAN] from the uploaded close-up selfie as the primary identity source, preserving their exact facial features, skin tone, complexion, [FACIAL FEATURES], hairstyle, eye detail, and overall likeness with absolute accuracy, replacing the person in the pose staging reference image with this subject while keeping the same pose, body positioning, framing, perspective, and camera angle exactly as in that reference, dressing the subject in the exact outfit from the outfit reference image consisting of the [OUTFIT DESCRIPTION] with accurate colors, fabric textures, proportions, and fit, placing the subject outdoors in front of the [LOCATION] from the location reference image as the main background environment, and additionally incorporating the [CAR/PROP] from the prop reference image positioned behind the subject in the scene in the same relative placement, angle, scale, and visual prominence as shown in the staging reference image, ensuring it looks naturally placed behind the subject as part of the environment, including a vintage hanging microphone suspended directly in front of the subject at mouth level staged identically to the reference image, applying true cinematic shallow depth of field so that the subject, microphone, and foreground remain in razor-sharp focus while both the [LOCATION] and the [CAR/PROP] in the background are softly blurred with natural optical bokeh and realistic lens falloff rather than artificial blur, matching the visual style of imagery shot on an ARRI Alexa cinema camera with a high-quality prime lens, using filmic color science, natural highlight roll-off, accurate dynamic range, professional golden-hour outdoor lighting, and cinematic realism, while implementing advanced skin realism by enhancing all facial imperfections with high-accuracy micro-detail including authentic pores, subtle texture variation, fine lines, micro-creases, natural asymmetry, faint scars, freckles, vellus hairs, and true surface irregularities, strengthening realistic material response such as matte versus oily zones, natural specularity, and micro-shadows without introducing smoothing, softening, or plastic artifacts, correcting only elements that appear broken or AI-distorted while fully preserving the subject's identity and keeping the original color grading exactly as it is, enhancing the eyes with high-fidelity micro-detail including crisp iris texture, natural radial patterns, subtle chromatic variation, accurate subsurface light response, refined eyelids, lashes, and tear ducts with true anatomical detail and natural moisture reflections, maintaining realistic skin translucency, authentic beard stubble detail, and natural lip texture, avoiding any beauty filters or artificial perfection, and producing a final result that is ultra-photorealistic with seamless blending between subject, prop, and environment, accurate proportions and perspective, true optical depth, professional cinematic quality, 4K resolution, and absolutely no text, logos, or visual artifacts.",
+        placeholders: [
+          { key: "MAN/WOMAN", label: "man / woman", example: "man" },
+          { key: "FACIAL FEATURES", label: "Your facial features", example: "beard texture" },
+          { key: "OUTFIT DESCRIPTION", label: "Outfit", example: "camo Supreme hoodie, olive green pants, and white Adidas sneakers" },
+          { key: "LOCATION", label: "Location", example: "Learning Center building" },
+          { key: "CAR/PROP", label: "Car / prop", example: "luxury white car" },
+        ],
+        referenceSlots: [
+          { key: "selfie", label: "Your selfie", description: "Clear face shot — identity source.", required: true },
+          { key: "outfit", label: "Outfit reference", description: "The clothes you want to wear.", required: true },
+          { key: "location", label: "Location reference", description: "Where you want to be.", required: true },
+          { key: "pose", label: "Pose / staging reference", description: "Controls the shot — pose, angle, staging.", required: false },
+          { key: "prop", label: "Car / prop reference", description: "Makes the scene feel real.", required: false },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "Don't change the technical photography terms (ARRI Alexa, bokeh, skin realism…) — that's what makes it cinematic.",
+          "Only swap the parts that describe YOUR specific scene.",
+        ],
+        variants: [],
+      },
+      {
+        id: "angles",
+        title: "Re-shoot the scene from new angles",
+        kind: "image",
+        description:
+          "Upload your base scene as the only reference and use short one-line prompts to get new camera angles. Generate 3-5 different angles.",
+        promptTemplate: "super close up, from the side front angle of the [MAN/WOMAN], keep bokeh depth of field",
+        placeholders: [{ key: "MAN/WOMAN", label: "man / woman", example: "man" }],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["One prompt = unlimited shots. That's how you get a full music video from AI."],
+        variants: [
+          { label: "Wide shot", prompt: "wide shot from behind the subject, showing full environment, keep cinematic depth of field" },
+          { label: "Low angle", prompt: "low angle looking up at the subject, dramatic perspective, keep bokeh depth of field" },
+          { label: "Close-up face", prompt: "extreme close-up on the face, eyes looking into camera, shallow depth of field" },
+          { label: "Over shoulder", prompt: "over the shoulder shot from behind, looking at the scene ahead, cinematic bokeh" },
+          { label: "Dutch angle", prompt: "tilted dutch angle, dynamic composition, dramatic cinematic lighting" },
+        ],
+      },
+      {
+        id: "animate",
+        title: "Animate every angle",
+        kind: "motion",
+        description:
+          "Motion Control: upload each generated angle as the source image and your original phone recording as the control video. Do this for each angle, edit them together, and you have a full multi-shot music video.",
+        promptTemplate: "[MAN/WOMAN] performing and singing expressively",
+        placeholders: [{ key: "MAN/WOMAN", label: "man / woman", example: "man" }],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["All from one phone recording and some reference images."],
+        toolLink: { label: "Open Motion Control", to: "/motion" },
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 5. Collage Music Video ────────────────────────────────────────────────
+  {
+    slug: "collage-music-video",
+    title: "AI Collage Music Video",
+    tagline: "High-fashion multi-panel video from one headshot",
+    description:
+      "Generate a library of consistent AI images from just a headshot and an outfit reference — full body, vehicle scenes, close-ups, multiple angles, even a featured model. Animate a few (lip sync, dolly zoom, dance), then assemble rounded-corner panels in CapCut into a cinematic collage video.",
+    category: "music-video",
+    icon: "🧩",
+    sourceCredit: "Aurora Studio",
+    isPublished: true,
+    sortOrder: 50,
+    steps: [
+      {
+        id: "base-full-body",
+        title: "Base full-body studio shot",
+        kind: "image",
+        description: "Upload two references — a clear headshot and an outfit photo — and generate your base image.",
+        promptTemplate:
+          "Place the subject from image 1 standing fully upright in a professional studio with a seamless infinite white background. Preserve his exact facial features, skin tone, hairstyle, beard shape, and body proportions with high skin realism and natural texture. Dress him in the exact outfit from image 2: [DESCRIBE THE OUTFIT IN DETAIL]. Ensure the clothing fits naturally on his body with realistic fabric folds and weight. Use soft studio lighting, subtle ground shadow under the feet, centered full-body composition, ultra-realistic editorial fashion photography style, 85mm lens, sharp focus, high detail.",
+        placeholders: [
+          { key: "DESCRIBE THE OUTFIT IN DETAIL", label: "Outfit detail", example: "red gingham flannel shirt, wide-leg dark jeans, white sneakers, silver chain" },
+        ],
+        referenceSlots: [
+          { key: "face", label: "Headshot", description: "Clear face photo — locks identity.", required: true },
+          { key: "outfit", label: "Outfit reference", description: "Outfit inspiration photo.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "Be extremely specific about the outfit: patterns, colors, fit, accessories, shoes. More detail = better match.",
+        ],
+        variants: [],
+      },
+      {
+        id: "vehicle-scene",
+        title: "Scene variation: subject + vehicle/prop",
+        kind: "image",
+        description: "Use your base shot as image 1 and a vehicle/prop photo as image 2.",
+        promptTemplate:
+          "Use image 1 as the identity and outfit reference, and image 2 as the vehicle reference. Take the subject from image 1 and place them leaning in a relaxed way on the front-left side of the exact same [VEHICLE DESCRIPTION] from image 2. Match the vehicle one-to-one. Preserve the subject's exact facial features, skin tone, hairstyle, beard shape, and body proportions with high skin realism and natural texture, keeping the exact same outfit from image 1 without alteration. Set the scene inside a professional studio with a seamless infinite white background, soft studio lighting, realistic reflections on the vehicle paint and rims, subtle ground shadow, ultra-realistic editorial fashion photography style, 85mm lens, sharp focus, high detail.",
+        placeholders: [
+          { key: "VEHICLE DESCRIPTION", label: "Vehicle", example: "black Mercedes-Maybach GLS" },
+        ],
+        referenceSlots: [
+          { key: "vehicle", label: "Vehicle / prop reference", description: "Your dream car, bike, or any prop.", required: true },
+        ],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "close-up",
+        title: "Close-up detail shot",
+        kind: "image",
+        description: "This gives you the cinematic eye and mouth panels for the collage.",
+        promptTemplate:
+          "Tight close-up portrait from chest up, man in [OUTFIT DESCRIPTION], gold chain and accessories visible, [PROP/VEHICLE] blurred in background, soft studio rim lighting, editorial fashion photography, bokeh, 85mm lens, cinematic color grading with warm tones",
+        placeholders: [
+          { key: "OUTFIT DESCRIPTION", label: "Outfit", example: "red gingham shirt" },
+          { key: "PROP/VEHICLE", label: "Prop / vehicle", example: "black Maybach" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "angles",
+        title: "Generate multiple angles",
+        kind: "image",
+        description: "Create 4-6 different angles from the same scene for variety in your collage.",
+        promptTemplate:
+          "Cinematic low-angle shot of a man leaning against a [VEHICLE] in a white studio, camera tilted upward from ground level, dramatic lighting from the left, shallow depth of field on the vehicle's front grille, fashion editorial style, 35mm anamorphic lens flare, moody contrast",
+        placeholders: [{ key: "VEHICLE", label: "Vehicle", example: "black Maybach GLS" }],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [
+          { label: "Wide three-quarter rear", prompt: "Wide cinematic shot from the rear three-quarter angle of a [VEHICLE] with [WHEEL DETAILS], man standing at the front corner, white seamless backdrop, symmetrical composition, high-end automotive advertisement style, cool desaturated tones, IMAX resolution feel" },
+          { label: "Side profile silhouette", prompt: "Cinematic side profile shot, man silhouetted against bright white background standing next to a [VEHICLE], strong backlight creating rim light on both the person and vehicle contours, minimal shadows, stark contrast, monochromatic mood, 24mm wide-angle lens perspective" },
+          { label: "Overhead bird's-eye", prompt: "Top-down bird's-eye view of a [VEHICLE] on a white studio floor, man standing beside the driver-side door looking up at camera, graphic composition, clean geometric lines, luxury automotive campaign, high-fashion editorial, crisp studio lighting, drone perspective" },
+          { label: "Dutch angle detail", prompt: "Dutch angle low shot focused on [DETAIL], man's legs visible in frame, [OUTFIT DETAILS], gritty cinematic texture, shallow depth of field, tungsten warm highlights on chrome trim, street-luxury aesthetic, 50mm prime lens" },
+        ],
+      },
+      {
+        id: "featured-model",
+        title: "Add a featured model (optional)",
+        kind: "image",
+        description:
+          "Want a second person? Use a face reference (e.g. from Pinterest) as image 1 and your generated outfit photo as image 2 — the AI dresses them in a coordinated outfit, same palette, same vibe.",
+        promptTemplate:
+          "Use image 1 as the identity reference for the featured model and image 2 as the outfit/style reference. Generate a full-body studio shot of the model in a coordinated outfit matching the color palette and aesthetic of image 2, adapted to their body type. Seamless infinite white background, soft studio lighting, subtle ground shadow, ultra-realistic editorial fashion photography style, 85mm lens, sharp focus, high detail.",
+        placeholders: [],
+        referenceSlots: [
+          { key: "model-face", label: "Featured model face reference", description: "Any clear headshot.", required: true },
+        ],
+        usesPreviousResult: true,
+        tips: ["Same fabric patterns, complementary colors — like a real styled photoshoot."],
+        variants: [],
+      },
+      {
+        id: "lipsync",
+        title: "Lip sync the close-up",
+        kind: "lipsync",
+        description:
+          "Upload your close-up image (chest-up works best) and your song audio. One lip sync gives you TWO collage panels: crop to the mouth for the lip-sync panel, crop to the eyes for the eyes panel.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["One generation, two clips!"],
+        toolLink: { label: "Open Lip Sync", to: "/lipsync" },
+        variants: [],
+      },
+      {
+        id: "dolly-zoom",
+        title: "Dolly zoom animation",
+        kind: "video",
+        description: "Use your close-up image with a cinematic motion prompt for subtle, editorial movement.",
+        promptTemplate:
+          "Tight chest-up framing of man in [OUTFIT DESCRIPTION], standing in front of [BACKGROUND] in white studio. Very slow dolly-in, fabric texture catches light, gold chain sways imperceptibly with a breath, [BACKGROUND] soft in background bokeh, intimate fashion editorial film, almost still, warm tones",
+        placeholders: [
+          { key: "OUTFIT DESCRIPTION", label: "Outfit", example: "red gingham shirt" },
+          { key: "BACKGROUND", label: "Background element", example: "black Maybach" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "dance",
+        title: "Motion Control dance",
+        kind: "motion",
+        description:
+          "Make your model dance: upload the generated full-body image as the reference and a TikTok/Instagram dance video as the motion reference. Face and outfit stay intact.",
+        promptTemplate: "model dancing energetically in a white studio",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        toolLink: { label: "Open Motion Control", to: "/motion" },
+        variants: [],
+      },
+      {
+        id: "capcut",
+        title: "Assemble the collage in CapCut",
+        kind: "instruction",
+        description:
+          "New 9:16 project (1080×1920), light gray or black background. For each clip: drag to its own track → Mask → Rectangle → Round corners 50% → resize to its panel shape (wide letterbox for eyes, square for full body) → position on canvas. Stack all tracks so panels play simultaneously, leave small gaps for the background. Add your song, cut to the beat, export 1080×1920 30fps.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Each clip goes on its own separate track.",
+          "Layout idea: eyes letterbox on top, full body + featured model side by side, second eyes strip, lip-sync letterbox at the bottom.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 6. AI Artist Creation ─────────────────────────────────────────────────
+  {
+    slug: "create-your-ai-artist",
+    title: "Create Your Own AI Artist",
+    tagline: "Base character → de-AI realism → concepts → animation",
+    description:
+      "Build a complete AI artist from scratch in 4 steps: generate the foundational look, remove the 'AI look' with realistic skin texture, build 10-15 concept shots across locations and angles, then animate the best ones. Great for a whole roster of artists across music styles.",
+    category: "character",
+    icon: "🧑‍🎤",
+    sourceCredit: "Aurora Studio",
+    isPublished: true,
+    sortOrder: 60,
+    steps: [
+      {
+        id: "base-character",
+        title: "Create your base character",
+        kind: "image",
+        description:
+          "Generate 4-8 variations. Try different expressions (neutral, smiling, confident) and angles (front, 3/4, side profile). Pick the one with clear features, good lighting, realistic skin.",
+        promptTemplate:
+          "A photo realistic picture of a [ARTIST DESCRIPTION], professional photography, studio lighting, high quality, 8k resolution, detailed facial features, modern style",
+        placeholders: [
+          { key: "ARTIST DESCRIPTION", label: "Your artist", example: "black male artist wearing streetwear, 90s hip hop aesthetic" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "For different looks add \"wearing streetwear\" or \"in formal attire\"; for vibes add \"moody lighting\" or \"bright and energetic\".",
+          "Avoid distorted features, blurry details, unnatural proportions.",
+        ],
+        variants: [],
+      },
+      {
+        id: "de-ai",
+        title: "De-AI processing",
+        kind: "image",
+        description:
+          "Remove the 'AI look' by adding realistic skin texture, pores, and imperfections. Use your chosen character image as the reference. Generate 2-3 versions and compare.",
+        promptTemplate:
+          "Enhance with: natural skin texture, visible pores, subtle blemishes, realistic lighting, film grain, professional photography quality, remove artificial smoothness, add human imperfections",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "The goal is a professional photoshoot look, not a 3D render — subtle is better than extreme.",
+          "Not realistic enough? Add \"macro photography skin detail\".",
+          "Save both the original and processed versions.",
+        ],
+        variants: [],
+      },
+      {
+        id: "concepts",
+        title: "Build your visual concepts & shots",
+        kind: "image",
+        description:
+          "Define the vibe (urban? luxury? underground?), then create 10-15 shots across locations and angles — wide, medium, close-up, over-the-shoulder, low angle for power. Always use your character image as the reference to stay consistent.",
+        promptTemplate:
+          "[YOUR AI ARTIST] standing in urban city street at night, neon lights, cinematic photography, moody atmosphere, street style fashion, professional music video aesthetic",
+        placeholders: [
+          { key: "YOUR AI ARTIST", label: "Artist descriptor", example: "the artist from the reference image" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "Storyboard before generating; think about how shots transition.",
+          "Consider your music genre's visual language.",
+        ],
+        variants: [
+          { label: "Luxury / high-end", prompt: "[YOUR AI ARTIST] in luxury penthouse, floor to ceiling windows, city skyline background, golden hour lighting, high fashion, editorial photography style" },
+          { label: "Performance / stage", prompt: "[YOUR AI ARTIST] on concert stage, dramatic stage lighting, smoke effects, crowd in background, energetic performance, professional concert photography" },
+          { label: "Intimate / studio", prompt: "[YOUR AI ARTIST] in recording studio, dim warm lighting, sitting at mixing board, creative atmosphere, behind the scenes vibe" },
+        ],
+      },
+      {
+        id: "animate",
+        title: "Animate your shots",
+        kind: "video",
+        description:
+          "Bring your best stills to life. Start with subtle animations — they look more realistic. Keep clips short (3-8s) for social media.",
+        promptTemplate:
+          "Subtle head movement, natural breathing, slight body sway, maintain facial features, smooth realistic motion, cinematic camera movement",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["Generate 2-3 versions of important shots."],
+        variants: [
+          { label: "Performance", prompt: "Artist performing energetically, natural gestures, confident movements" },
+          { label: "Walking", prompt: "Slow confident walk towards camera, smooth motion" },
+          { label: "Atmospheric", prompt: "Gentle camera push in, subject looking around, ambient movement" },
+        ],
+      },
+      {
+        id: "edit",
+        title: "Put it all together",
+        kind: "instruction",
+        description:
+          "Group clips by scene, arrange in story order, add your music, apply consistent color grading, add transitions. Export: Reels/TikTok 1080×1920 30fps; YouTube 1920×1080.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Content ideas: full music video, visualizer, promo clips, album artwork, lyric videos, tour visuals.",
+          "Always disclose that your artist is AI-generated and check platform policies.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 7. Realism Formula ────────────────────────────────────────────────────
+  {
+    slug: "realism-formula-macro-skin",
+    title: "The Realism Formula: Macro Skin",
+    tagline: "Uncomfortably real macro shots — pores, texture, imperfections",
+    description:
+      "A master prompt system for extreme macro skin realism — ears, forehead, lips, neck tattoos, eyes, even a bandaged finger. Every shot reads like a dermatological study shot by a cinematographer. Use these as b-roll inserts to sell the realism of an AI artist.",
+    category: "realism",
+    icon: "🔬",
+    sourceCredit: "Realism Formula",
+    isPublished: true,
+    sortOrder: 70,
+    steps: [
+      {
+        id: "master",
+        title: "The master macro prompt",
+        kind: "image",
+        description:
+          "Tweak the highlighted attributes — body part, skin tone, imperfections — and generate. The preset variants below are ready-made shots from the same system.",
+        promptTemplate:
+          "Extreme macro photograph of [BODY PART]. [SKIN TONE] skin. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. [IMPERFECTION] rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer.",
+        placeholders: [
+          { key: "BODY PART", label: "Body part", example: "ear / cheek / forehead / knuckles / neck / collarbone" },
+          { key: "SKIN TONE", label: "Skin tone", example: "deep brown-black / warm medium brown / olive-tan / pale with pink undertones" },
+          { key: "IMPERFECTION", label: "Imperfection", example: "raised mole 4mm / healed scar 15mm / freckle cluster / none" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Avoid: airbrushed, smooth skin, uniform tone, beauty lighting, ring light, porcelain, digital sharpening halos, CGI, plastic, flat lighting.",
+          "For an extra pass, upscale 2x with low creativity and the prompt \"Add micro pores, micro hairs and sharp skin texture.\"",
+        ],
+        variants: [
+          { label: "Ear + diamond stud", prompt: "Extreme macro photograph of right ear with round diamond stud earring. Warm medium brown skin. Full ear in profile filling frame — helix, antihelix, tragus, concha, and earlobe all visible, round brilliant-cut diamond stud earring in platinum four-prong setting on earlobe catching light, buzz cut stubble visible at hairline above ear, goatee stubble on jawline below and in front of ear, sage-green blurred background. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. Round brilliant-cut diamond stud in platinum setting on earlobe rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer." },
+          { label: "Forehead wrinkles", prompt: "Extreme macro photograph of forehead from hairline to eyebrows. Warm medium brown skin. Full forehead filling frame with 3-4 deep horizontal wrinkle lines, short buzz cut stubble visible at top hairline edge, thick black eyebrow tops visible at bottom of frame, dense visible pores across entire surface. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. Deep horizontal forehead wrinkles 3-4 lines rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer." },
+          { label: "Lips + chin", prompt: "Extreme macro photograph of lips and chin area. Pale beige with pink undertones skin. Closed lips filling upper portion of frame with visible vertical lip texture lines, pink-beige natural lip color, chin below with subtle cleft shadow, fine vellus peach fuzz visible on chin and around mouth, muted sage-green color cast over entire image. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. Vertical lip lines on both lips rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer." },
+          { label: "Neck tattoo", prompt: "Extreme macro photograph of neck and throat with tattoo. Deep brown-black skin. Front of neck filling frame, black ink tattoo reading [TATTOO TEXT] in capital serif letters across lower throat, Adam's apple visible at top, tan/beige button-up shirt collar with metal button visible at bottom edge, chin shadow at top of frame, visible pores and fine stubble across neck surface. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. Black ink tattoo across lower neck rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer." },
+          { label: "Single eye", prompt: "Extreme macro photograph of single eye extreme close-up. Deep brown-black with olive-green color cast skin. Single eye filling frame, dark brown iris with visible radial fibers and light reflection, white sclera with subtle cream tone, short natural eyelashes, smooth eyelid with fine crease, surrounding orbital skin with visible pore texture. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. Fine under-eye texture rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer." },
+          { label: "Bandaged pinky", prompt: "Extreme macro photograph of pinky finger wrapped in fabric bandaid. Deep brown-black skin. Small pinky finger with woven beige/tan fabric bandaid wrapped around the middle section, white gauze pad visible in center of bandaid, finger emerging from powder-blue fabric sleeve. Photorealistic, shot on medium format film. Raking side-top light at 45 degrees reveals every pore as a 3D crater with its own micro-shadow. Shallow depth of field — critical sharpness in the center, gentle optical falloff at edges. Visible: individual pore openings with depth, vellus peach fuzz catching sidelight, natural sebum sheen (uneven, concentrated on convex surfaces), subsurface color variation (veins, capillary flush, melanin gradients), micro-wrinkles between major features. Woven fabric bandaid wrapped around finger rendered with full physical accuracy — casting micro-shadow, distinct texture from surrounding skin. Skin fills 85% of frame. Fine organic film grain throughout. Zero digital sharpening — all sharpness is optical. Lifted blacks — shadow detail preserved inside every pore. Soft highlight rolloff — specular sheen never clips. No makeup, no retouching, no smoothing, no filters. The skin must look uncomfortably real — a dermatological study shot by a cinematographer." },
+        ],
+      },
+      {
+        id: "animate",
+        title: "Animate your macro shots",
+        kind: "video",
+        description: "Once you have your shots, animate them with subtle motion for texture-rich b-roll.",
+        promptTemplate:
+          "Extreme macro skin shot, subtle natural micro-movement, breathing, light shifting across pores, film grain, cinematic realism, no camera movement",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 8. Static Subject, Morphing Background ────────────────────────────────
+  {
+    slug: "morphing-background",
+    title: "Static Subject, Morphing Background",
+    tagline: "You stay frozen while the world transforms behind you",
+    description:
+      "The trending effect where the camera and subject stay perfectly locked while the environment seamlessly transforms behind them. Build a character sheet, lock your spatial position, generate environment variations, then animate each background with micro-motions.",
+    category: "effects",
+    icon: "🌀",
+    sourceCredit: "InVideo Agent One guide",
+    isPublished: true,
+    sortOrder: 80,
+    steps: [
+      {
+        id: "character-sheet",
+        title: "Build your character sheet",
+        kind: "image",
+        description:
+          "Upload a few clear photos of yourself and generate a multi-angle character sheet with identical facial geometry, clothing and lighting.",
+        promptTemplate:
+          "Create a full character sheet of the person in the reference images wearing [OUTFIT DESCRIPTION]: multi-angle consistent views (front, 3/4, side), identical facial structure, clothing style, and lighting conditions across every angle, neutral studio background, photorealistic, high detail.",
+        placeholders: [
+          { key: "OUTFIT DESCRIPTION", label: "Outfit", example: "black hoodie, cargo pants, white sneakers" },
+        ],
+        referenceSlots: [
+          { key: "you", label: "Your reference photos", description: "A few clear source photos of you or your subject.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "lock-position",
+        title: "Lock the spatial position",
+        kind: "image",
+        description:
+          "Establish the static point where your character stands in the frame — this locks framing, focal distance and orientation so perspective never jitters between backgrounds.",
+        promptTemplate:
+          "Place the character from the reference in [LOCATION DESCRIPTION], standing in a fixed centered position, full body visible, static camera framing, consistent focal length and orientation, photorealistic, cinematic lighting.",
+        placeholders: [
+          { key: "LOCATION DESCRIPTION", label: "Base location", example: "an empty urban street at dusk" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "variations",
+        title: "Generate environment variations",
+        kind: "image",
+        description:
+          "Queue multiple environments behind your locked subject — keep the character, pose, framing and camera identical; only the background changes.",
+        promptTemplate:
+          "Keep the character, pose, framing, camera angle and lighting on the subject EXACTLY identical to the reference image. Change only the environment behind them to: [NEW ENVIRONMENT]. Photorealistic, seamless integration, consistent perspective and ground plane.",
+        placeholders: [
+          { key: "NEW ENVIRONMENT", label: "New environment", example: "post-apocalyptic alleyway with fires, smoke, and street debris" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["Generate 3-6 variations for a satisfying morph sequence."],
+        variants: [
+          { label: "Luxury studio", prompt: "Keep the character, pose, framing, camera angle and lighting on the subject EXACTLY identical to the reference image. Change only the environment behind them to: a hyper-clean studio setup with an exotic red luxury vehicle. Photorealistic, seamless integration, consistent perspective and ground plane." },
+          { label: "Stylized art block", prompt: "Keep the character, pose, framing, camera angle and lighting on the subject EXACTLY identical to the reference image. Change only the environment behind them to: a stylized artistic set with a dynamic horse element in the backdrop. Photorealistic, seamless integration, consistent perspective and ground plane." },
+        ],
+      },
+      {
+        id: "animate",
+        title: "Animate each background",
+        kind: "video",
+        description:
+          "Animate your favorite variations: the background gets micro-motions (smoke, flames, spinning rims) while the subject stays flawlessly locked.",
+        promptTemplate:
+          "Subject remains perfectly still and locked in place, camera completely static. Only the background environment animates with subtle micro-motions: [BACKGROUND MOTION]. Seamless, realistic, cinematic.",
+        placeholders: [
+          { key: "BACKGROUND MOTION", label: "Background motion", example: "drifting smoke, flame ripples, flickering light" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "edit",
+        title: "The editing sauce",
+        kind: "instruction",
+        description:
+          "Overlay the clips in your editor so the eye-line and body stay perfectly registered frame-to-frame. Slice each background transition exactly on heavy beats, and add a distinct SFX for each shift — sub drops, whooshes, camera shutters, explosive snaps.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 9. Agent-style Scene Building (16mm film look) ───────────────────────
+  {
+    slug: "complete-scene-16mm",
+    title: "Build a Complete Scene (16mm Film Look)",
+    tagline: "From one paragraph to a fully produced shot list",
+    description:
+      "Don't overthink the brief — one paragraph is enough. Describe your concept, cast, vehicle and location, let AI expand it into a production breakdown, then generate each shot with deep-focus 16mm film prompts. The example: a man and a chimpanzee rob a bank in the Albuquerque desert.",
+    category: "music-video",
+    icon: "🎞️",
+    sourceCredit: "Triv / Agent One guide",
+    isPublished: true,
+    sortOrder: 90,
+    steps: [
+      {
+        id: "brief",
+        title: "Write the one-paragraph brief",
+        kind: "text",
+        description:
+          "Send one plain paragraph to Aurora's Agent — concept, vehicle, cast, location. It comes back with a scene-by-scene shot list, camera angles, character behavior, and color direction.",
+        promptTemplate:
+          "Create a complete production breakdown for this concept: [YOUR CONCEPT]. Cast: [CAST]. Vehicle/props: [PROPS]. Location: [LOCATION]. Return a scene-by-scene shot list with camera angles, character behavior descriptions, location detail, and color direction for each sequence.",
+        placeholders: [
+          { key: "YOUR CONCEPT", label: "Concept", example: "a man and a chimpanzee rob a bank in the Albuquerque desert" },
+          { key: "CAST", label: "Cast", example: "TRIV and his chimpanzee sidekick" },
+          { key: "PROPS", label: "Vehicle / props", example: "red Ferrari Testarossa" },
+          { key: "LOCATION", label: "Location", example: "flat New Mexico desert, a bank, a dive bar" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: ["It will give you angles you hadn't thought of — ground-level POVs, mirror shots, environmental storytelling."],
+        toolLink: { label: "Open Studio", to: "/studio" },
+        variants: [],
+      },
+      {
+        id: "hero-shot",
+        title: "Generate the hero shot",
+        kind: "image",
+        description:
+          "Generate each shot from your breakdown. The example prompts below show the exact 16mm-film language that makes these look shot on real film — deep focus, handheld drift, organic grain.",
+        promptTemplate:
+          "[SHOT DESCRIPTION]. Hard natural midday sun, dust in the air. Shot on 16mm film. 14mm lens, f/8.0. Everything in deep focus, all sharp. Handheld, slight drift. Visible film grain, natural and organic. No digital sharpening, no bloom, no lens flare.",
+        placeholders: [
+          { key: "SHOT DESCRIPTION", label: "Shot description", example: "A man steps out of a red Ferrari Testarossa, driver door swung open, one leg on the ground…" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: ["Keep the film-stock language (16mm, deep focus, grain, no bloom) byte-identical across every shot for a consistent look."],
+        variants: [
+          { label: "Outside the bank (example)", prompt: "A man steps out of a red Ferrari Testarossa, driver door swung open, one leg already on the ground. White ribbed sleeveless tank top, straight blue jeans, tall brown leather cowboy boots. Black duffel bag in hand. A chimpanzee climbs out simultaneously from the other side, tactical backpack strapped to its back, automatic rifle in hand. Behind them: a small single-story stucco bank building, sun-bleached beige walls, no signage, flat cracked asphalt parking lot, American flag on a pole, flat Albuquerque desert stretching wide, red mesa formations under a pale blue sky. Hard natural midday sun, dust in the air. Shot on 16mm film. 14mm lens, f/8.0. Everything in deep focus, all sharp. Handheld, slight drift. Visible film grain, natural and organic. No digital sharpening, no bloom, no lens flare." },
+          { label: "The wanted poster (example)", prompt: "Medium shot. A weathered wooden electricity pole stands in the left foreground, close to the camera, dominating the left half of the frame. Stapled to the pole facing the camera is a wanted poster — large, printed on yellowed paper, edges curling, sun-bleached. The poster reads \"WANTED\" across the top in bold block letters. Below it two images side by side — the man on the left, the chimpanzee on the right. A reward amount printed below. The poster is slightly crooked, stapled at the top corners, flapping slightly in the desert wind. The pole itself is old — cracked wood, a few old staples and torn paper scraps from previous postings. The right half of the frame opens up to the flat two-lane Albuquerque desert road stretching back into the distance — yellow center line, cracked asphalt, sparse scrub on the shoulders, red mesa formations in the far distance, pale blue sky above. Hard natural midday sun casting a sharp shadow from the pole across the dirt shoulder. The poster catches the direct sunlight — warm, bleached, real. Shot on 16mm film. 14mm lens, f/8.0. The pole and the wanted poster sharp in the foreground, the desert road sharp behind to the right. Handheld, slight drift. Visible film grain, natural and organic. No digital sharpening, no bloom, no lens flare." },
+          { label: "The dive bar (example)", prompt: "A man and a chimpanzee sit side by side in a worn leather booth inside a dark dive bar. The man wears a white ribbed sleeveless tank top, straight blue jeans, tall brown leather cowboy boots. He has a whiskey glass in hand, leaning back in the booth, laughing — head tilted, completely relaxed, totally at ease. The chimpanzee sits right beside him, its own drink on the table in front of it, also animated — mouth open, vocalizing, rocking slightly with energy, the way a chimp does when it is excited and happy. Black coarse fur, bare dark facial skin, compact muscular build. They are mid-conversation, mid-laugh, like two guys celebrating after a long day. The black duffel bag sits on the table between them, unzipped, fat stacks of banded cash visible spilling out. The bar around them: dark wood paneling, sticky vinyl booths, old framed photos on the walls, a glowing beer neon sign casting warm red light across the scene, dim pendant lights above, a half-empty bottle of whiskey on the table, beer glasses, ashtrays. The whole space is dark, warm, amber-toned. Nobody else in the bar is paying attention. Shot on 16mm film. 14mm lens, f/8.0. Everything in deep focus — both figures, the duffel bag, the neon sign, the bar interior, all sharp. Handheld, slight drift. Visible film grain, natural and organic. No digital sharpening, no bloom, no lens flare." },
+        ],
+      },
+      {
+        id: "animate",
+        title: "Animate the shots",
+        kind: "video",
+        description: "Animate your favorite stills — keep motion natural and restrained to preserve the film look.",
+        promptTemplate:
+          "Subtle natural movement, characters breathing and shifting weight, ambient motion in the environment (dust, wind, flags). Handheld 16mm film feel with slight drift, organic grain, no digital sharpening.",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 10. Storyboard → 15s Film ─────────────────────────────────────────────
+  {
+    slug: "storyboard-15s-film",
+    title: "15-Second Film from One Image",
+    tagline: "Image → storyboard → prompt → video, all connected",
+    description:
+      "Go from a single key visual to a complete 15-second cinematic film. Create your key image, break it into a storyboard, turn the storyboard into a structured timestamped video prompt, then generate the final video. Swap the key visual and you have a whole new film in minutes.",
+    category: "music-video",
+    icon: "📋",
+    sourceCredit: "Freepik Spaces guide",
+    isPublished: true,
+    sortOrder: 100,
+    steps: [
+      {
+        id: "key-visual",
+        title: "Create your key visual",
+        kind: "image",
+        description:
+          "Everything begins with one image. Generate a few variations — the one you pick defines the visual tone of the whole film.",
+        promptTemplate:
+          "analog photography. no framings or text. close-up to the subject's face. subject is [SUBJECT DESCRIPTION]. [STYLING DETAILS]. setting is [SETTING]. background out of focus. diffused lighting. subject gazing off camera.",
+        placeholders: [
+          { key: "SUBJECT DESCRIPTION", label: "Subject", example: "a young woman with black hair and golden jeweled hairclips" },
+          { key: "STYLING DETAILS", label: "Styling", example: "bleached brows, subtle freckles, wearing a red tracksuit jacket" },
+          { key: "SETTING", label: "Setting", example: "a city" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "storyboard",
+        title: "Write your storyboard",
+        kind: "text",
+        description:
+          "Break your visual into a numbered sequence of scenes — each one a moment, setting, or framing that builds the narrative. This becomes your shot list.",
+        promptTemplate:
+          "Based on the key visual, write a storyboard of [NUMBER OF SCENES] scenes for a short fashion film. The vibe: [VIBE]. Each scene is one line: shot type + what happens. Example format: \"1. Frontal shot. sitting on a bus stop, human-sized stuffed animal around her. 2. Close-up. about to bite a sandwich, jewels on her teeth. 3. Aerial shot. walking down the street…\"",
+        placeholders: [
+          { key: "NUMBER OF SCENES", label: "Scene count", example: "6" },
+          { key: "VIBE", label: "Vibe", example: "playful, surreal — surrounded by human-size pastel stuffed animals" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: ["Generate a few storyboard variations and pick the one that tells the best story."],
+        toolLink: { label: "Open Studio", to: "/studio" },
+        variants: [],
+      },
+      {
+        id: "video-prompt",
+        title: "Build the timestamped video prompt",
+        kind: "text",
+        description: "Turn your storyboard into a structured video prompt with timestamps.",
+        promptTemplate:
+          "Based on this fashion film storyboard, create a video prompt for a 15-second video. Dynamic cuts, smooth transitions, cinematic camera movements. The vibe is [VIBE]. No background music, coherent SFX. High quality. Use timestamps. Be sure to include every scene in the storyboard in order. Use this prompt structure: [Scene Setting] [Visual Style] [Lighting] [Key Textures] [Type of Video] [Sound Design] then \"0–Xs —\" lines for each scene. Storyboard: [STORYBOARD]",
+        placeholders: [
+          { key: "VIBE", label: "Vibe", example: "playful" },
+          { key: "STORYBOARD", label: "Paste your storyboard", example: "1. Frontal shot… 2. Close-up…" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [],
+        toolLink: { label: "Open Studio", to: "/studio" },
+        variants: [],
+      },
+      {
+        id: "generate-video",
+        title: "Generate the film",
+        kind: "video",
+        description:
+          "Use your key visual as the start frame and paste the structured, timestamped prompt. Longer durations work best for storyboard films — a consistent character, setting and tone across every cut.",
+        promptTemplate: "[PASTE YOUR TIMESTAMPED VIDEO PROMPT]",
+        placeholders: [
+          { key: "PASTE YOUR TIMESTAMPED VIDEO PROMPT", label: "Timestamped prompt", example: "[Scene Setting] a city in daylight… 0–3s — she crosses the sidewalk…" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["Save this workflow and reuse it — swap the key visual, adjust the storyboard, and you have a new film in minutes."],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 11. Character Scene Pack ──────────────────────────────────────────────
+  {
+    slug: "character-scene-pack",
+    title: "Character Scene Pack",
+    tagline: "One character sheet, six cinematic scenes",
+    description:
+      "Build your character once, then keep them across every scene: werewolf transformation, floating popcorn in an old cinema, a time-freeze on a city street, an arthouse fight, an office chase, and a surreal multi-world music video. Add your character sheet as reference, pick a scene, paste the full prompt.",
+    category: "effects",
+    icon: "🎭",
+    sourceCredit: "Prompt Share — Character Sheet",
+    isPublished: true,
+    sortOrder: 110,
+    steps: [
+      {
+        id: "sheet",
+        title: "Generate your character sheet",
+        kind: "image",
+        description: "Create a multi-angle character sheet — it becomes the identity reference for every scene.",
+        promptTemplate:
+          "Full character sheet of [CHARACTER DESCRIPTION]: multi-angle consistent views (front, 3/4, side, back), identical facial structure and outfit across all angles, neutral background, photorealistic, high detail, consistent lighting.",
+        placeholders: [
+          { key: "CHARACTER DESCRIPTION", label: "Your character", example: "a young Black male athlete wearing a magenta American football uniform" },
+        ],
+        referenceSlots: [
+          { key: "you", label: "Optional identity photos", description: "Add photos to base the character on yourself.", required: false },
+        ],
+        usesPreviousResult: false,
+        tips: [],
+        variants: [],
+      },
+      {
+        id: "scene",
+        title: "Pick a scene and generate",
+        kind: "video",
+        description:
+          "Use your character sheet as the reference image, pick a scene prompt below, adapt the subject line to your character, and generate.",
+        promptTemplate:
+          "ultra cinematic werewolf transformation scene on an empty American football field, intense, dramatic, high realism, no music, only environmental sound. subject: [YOUR CHARACTER], alone on the field. environment: – empty football stadium at night, stadium lights casting strong highlights and deep shadows – subtle wind, quiet and eerie atmosphere. scene progression: opening – wide shot: he stands alone in the middle of the field – calm, slightly tense atmosphere. first signs – medium close-up: he feels something wrong in his body – subtle discomfort, breathing becomes heavier. pain onset – he grabs his arm or chest – body starts to tense, muscles contracting – he drops to his knees, struggling. transformation begins – he starts screaming in pain – muscles visibly expanding and shifting under the skin – bones subtly restructuring (non-graphic, cinematic). physical change – hands begin to elongate and change shape – posture becomes more animalistic – face partially transforms (suggested through shadow and movement, not graphic). intensification – camera moves dynamically around him – strong lighting flickers, emphasizing transformation – his scream transitions into a more primal sound. final moment – he rises partially transformed, breathing heavily – silhouette suggests a werewolf-like figure. visual style: – ultra cinematic, high contrast, dramatic lighting – cold tones with strong highlights from stadium lights – heavy shadows to keep transformation suggestive and aesthetic. effects: – subtle body deformation (non-graphic) – motion blur, light flicker, slight camera shake. sound design: – no music – wind, distant stadium ambience – breathing, bones shifting (subtle), painful scream evolving into a growl. camera: – mix of close-ups, handheld shots, and wide cinematic angles – dynamic movement during transformation. mood: – intense, painful, raw, cinematic, dramatic. ultra realistic, film-level quality",
+        placeholders: [
+          { key: "YOUR CHARACTER", label: "Your character", example: "a young Black male athlete wearing a magenta American football uniform (no helmet)" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["Same character, new scene — push it again with a different variant."],
+        variants: [
+          { label: "Gravity (floating cinema)", prompt: "ultra cinematic surreal cinema scene, elegant and atmospheric, superhero movie style realism, no music, only environmental sound. subject: [YOUR CHARACTER] sitting alone in an empty vintage movie theater. environment: – beautiful old cinema, classic architecture, velvet seats, warm textures, slightly worn but elegant – only light source is the movie screen, flickering light illuminating the space – dust particles visible in the air, soft haze. scene progression: opening shot – wide shot of the empty cinema, character sitting alone in the middle row – soft screen light flickering across the room. quiet moment – close-up: character holding a bucket of popcorn – ambient silence, subtle projector sound. trigger moment – a few popcorn pieces slowly start to lift from the bucket – floating gently in the air, unnatural but smooth motion. reaction – character notices, confused expression – looks around, then back at the floating popcorn. escalation – more popcorn begins to levitate and drift, spreading through the air – slow-motion floating particles, orbiting softly around him. full surreal moment – the character's body begins to lift slowly from the seat – he floats upward, slightly rotating – expression shifts to surprise and subtle fear. peak shot – wide cinematic frame: character suspended mid-air in the theater – popcorn floating all around like particles – light from the screen creating dramatic highlights and shadows. visual style: – ultra cinematic lighting, strong contrast, deep shadows – soft glow from the screen, flickering light patterns – warm tones mixed with subtle cool shadows. effects: – slow motion, floating particles, dust, popcorn pieces – slight lens flares, film grain, soft diffusion. camera: – slow, smooth cinematic movements – wide establishing shots + intimate close-ups. mood: – mysterious, elegant, surreal, immersive, visually aesthetic" },
+          { label: "Time-freeze (city street)", prompt: "ultra cinematic time-freeze sequence triggered by music pause, dynamic, stylized realism, no music in final output, only environmental sound. subject: [YOUR CHARACTER], casual athletic look. environment: – urban street in daylight, people walking, cars moving, natural city life – realistic lighting and textures. scene progression: opening (real-time) – medium shot: she walks through the street with headphones, holding her phone – subtle indication she is listening to music (head nod, rhythm in steps) – the surrounding world in motion: pedestrians, traffic, movement everywhere. focus moment – close-up of her hand holding the phone – thumb moves toward the pause button. trigger (key moment) – she taps pause – exact instant → everything around her freezes mid-motion. freeze effect detail – people stop mid-step, frozen in unnatural poses – hair, clothing, and objects suspended – a moving object (like a cup or bag) frozen mid-air. contrast – she keeps walking normally through the frozen world – only her movement continues. interaction moment – she casually approaches a frozen person holding a smoothie – takes it from their hand – drinks from it while continuing to move. visual style – strong contrast between dynamic subject vs completely static environment – natural daylight, slightly stylized. effects: – instant time-freeze transition at button press – frozen particles, suspended motion – subtle motion blur only on her. sound design: – no music – ambient city sounds → abruptly cut or drop into silence at pause moment – subtle wind or movement sound as she moves. camera: – smooth tracking shots – close-ups for trigger moment – wide shots to emphasize frozen world. mood: – surreal, playful, cinematic, visually striking. ultra realistic, cinematic quality" },
+          { label: "Fight (arthouse parking lot)", prompt: "cinematic action scene with arthouse sensibility, grounded realism + slow, poetic tension, no music, only environmental sound. subject: [YOUR CHARACTER], facing a tall, very muscular blond man, both serious and focused. environment: – empty parking lot at night, concrete textures, minimal architecture – cold, natural lighting from street lamps – wet ground reflecting light, subtle fog or mist. mood: – tense, minimal, introspective but violent, long pauses between bursts of action. scene progression: opening – wide static shot of both characters facing each other in silence – ambient sound: distant traffic, wind, faint hum of lights. build-up – slow close-ups: hands tightening, subtle breathing, eye contact – long takes, minimal camera movement. fight begins – sudden, sharp burst of movement – martial arts-style combat, precise and grounded – no exaggerated choreography, realistic impacts. dynamic sequence – mix of slow, observational shots and sudden fast movements – bodies colliding, slipping on wet ground, heavy breathing – camera stays mostly restrained, occasionally handheld for impact. visual style – naturalistic lighting, deep shadows, muted colors – minimal stylization, but highly aesthetic framing – long takes mixed with selective cuts. climax – tension builds, both exhausted – sudden punch from the blond man. final shot – extreme close-up in slow motion of the punch hitting the protagonist's face – skin deformation, sweat particles, subtle droplets in the air – time slows dramatically. sound design: – no music – punches, footsteps, breathing, fabric movement – ambient night sounds (wind, distant cars, electric hum). camera: – mostly static or slow controlled movement – occasional handheld during impact – intimate close-ups + wide minimal compositions. color palette: – desaturated tones, cold lighting, realistic colors. mood: – raw, emotional, heavy, cinematic, grounded realism. ultra realistic, film-level quality" },
+          { label: "Chase (office parkour)", prompt: "ultra cinematic chase sequence inside a corporate office, high tension, stylized realism, thriller-inspired aesthetic, no music, only environmental sound. subject: [YOUR CHARACTER], composed but determined. environment: – minimalist corporate office, clean geometry, glass walls, repetitive cubicles – cold lighting, slightly green/neutral tones – reflective surfaces, polished floors. antagonists: – multiple figures in full-body magenta teddy bear costumes, surreal and unsettling – carrying weapons, moving in coordinated, controlled manner. scene progression: opening – calm office environment, subtle ambient noise (computers, air conditioning) – character working or walking through the office. intrusion – sudden entrance of masked figures in magenta teddy suits – glass doors opening aggressively, tension rises instantly. realization + escape – close-up: character notices them, shifts to alert expression – immediately starts running. parkour sequence – jumping over desks, sliding across surfaces – knocking objects aside, dynamic movement – camera tracking fast, low angles, handheld energy. vertical escape – running into stairwell – fast climbing, using railings, skipping steps, wall-assisted movement – pursuers following closely. rooftop transition – door bursts open → rooftop at night or sunset – strong wind, city skyline visible. climax jump – sprints and jumps from one building to another – slow motion mid-air, dramatic lighting, tension peak. visual style: – ultra cinematic, high contrast lighting – clean, geometric framing inside office – motion blur, subtle lens flares, light reflections – mix of cold tones (office) and warmer tones (rooftop). effects: – dynamic camera shake during chase – slow motion for key jumps – slight stylization. sound design: – no music – footsteps, breathing, objects crashing – distant city sounds, wind on rooftop. camera: – fast tracking shots, handheld feel during action – low angles for movement – wide cinematic shots on rooftop. mood: – tense, surreal, high-adrenaline, visually striking. ultra realistic, cinematic quality" },
+          { label: "Music video (multi-world)", prompt: "hyper dynamic music video-style visual, surreal transitions, ultra cinematic, high energy. subject: [YOUR CHARACTER], rapping with strong attitude and presence. composition: a multi-layered or collage-style frame that captures different moments in one image, as if frozen from a fast-paced music video. main scene: – night urban street, wet asphalt, neon reflections – character in the center rapping intensely – dancers around him performing choreography, all dressed in white, dynamic poses. transition effect 1: – dramatic fast zoom into his mouth, distorted perspective, motion blur, stretched geometry. second scene emerging: – jungle environment, lush greenery, humid atmosphere – dancers now dressed in magenta, continuing choreography. transition effect 2: – another aggressive zoom distortion, tunnel-like effect, warped visuals. third scene emerging: – desert landscape, minimal, harsh light – dancers dressed in black, strong silhouettes, powerful poses. style: – very dynamic composition, layered or fragmented transitions within one frame – surreal blending of environments (city / jungle / desert coexisting visually). effects: – heavy motion blur, zoom distortion, chromatic aberration – light streaks, glow, grain, slight glitch feeling – depth layering and warped perspective. color palette: – strong contrast between neon night tones, lush greens, and desert neutrals – accents of white, magenta, and black outfits. mood: – energetic, chaotic, stylish, experimental, music video energy. camera feel: – wide lens distortion (24mm), extreme zoom effect simulation. ultra high resolution, no watermark" },
+        ],
+      },
+    ],
+  },
+
+  // ── 12. Head Animations ───────────────────────────────────────────────────
+  {
+    slug: "caricature-head-animations",
+    title: "Caricature Head Animations",
+    tagline: "Grotesque hyperreal floating heads, exaggerated to the max",
+    description:
+      "The underground art-toy look: generate a levitating, heavily caricatured head with ultra-hyperrealistic skin on a clean background, then animate it with wildly exaggerated facial animation — manic laughter, swinging earrings, trembling cheeks — while every texture stays photoreal.",
+    category: "effects",
+    icon: "🗿",
+    sourceCredit: "Freepik AI Suite guide",
+    isPublished: true,
+    sortOrder: 120,
+    steps: [
+      {
+        id: "head-png",
+        title: "Generate the caricature head",
+        kind: "image",
+        description:
+          "A floating head, no body or neck, isolated on a clean solid background. Exaggerated anatomy + hyperreal skin is the whole trick.",
+        promptTemplate:
+          "A levitating [CHARACTER DESCRIPTION] head, no body or neck, isolated on a [BACKGROUND COLOR] background. Strongly exaggerated, caricatured facial anatomy with ultra-hyperrealistic skin textures. [FEATURE EXAGGERATIONS]. Intense expression, eyes locked to camera. [DETAILS]. Ultra-hyperrealistic skin: visible pores, micro-wrinkles, oil, blemishes, peach fuzz, uneven pigmentation. No cracks, no seams. Hard studio lighting, high contrast, shadows emphasizing pores and anatomy. Underground art-toy aesthetic, grotesque but refined, post-human street culture energy. Ultra-high resolution, PBR, subsurface scattering, sharp macro detail — like a photographed physical sculpture.",
+        placeholders: [
+          { key: "CHARACTER DESCRIPTION", label: "Character", example: "Black male" },
+          { key: "BACKGROUND COLOR", label: "Background", example: "pure white" },
+          { key: "FEATURE EXAGGERATIONS", label: "Exaggerated features", example: "Oversized light blue eyes with visible veins, small flattened nose, extremely thick sculptural lips, large asymmetrical ears" },
+          { key: "DETAILS", label: "Tattoos, piercings, and hair", example: "Face tattoos under eyes and on temples, multiple ear piercings, red braided hair with visible scalp and frizz" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: ["Aggressive, dominant proportions that feel confrontational read best."],
+        variants: [],
+      },
+      {
+        id: "animate",
+        title: "Animate the head",
+        kind: "video",
+        description:
+          "Exaggerated, cartoon-like facial animation with fully realistic textures — the contrast is the effect. Camera stays completely static.",
+        promptTemplate:
+          "A floating hyperrealistic head on a clean neutral background. The character is clearly [EMOTION/ACTION] in an exaggerated, manic way. The expression is unmistakable: the mouth opens wide repeatedly, corners of the lips stretch unnaturally, teeth fully visible, cheeks lift and tremble, and the jaw shakes with each burst. Eyes widen, eyebrows bouncing sharply in rhythm. The head makes small, sharp movements, causing the earrings and piercings to visibly sway, bounce, and slightly swing with inertia. Facial muscles contract intensely, wrinkles deepen, skin stretches realistically. Movements are highly exaggerated and cartoon-like, while skin, eyes, teeth, metal, and hair remain ultra-realistic. The head stays floating and centered. Camera remains completely static, focus entirely on expressive facial animation and secondary motion.",
+        placeholders: [
+          { key: "EMOTION/ACTION", label: "Emotion / action", example: "laughing" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: ["Secondary motion sells it — earrings swinging naturally with head movement."],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 13. Product Shoot Studio ──────────────────────────────────────────────
+  // Sorted at 65 so it lands with the other prompt-pack guides (10–60),
+  // just before Realism Formula (70).
+  {
+    slug: "product-shoot-studio",
+    title: "Product Shoot Studio",
+    tagline: "Studio-quality fashion & product shots — model, mannequin, and editorial angles",
+    description:
+      "Turn any outfit or product into a full e-commerce shoot without a camera: a standing model shot, a runway-turn video, a clean mannequin product shot with a 360° spin, plus two editorial poses. Swap the [OUTFIT] and [MODEL DESCRIPTION] placeholders and rerun the whole set for every drop.",
+    category: "product",
+    icon: "🛍️",
+    sourceCredit: "Aurora Studio",
+    isPublished: true,
+    sortOrder: 65,
+    steps: [
+      {
+        id: "standing-model",
+        title: "Standing model shot",
+        kind: "image",
+        description:
+          "The hero image: your outfit on a model in a relaxed streetwear stance against a clean white studio backdrop. This frame anchors the whole shoot — every later step reuses the same outfit description.",
+        promptTemplate:
+          "A [MODEL DESCRIPTION] is wearing [OUTFIT]. The outfit has a relaxed streetwear look. The model stands in a relaxed fashion stance with the body slightly angled rather than facing directly forward. Weight rests mostly on one leg, creating a natural shift in the hips. Legs are slightly apart with one knee subtly bent, giving the pose a casual and confident feel. One arm rests naturally by the side while the other hand lightly holds the garment near the [BRAND ITEM] to showcase it. Shoulders are relaxed, and the head tilts slightly with a calm, confident expression. The background is a clean white studio backdrop with a black studio floor. Professional soft studio lighting highlights the fabric and creates subtle shadows. Portrait fashion photo captured with a high-end DSLR camera, 85mm lens, ultra-realistic, sharp details, fashion editorial quality, 8K resolution. Aspect ratio 9:16.",
+        placeholders: [
+          { key: "MODEL DESCRIPTION", label: "Describe your model", example: "stylish light-skin Black male model with a small Afro" },
+          { key: "OUTFIT", label: "The outfit / product", example: "a grey and navy Baltimore Ravens zip jacket with short sleeves, loose black baggy jeans, modern sneakers, and a white Japanese-style baseball cap" },
+          { key: "BRAND ITEM", label: "Logo / detail to showcase", example: "jacket zipper area with the team logo" },
+        ],
+        referenceSlots: [
+          { key: "product", label: "Product photo (optional)", description: "A flat or hanger shot of the real garment helps lock colors and logos.", required: false },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "Keep the technical photography terms — 85mm lens, 8K, editorial quality — they do the heavy lifting.",
+          "Describe the outfit in obsessive detail (colors, cut, sleeve length): the same [OUTFIT] text gets reused in every step so the shoot stays consistent.",
+          "9:16 portrait is the e-commerce and social standard — don't switch aspect ratios mid-shoot.",
+        ],
+        variants: [],
+      },
+      {
+        id: "runway-turn-video",
+        title: "Runway turn video",
+        kind: "video",
+        description:
+          "Animate the standing shot into a 12-second fashion clip: pose, side turn, zipper adjust, then two runway steps toward a slowly pushing-in camera.",
+        promptTemplate:
+          "Scene: Minimal studio fashion shoot with a clean light gray background and glossy reflective floor. Soft professional studio lighting. Subject: A [MODEL DESCRIPTION] wearing [OUTFIT]. Natural confident facial expression. Action / Motion: Shot 1 (0–3s): Full body shot. The model stands in a relaxed pose similar to the reference image, one hand lightly touching the chest of the garment, looking confidently at the camera like a professional fashion model. Shot 2 (3–6s): The model slowly turns the body slightly to the side, showing the side profile of the outfit. The fabric subtly reflects the studio lights. Shot 3 (6–9s): The model adjusts the front of the garment near the [BRAND ITEM] with one hand and slightly nods, giving a stylish streetwear model attitude. Shot 4 (9–12s): The model takes two slow confident steps forward like a runway walk while the camera slightly pushes in to highlight the outfit details. Style: high-fashion streetwear modeling, confident model attitude, smooth cinematic motion, studio fashion commercial, ultra realistic, sharp focus, detailed clothing texture, soft shadows, 4K cinematic lighting.",
+        placeholders: [
+          { key: "MODEL DESCRIPTION", label: "Describe your model", example: "stylish young male model" },
+          { key: "OUTFIT", label: "The outfit (same as step 1)", example: "a grey Baltimore Ravens zip-up jersey shirt, loose black jeans, black and white chunky sneakers, and a beige baseball cap" },
+          { key: "BRAND ITEM", label: "Detail the model adjusts", example: "jacket zipper area" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "Use the standing model shot as the first frame — the 4-shot timing structure (0–3s / 3–6s / 6–9s / 9–12s) keeps the motion readable.",
+          "The camera push-in in shot 4 is what makes it feel like a real fashion commercial.",
+        ],
+        toolLink: { label: "Animate it in Orchestrate", to: "/orchestrate" },
+        variants: [],
+      },
+      {
+        id: "mannequin-shot",
+        title: "Mannequin product shot",
+        kind: "image",
+        description:
+          "The clean catalog frame: the same outfit on a smooth grey retail mannequin, front-facing, evenly lit — pure e-commerce.",
+        promptTemplate:
+          "A smooth grey retail mannequin is dressed in [OUTFIT]. The outfit has a relaxed streetwear aesthetic and is styled neatly to showcase the clothing clearly. The mannequin stands upright facing directly toward the camera with a straight balanced posture. Both arms hang naturally by its sides so the garments are fully visible from the front. The legs are positioned slightly apart to create a stable stance while keeping the outfit clearly displayed. The garment front is centered and smooth, and any headwear sits properly on the mannequin's head to complete the outfit. The background is a clean white professional studio backdrop with a black studio floor. Soft, even studio lighting highlights the fabric texture and creates subtle shadows. High-quality product photography captured with a professional DSLR camera, 85mm lens, ultra-sharp details, realistic fabric texture, e-commerce fashion shoot style, portrait orientation, 8K resolution. Aspect ratio 9:16.",
+        placeholders: [
+          { key: "OUTFIT", label: "The outfit (same as step 1)", example: "a grey and navy Baltimore Ravens zip jacket with short sleeves, loose black baggy jeans, modern sneakers, and a white Japanese-style baseball cap" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Front-facing and evenly lit — this is the frame buyers zoom into, so clarity beats mood here.",
+          "Keep the exact same [OUTFIT] text as the model shots so your listing photos match.",
+        ],
+        variants: [],
+      },
+      {
+        id: "mannequin-spin",
+        title: "Mannequin 360° spin video",
+        kind: "video",
+        description:
+          "Animate the mannequin shot into a slow 360° rotation on a hidden platform — the classic product-page spin.",
+        promptTemplate:
+          "A grey retail mannequin wearing [OUTFIT] stands upright in a clean white studio with a black studio floor. The mannequin remains completely stiff and motionless with its arms naturally by its sides while slowly rotating 360 degrees in a smooth circle on a hidden rotating platform. The rotation is slow and steady to showcase the outfit from all angles. The camera remains fixed in front of the mannequin in a portrait frame, capturing a full-body view while the mannequin rotates. Soft professional studio lighting highlights the fabric textures while creating subtle shadows on the floor. Ultra-realistic fashion product showcase video, high-end studio quality, smooth motion, sharp details, cinematic lighting, 8K fashion product video.",
+        placeholders: [
+          { key: "OUTFIT", label: "The outfit (same as step 3)", example: "a grey and navy Baltimore Ravens zip jacket with short sleeves, loose black baggy jeans, modern sneakers, and a white Japanese-style baseball cap" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "\"Completely stiff and motionless\" matters — without it the AI adds human sway to the mannequin.",
+          "Fixed camera + rotating subject reads as premium; a moving camera reads as amateur.",
+        ],
+        toolLink: { label: "Animate it in Orchestrate", to: "/orchestrate" },
+        variants: [],
+      },
+      {
+        id: "seated-editorial",
+        title: "Seated editorial pose",
+        kind: "image",
+        description:
+          "The magazine frame: your model seated on a metal folding chair with crossed legs and generous negative space around the subject.",
+        promptTemplate:
+          "A [MODEL DESCRIPTION] is seated on a simple metal folding chair in a minimalist studio, wearing [OUTFIT], creating a relaxed streetwear aesthetic. The model sits in a confident editorial pose similar to a high-fashion studio portrait. The body is slightly turned to the side rather than facing directly forward. One leg is crossed over the other at the knee, with the extended leg angled forward. The posture is relaxed but composed. One arm rests casually on the backrest of the chair while the other hand rests naturally on the lap or near the [BRAND ITEM], subtly showcasing it. Shoulders are relaxed, and the head turns slightly to the side as if looking off-camera, giving a calm, confident expression. The composition is clean and minimalist with a large amount of negative space around the subject. The background is a clean white studio backdrop with a black studio floor. Professional soft studio lighting creates gentle shadows and highlights the texture of the clothing. Portrait fashion editorial photograph, high-end DSLR camera, 85mm lens, ultra-realistic, sharp details, fashion magazine quality, 8K resolution. Aspect ratio: 9:16.",
+        placeholders: [
+          { key: "MODEL DESCRIPTION", label: "Describe your model", example: "stylish light-skin Black male model with a small Afro" },
+          { key: "OUTFIT", label: "The outfit (same as step 1)", example: "a grey and navy Baltimore Ravens short-sleeve zip jacket, loose black baggy jeans, modern sneakers, and a white Japanese-style baseball cap" },
+          { key: "BRAND ITEM", label: "Logo / detail to showcase", example: "jacket zipper showing the team logo" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "The negative space is deliberate — it's where a designer drops the brand name or price.",
+          "Looking off-camera reads editorial; looking at camera reads catalog. Pick per use.",
+        ],
+        variants: [],
+      },
+      {
+        id: "top-down-editorial",
+        title: "Top-down editorial angle",
+        kind: "image",
+        description:
+          "Finish with the scroll-stopper: a slightly elevated camera looking down while the model leans forward and holds eye contact.",
+        promptTemplate:
+          "A [MODEL DESCRIPTION] is wearing [OUTFIT]. The outfit has a relaxed streetwear aesthetic. The model stands in a fashionable editorial pose viewed from a slightly top-down camera angle. The body leans slightly forward toward the camera while the head tilts upward, making direct eye contact with a confident expression. One hand lightly holds the front of the garment near the [BRAND ITEM], subtly showcasing it, while the other hand rests casually near the side. Shoulders are slightly rounded forward to create a relaxed, modern fashion posture. Legs are positioned close together with one foot slightly forward, giving the pose a stylish, composed look similar to a high-fashion editorial stance. The background is a clean white professional studio backdrop with a black studio floor. Soft studio lighting highlights the fabric texture and creates gentle shadows around the model. Portrait fashion photo captured from a slightly elevated angle using a high-end DSLR camera, 85mm lens, ultra-realistic, sharp details, fashion editorial quality, 8K resolution. Aspect ratio 9:16.",
+        placeholders: [
+          { key: "MODEL DESCRIPTION", label: "Describe your model", example: "stylish light-skin Black male model" },
+          { key: "OUTFIT", label: "The outfit (same as step 1)", example: "a grey and navy Baltimore Ravens zip jacket with short sleeves, loose black baggy jeans, modern sneakers, and a white Japanese-style baseball cap" },
+          { key: "BRAND ITEM", label: "Logo / detail to showcase", example: "zipper area with the team logo" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "The lean-forward + upward eye contact combination is what makes this angle feel dynamic instead of awkward.",
+          "Run all four image steps with the same [OUTFIT] text and you have a complete drop-ready shoot in one sitting.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 14. Helicopter Reveal ─────────────────────────────────────────────────
+  {
+    slug: "helicopter-reveal",
+    title: "Helicopter Reveal",
+    tagline: "A helicopter peels a giant cover off your building, car, or cover art",
+    description:
+      "The viral reveal effect: take a photo of any structure (building, car, billboard — anything), have AI drape a massive black cover over it held by a hovering helicopter, then animate the helicopter flying away and pulling the cover off to reveal what's underneath. Perfect for album drops, store openings, and product launches.",
+    category: "effects",
+    icon: "🚁",
+    sourceCredit: "@learnwithkayo",
+    isPublished: true,
+    sortOrder: 130,
+    steps: [
+      {
+        id: "take-photo",
+        title: "Take your photo",
+        kind: "instruction",
+        description:
+          "Photograph the thing you want to reveal — a building, storefront, car, or even a printed poster of your cover art on a wall. Shoot it straight-on or at a slight angle with the whole structure in frame and some sky visible above it (the helicopter needs somewhere to hover).",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Leave sky above the structure — the cables need room to stretch upward to the helicopter.",
+          "Daylight shots read best: the black cover pops against a bright sky.",
+        ],
+        variants: [],
+      },
+      {
+        id: "covered-image",
+        title: "Create the covered image",
+        kind: "image",
+        description:
+          "Upload your photo and generate the 'before' frame: the entire structure hidden under a taut black cover, suspended by cables from a helicopter hovering above.",
+        promptTemplate:
+          "A large black cover is draped over the entire [STRUCTURE], completely hiding it from view. The cover is held in place by cables that stretch upward into the sky, connecting to a helicopter hovering above. The helicopter is suspending the whole structure mid-reveal, cables taut, the black fabric hugging every curve of the [STRUCTURE] beneath it.",
+        placeholders: [
+          { key: "STRUCTURE", label: "What's being covered", example: "building" },
+        ],
+        referenceSlots: [
+          { key: "structure", label: "Your photo", description: "The building, car, or object that gets covered — the AI keeps the scene and swaps in the draped cover.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "The phrase \"hugging every curve\" is what makes the fabric look real instead of like a flat box.",
+          "Keep the original photo's angle — the reveal video only works if the covered frame matches the scene.",
+        ],
+        variants: [],
+      },
+      {
+        id: "reveal-animation",
+        title: "Animate the reveal",
+        kind: "video",
+        description:
+          "Animate the covered image: the helicopter flies out of frame, dragging the cover with it and revealing the structure underneath.",
+        promptTemplate:
+          "A helicopter flies out of frame to the right, carrying a large black cover with it. The cover is attached to the helicopter by cables and is being pulled away, slowly revealing the [STRUCTURE] beneath as it goes. The fabric peels back smoothly as the helicopter moves, the cables staying taut throughout the motion. The helicopter and cover exit the frame completely to the right, leaving the [STRUCTURE] fully revealed.",
+        placeholders: [
+          { key: "STRUCTURE", label: "What's being revealed", example: "building" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "Use the covered image as the start frame and (if your tool supports it) your original photo as the end frame — the reveal lands exactly on reality.",
+          "\"Cables staying taut throughout\" stops the AI from letting the cover float away like a loose sheet.",
+        ],
+        toolLink: { label: "Animate it in Orchestrate", to: "/orchestrate" },
+        variants: [],
+      },
+      {
+        id: "get-creative",
+        title: "Get creative",
+        kind: "instruction",
+        description:
+          "Swap the structure for anything: your album cover printed on a billboard, a new car, your merch table. The covered frame + fly-away reveal works on any object with a recognizable silhouette.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Time the reveal to the beat drop when you cut it into a teaser.",
+          "Run the same reveal on 3–4 different structures and cut them together for a launch-day montage.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 15. Floating Music Cards ──────────────────────────────────────────────
+  {
+    slug: "floating-music-cards",
+    title: "Floating Music Cards",
+    tagline: "Your music world materializes around you in AR — floating player cards",
+    description:
+      "Surround yourself with semi-transparent music player UI cards — Spotify and Apple Music style panels floating at different depths in 3D space, featuring your artists and songs. Then animate a slow camera orbit while you stay frozen in time. An instant scroll-stopper for playlist promos and artist announcements.",
+    category: "music-video",
+    icon: "🎧",
+    sourceCredit: "@learnwithkayo",
+    isPublished: true,
+    sortOrder: 140,
+    steps: [
+      {
+        id: "take-photo",
+        title: "Take your photo",
+        kind: "instruction",
+        description:
+          "Take a clean photo of yourself — standing or seated, any location. Leave some space around you in the frame: the floating cards need room to hover in the foreground and background.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "A slightly wider shot works better than a tight portrait — the parallax effect needs depth.",
+          "Moody or evening lighting makes the glowing card outlines pop harder.",
+        ],
+        variants: [],
+      },
+      {
+        id: "cards-image",
+        title: "Generate the floating cards image",
+        kind: "image",
+        description:
+          "Upload your photo and generate the AR frame: layered music player cards hovering around you at different depths, with your chosen artists and songs on them.",
+        promptTemplate:
+          "Floating around the person are multiple semi-transparent music player UI cards — a mix of Spotify and Apple Music interfaces — hovering at different depths in 3D space. Some cards overlap in the foreground, others fade softly into the background, creating a layered parallax feel. The cards feature artists like [ARTIST 1], [ARTIST 2], and [ARTIST 3] with songs like [SONG 1], [SONG 2], and [SONG 3]. UI style: frosted glass panels with warm amber glowing outlines, pill-shaped progress bars, album art thumbnails, and playback controls. Cinematic depth of field keeps the subject sharp while the cards drift at varying distances. The overall mood feels like the person's entire music world has materialized around them in augmented reality.",
+        placeholders: [
+          { key: "ARTIST 1", label: "First artist", example: "your artist name" },
+          { key: "ARTIST 2", label: "Second artist", example: "a collaborator" },
+          { key: "ARTIST 3", label: "Third artist", example: "an inspiration" },
+          { key: "SONG 1", label: "First song", example: "your new single" },
+          { key: "SONG 2", label: "Second song", example: "a fan favorite" },
+          { key: "SONG 3", label: "Third song", example: "a deep cut" },
+        ],
+        referenceSlots: [
+          { key: "photo", label: "Your photo", description: "Locks your identity, outfit, and scene — the cards get composited around you.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "Use your own artist name and real song titles — the cards become free promo for your actual catalog.",
+          "\"Frosted glass panels with warm amber glowing outlines\" is the styling that sells the AR look; keep it.",
+        ],
+        variants: [],
+      },
+      {
+        id: "orbit-animation",
+        title: "Animate the camera orbit",
+        kind: "video",
+        description:
+          "Bring the frame to life: you stay perfectly frozen while the camera orbits slowly, letting the cards drift past at different depths.",
+        promptTemplate:
+          "Slow camera orbit. Person stays static, frozen in time — only the camera orbits very slowly around them. The floating music player cards hold their positions in 3D space, drifting past the lens at different depths as the camera moves, creating a layered parallax effect.",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "\"Frozen in time, only camera orbits\" is the key phrase — it stops the AI from animating your body.",
+          "The parallax between near and far cards is what makes the orbit feel 3D, not flat.",
+        ],
+        toolLink: { label: "Animate it in Orchestrate", to: "/orchestrate" },
+        variants: [],
+      },
+      {
+        id: "get-creative",
+        title: "Get creative",
+        kind: "instruction",
+        description:
+          "Swap the card contents for anything: podcast episodes, tour dates, merch drops, or your top-played tracks of the year. Same frame, endless promos.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Post it when a new single drops with the single's card front and center.",
+          "A version with tour-date cards makes a great announcement reel.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── 16. Wong Kar-wai Look ─────────────────────────────────────────────────
+  {
+    slug: "wong-kar-wai-look",
+    title: "The Wong Kar-wai Look",
+    tagline: "Amber-and-emerald split tones, strict profiles, one tungsten practical",
+    description:
+      "Shoot in the visual language of Wong Kar-wai: single warm tungsten practicals, split-toned amber-and-emerald grades, off-centre framing through obstructions, and step-printed slow motion. This guide distills the full craft reference — camera, palette, composition, and the negative prompt that keeps AI defaults from breaking the aesthetic.",
+    category: "realism",
+    icon: "🎞️",
+    sourceCredit: "Wong Kar-wai — The Complete Visual Language",
+    isPublished: true,
+    sortOrder: 150,
+    steps: [
+      {
+        id: "choose-register",
+        title: "Choose your film register",
+        kind: "instruction",
+        description:
+          "Pick which Wong Kar-wai era you're channeling — it decides your palette and aspect ratio. In the Mood for Love (1.66:1, amber-and-emerald split tones) is the iconic default. Chungking Express / Fallen Angels bring neon-chaos saturation (magenta, cyan, electric yellow through rain and glass). Ashes of Time is bleached desert and gold.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "If in doubt, default to In the Mood for Love — the most recognizable register.",
+          "Non-negotiables in every register: lifted blacks that carry color (never pure #000000), warm amber highlights (never neutral white), no HDR, no direct eye contact between subjects.",
+          "Vertical 9:16 is forbidden in this style — if you need vertical, letterbox a wide frame instead.",
+        ],
+        variants: [],
+      },
+      {
+        id: "portrait",
+        title: "Single-character portrait",
+        kind: "image",
+        description:
+          "The signature frame: your character in a textured interior, framed through an obstruction, lit by one warm tungsten practical, graded amber-and-emerald.",
+        promptTemplate:
+          "[CHARACTER] in [LOCATION] with textured surfaces and a visible practical light source, framed through [OBSTRUCTION] with the foreground out of focus bleeding colored bokeh, camera offset from the subject's sightline, gaze directed away from the lens, lit by a single bare warm tungsten practical producing halation and casting the face half in amber key and half in deep emerald shadow, split-toned color grade with warm amber-orange highlights and emerald shadows, lifted blacks that carry color, honey-warm skin, shot on 35mm Kodak Vision 500T with an 85mm Zeiss prime at f/2, aspect ratio 1.66:1, fine organic film grain, [ATMOSPHERE], restrained melancholic register, in the style of Wong Kar-wai's In the Mood for Love, cinematography by Christopher Doyle and Mark Lee Ping-bing. Negative: clean studio lighting, high-key illumination, flat neutral daylight, crushed pure-black shadows, blown highlights, HDR, oversaturated Instagram filter, flat untextured walls, drone shot, fisheye, vertical 9:16, smiling, direct eye contact, CGI, cartoon, text, watermark.",
+        placeholders: [
+          { key: "CHARACTER", label: "Character + wardrobe + posture", example: "a woman in her late twenties in a deep crimson silk cheongsam with gold embroidery, hair in a low 1960s chignon, seated on a wooden chair" },
+          { key: "LOCATION", label: "Location (textured, with a light source)", example: "a narrow 1962 Hong Kong boarding-house room with emerald-green floral wallpaper" },
+          { key: "OBSTRUCTION", label: "What you shoot through", example: "an open doorway with a blurred dark doorframe filling the left 40% of the image" },
+          { key: "ATMOSPHERE", label: "Atmosphere", example: "cigarette smoke curling through the lamp light, humid still interior" },
+        ],
+        referenceSlots: [
+          { key: "face", label: "Your face reference (optional)", description: "Add yourself as the character while keeping the period styling.", required: false },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "The obstruction is not optional — a doorframe, beaded curtain, or window mullion in the near plane is what makes it Wong Kar-wai.",
+          "Every wall must be textured: patterned, papered, aged, or damp. Flat clean walls instantly break the aesthetic.",
+          "Keep the negative prompt block — AI defaults produce the exact opposites of this look.",
+        ],
+        variants: [],
+      },
+      {
+        id: "two-shot",
+        title: "Two-character scene",
+        kind: "image",
+        description:
+          "The strict-profile two-shot: two characters framed in rigid side-profile separated by a partition, neither looking at the other, one practical lighting the whole frame.",
+        promptTemplate:
+          "[CHARACTER A] and [CHARACTER B] in [LOCATION], framed as a strict profile two-shot separated by a vertical partition, neither looking directly at the other, restrained posture, no physical contact, lit by a single warm tungsten practical motivating the whole frame, split-toned amber-and-emerald palette with lifted colored shadows, shot on 35mm Kodak Vision 500T with a 50mm prime at f/2, fine organic film grain with halation, [ATMOSPHERE], restrained unresolved emotional tension, in the style of Wong Kar-wai, cinematography by Christopher Doyle. Negative: shot-reverse-shot framing, direct eye contact, smiling, embracing, clean studio lighting, crushed blacks, HDR, flat walls, vertical 9:16, CGI, text, watermark.",
+        placeholders: [
+          { key: "CHARACTER A", label: "First character", example: "a man in a dark 1960s suit with pomaded hair" },
+          { key: "CHARACTER B", label: "Second character", example: "a woman in a high-collared floral cheongsam" },
+          { key: "LOCATION", label: "Location", example: "a cramped noodle stall at night, steam rising" },
+          { key: "ATMOSPHERE", label: "Atmosphere", example: "steam and cigarette smoke under a bare bulb" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Restraint is the register: no touching, no eye contact, gazes past each other or at the floor.",
+          "The vertical partition (wall edge, curtain, shelf) between them carries the emotional distance.",
+        ],
+        variants: [],
+      },
+      {
+        id: "slow-motion",
+        title: "Step-printed slow-motion passage",
+        kind: "video",
+        description:
+          "The moving signature: a simple action rendered in step-printed slow motion with visible motion smear, camera drifting laterally, one practical burning in frame.",
+        promptTemplate:
+          "[SUBJECT] performing a simple action — [ACTION] — rendered in step-printed optical-printer slow motion with visible motion smear, camera tracking laterally with a patient one-beat-per-second drift, lit by a single practical light source with heavy halation bloom, split-toned amber-and-emerald palette with lifted colored shadows, 35mm Kodak Vision 500T film grain, [ATMOSPHERE], restrained melancholic mood, in the style of Wong Kar-wai, cinematography by Christopher Doyle. Negative: clean overcranked slow motion, sharp frozen frames, studio lighting, crushed blacks, HDR, drone shot, vertical 9:16, smiling, direct eye contact, CGI, text, watermark.",
+        placeholders: [
+          { key: "SUBJECT", label: "Your subject", example: "a woman in a crimson cheongsam carrying a thermos of noodles" },
+          { key: "ACTION", label: "The simple action", example: "descending a dim staircase past a peeling wall" },
+          { key: "ATMOSPHERE", label: "Atmosphere", example: "humid air, faint smoke drifting through the lamplight" },
+        ],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "\"Step-printed with visible motion smear\" is the signature — clean smooth slow motion reads as generic, not Wong Kar-wai.",
+          "Keep the action mundane: walking, turning to leave, lighting a cigarette. The mood carries it, not the event.",
+        ],
+        toolLink: { label: "Animate it in Orchestrate", to: "/orchestrate" },
+        variants: [],
+      },
+      {
+        id: "grade-check",
+        title: "Check the grade",
+        kind: "instruction",
+        description:
+          "Before you post, audit your output against the five most common failure modes: clean high-key lighting, pure-black shadows, direct eye contact between leads, oversaturated Instagram grading, and flat untextured walls. If any appear, regenerate — the look breaks easily under AI defaults.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Shadows should carry emerald, teal, or oxblood color — if they're pure black, the grade is wrong.",
+          "Global saturation low, red and green channels rich — that split is the WKW grade, not a generic 'moody filter'.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+
+  // ── NBA Josh — Looping Officers Composite ────────────────────────────────
+  {
+    slug: "nba-josh-looping-officers",
+    title: "Looping Officers — Surreal Urban Music Video",
+    tagline: "Josh stands unbothered. Officers run hard. Nobody moves.",
+    description:
+      "A reusable first-party production preset for The One campaign. Each run creates one standalone 15–30 second performance plate: the lead artist stays calm beneath a hanging microphone while officers sprint intensely behind them but never close the distance. Swap the creator-owned lead-character and wardrobe references for each run, choose a visual scene, then review the still and motion gates before paid work. Aurora supplies Layer A and the Layer B preparation brief; final compositing remains an explicit external handoff.\n\n⚠️ CHARACTER SPEC — MUST MATCH:\n• 6'3\" TALL LEAN athletic build. Long-limbed. NOT muscular, NOT thick, NOT bloated.\n• Long fully red dreadlocks past shoulders.\n• TATTOOS: Right shoulder = \"NBA\" with stars + \"JOSH\" gothic lettering. Left shoulder = portrait tattoo (low-cut Afro punk version of Josh's own face). Both forearms = full sleeves (clouds, roses, stars). ZERO tattoos on face or neck. No extra markings anywhere else.\n• Jewellery on every outfit: custom diamond \"NBA JOSH 444\" pendant on heavy diamond Cuban link chain + iced-out AP watch.\n• Vintage silver hanging microphone dangling from above — always visible.",
+    category: "music-video",
+    icon: "🎬",
+    sourceCredit: "NBA Josh · Out The Mud Records",
+    isPublished: true,
+    sortOrder: 5,
+    steps: [
+      {
+        id: "character-spec",
+        title: "Character Spec — READ BEFORE GENERATING",
+        kind: "instruction",
+        description:
+          "Before any generation, lock down the character spec. Every prompt MUST include all of these:\n\n**FACE & BODY:**\n6'3\" tall, lean long-limbed athletic Black male. Slender, NOT muscular or thick. Long fully red dreadlocks past shoulders. Clean face — NO tattoos or markings on face or neck.\n\n**REAL TATTOOS (arms only):**\n• Right shoulder: \"NBA\" with stars + \"JOSH\" in gothic lettering\n• Left shoulder: portrait tattoo of a young Black male face (low-cut Afro, punk energy)\n• Both forearms: full sleeve tattoos — clouds, roses, stars, geometric patterns\n• Nothing on face, neck, chest, or legs\n\n**JEWELLERY (every outfit):**\n• Custom diamond \"NBA JOSH 444\" pendant — large chunky iced-out silver/diamond letters on heavy diamond Cuban link chain\n• Iced-out AP (Audemars Piguet) diamond watch on left wrist\n\n**PROP (every scene):**\n• Vintage silver retro hanging microphone — dangles from above, always visible\n\n**ENERGY:**\nCompletely unbothered. Calm. Superpower aura. Does NOT look scared or tense.\n\n**OFFICERS:**\n4–6 officers in full police uniform running at absolute maximum aggression — but frozen on invisible treadmill (stuck in place, all running energy but zero forward movement). At end of clip Josh slowly turns, gives a calm smirk, walks away. Officers collapse exhausted.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [
+          { key: "face", label: "Josh blue-lit portrait (primary identity ref)", description: "Upload this to Kling/fal as the face reference. Best likeness lock.", required: true },
+          { key: "mic", label: "Vintage hanging silver microphone", description: "Always present in scene — hanging from above.", required: false },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "The single biggest cause of drift: including tattoo or muscle descriptions that contradict Josh's actual build. Copy the spec exactly.",
+          "If the model adds face/neck tattoos — they are hallucinated. Add 'NO tattoos on face, neck, or chest' as a negative prompt.",
+          "If the character looks too muscular — add 'slender long-limbed lean build, basketball player proportions, NOT bodybuilder'.",
+        ],
+        variants: [],
+      },
+      {
+        id: "outfit-library",
+        title: "Outfit Library — All Variants",
+        kind: "instruction",
+        description:
+          "Each outfit is its own standalone video post. Keep the NBA JOSH pendant and AP watch in every look.\n\n**A — Dark Night:** Burgundy sleeveless sport jersey, snake-frame sunglasses, dark wet street. Do not add a letter to the outfit.\n\n**B — White Mushroom Tee:** Psychedelic mushroom-eye tee, black leather pants, red Jordan 4s or Air Force 1s, red crystal belt, snake-frame sunglasses; golden-hour suburban street.\n\n**C — NEVER JXST:** Red/black racing jersey with white side panels, distressed black jeans, purple crystal belt, white Nike Shox or Air Force 1s; night or golden hour.\n\n**D — Crazy Visions Cyber-Punk:** Orange/black beanie, dark mushroom-eye tee, distressed red jeans, shearling boots, purple crystal belt; golden hour or dusk.\n\n**E — Red Puffer:** Glossy red puffer, wide camo cargos, blue paisley basketball sneakers, textured wavy sunglasses; street or rooftop.\n\n**F — Crazy Visions Clean:** Red/black beanie, oversized white tee, camo cargos or black pants, painted white/teal AF1s, red crystal belt.\n\n**G — Shearling Racing Edge:** Brown shearling bomber over NEVER JXST jersey, red leather pants, painted white/teal AF1 Mid, red iridescent sunglasses; daytime or dusk.\n\n**H — Minecraft Creeper Street:** Lime creeper tee, wide camo cargos, blue paisley basketball sneakers.\n\n**Red Benz:** Deep-red AMG GT 4-door with open door and purple/pink interior light. White streetwear jacket, graphic tee, embroidered white cargo shorts, purple VaporMax, wavy sunglasses. Replace the reference character with Josh's slim 6'3\" build, red dreads, likeness, and jewellery.",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: false,
+        tips: [
+          "Outfit B (white tee) is the most successful so far — IMG_3735 is nearly perfect. Use it as the benchmark.",
+          "Outfit C (NEVER JXST) shows good jersey accuracy in generated stills — build on those.",
+          "For the Benz scene: the car and outfit from the reference are borrowable. The face MUST be Josh's.",
+          "Always include the AP watch and NBA JOSH pendant — they are signature identity markers.",
+        ],
+        variants: [],
+      },
+      {
+        id: "generate-standalone-clips",
+        title: "Generate Standalone Clips — One Per Outfit",
+        kind: "video",
+        description:
+          "Start the production preset in Aurora Video Agent. Each clip is a separate standalone post with editable 15, 20, or 30-second delivery, visual scene choices, and creator-owned identity/wardrobe uploads. Aurora locks the explicit Seedream still and Seedance motion models, then requires still and motion review before paid generation.",
+        promptTemplate:
+          "Cinematic music video. Tall lean Black male rapper, 6'3\" slender long-limbed build (NOT muscular), long fully red dreadlocks past shoulders, sculptural [GLASSES] sunglasses, large diamond Cuban link chain with custom 'NBA JOSH 444' diamond pendant, iced-out AP diamond watch. Tattoo on right shoulder: 'NBA' with stars + 'JOSH' gothic lettering. Tattoo on left shoulder: portrait of young Black male face. Full forearm sleeve tattoos both arms — clouds roses stars. NO tattoos on face neck or chest. Wearing: [OUTFIT BLOCK]. Stands full-body on a [SETTING] wet urban street, officers in full uniform charging at maximum aggression behind him but completely frozen in place (invisible treadmill) — running legs, going nowhere. Vintage silver retro hanging microphone dangles from above. Josh is completely unbothered, calm superpower energy. Static locked-off camera. No camera movement. Near the end he slowly turns, gives a calm smirk toward camera, then walks away. Officers collapse exhausted. Realistic cinematic music video aesthetic. 16:9. High contrast dramatic lighting. Shallow depth of field.",
+        placeholders: [
+          { key: "GLASSES", label: "Glasses style", example: "red snake-frame" },
+          { key: "OUTFIT BLOCK", label: "Outfit description from outfit library", example: "white graphic tee with psychedelic mushroom-eye print + black leather pants + red Jordan 4s + red crystal belt" },
+          { key: "SETTING", label: "Scene setting", example: "golden hour suburban, palm trees" },
+        ],
+        referenceSlots: [
+          { key: "face", label: "Josh blue-lit close-up portrait", description: "Primary identity lock for Kling. Use for every generation.", required: true },
+        ],
+        usesPreviousResult: false,
+        tips: [
+          "If face drifts: re-upload the reference image and reduce the prompt word count — shorter prompts drift less.",
+          "If extra tattoos appear on face/neck: add to negative prompt 'no face tattoos, no neck tattoos, clean face'.",
+          "If too muscular: add 'slender lean tall basketball player proportions, long limbs, narrow chest'.",
+          "Generate 3 variations per outfit — pick the best likeness, not the best composition.",
+          "IMG_3735 is the benchmark still for Outfit B. If generation is worse than that, regenerate.",
+        ],
+        variants: [
+          {
+            label: "Outfit B — White Mushroom Tee (golden hour, base)",
+            prompt: "Cinematic music video. Tall lean Black male rapper, 6'3\" slender long-limbed build, long fully red dreadlocks past shoulders, red snake-frame sculptural sunglasses, large diamond Cuban link chain with 'NBA JOSH 444' diamond pendant, iced-out AP diamond watch. Tattoo right shoulder: NBA stars JOSH gothic. Tattoo left shoulder: portrait of young Black male face. Full forearm sleeves both arms. NO tattoos face neck chest. Wearing white graphic tee with colourful psychedelic mushroom-eye print, black leather pants, red Jordan 4s, red crystal-studded belt. Stands full-body on wet golden-hour suburban street, palm trees, police cruisers with flashing blue/red lights behind. 4 officers in full uniform charging maximum aggression but frozen in place — running hard, going nowhere. Vintage silver hanging microphone from above. Completely unbothered calm energy. Static locked-off camera. Near end he slowly turns, calm smirk, walks away. Officers collapse. Cinematic music video. 16:9. Warm golden sunset light, dramatic shadows.",
+          },
+          {
+            label: "Outfit C — NEVER JXST Racing Jersey (dark night)",
+            prompt: "Cinematic music video. Tall lean Black male rapper, 6'3\" slender long-limbed build, long fully red dreadlocks past shoulders, red snake-frame sculptural sunglasses, large diamond Cuban link chain with 'NBA JOSH 444' diamond pendant, iced-out AP diamond watch. Tattoo right shoulder: NBA stars JOSH gothic. Full forearm sleeves. NO tattoos face neck. Wearing NEVER JXST long-sleeve racing jersey — red and black with white side panels — black distressed jeans, purple crystal-studded belt, white Nike Shox sneakers. Stands full-body on dark wet urban street night, police cruisers with flashing lights behind. 4 officers charging maximum aggression but frozen on invisible treadmill. Vintage silver hanging microphone from above. Completely unbothered. Static locked-off camera. Near end slow turn, calm smirk, walks away. Officers exhausted. Cinematic. 16:9. Dark moody overhead streetlight, deep shadows.",
+          },
+          {
+            label: "Outfit G — Shearling + Racing (dusk)",
+            prompt: "Cinematic music video. Tall lean Black male rapper, 6'3\" slender long-limbed build, long fully red dreadlocks past shoulders, sculptural red iridescent sunglasses, large diamond Cuban link chain with 'NBA JOSH 444' diamond pendant, iced-out AP diamond watch. Tattoo right shoulder: NBA stars JOSH gothic. Full forearm sleeves. NO tattoos face neck. Wearing distressed brown shearling fur bomber jacket over NEVER JXST red/black racing jersey, red leather pants, white custom painted Nike AF1 mid. Stands full-body on wet urban street at dusk, officers charging hard but frozen in place. Vintage silver hanging microphone from above. Unbothered calm. Static camera. Near end turns, smirks, walks away. Cinematic dusk warm + cool tones. 16:9.",
+          },
+          {
+            label: "Red Benz Scene — Borrow car + outfit",
+            prompt: "Cinematic music video still. Tall lean Black male rapper, 6'3\" slender long-limbed build, long fully red dreadlocks past shoulders, wavy sculptural sunglasses colourful lenses, large diamond Cuban link chain with 'NBA JOSH 444' diamond pendant, iced-out AP diamond watch. Tattoo right shoulder: NBA stars JOSH gothic. Full forearm sleeves. NO tattoos face neck. Wearing white streetwear jacket over graphic tee, embroidered white cargo shorts, purple Nike VaporMax. Leans against a deep metallic red AMG Mercedes-Benz GT 4-door, door open, interior purple/pink ambient light, AMG grille. Officers in uniform charging in the background, frozen in place. Dusk urban setting. Cinematic. 16:9.",
+          },
+          {
+            label: "Outfit E — Red Puffer + Camo (urban)",
+            prompt: "Cinematic music video. Tall lean Black male rapper, 6'3\" slender long-limbed build, long fully red dreadlocks past shoulders, sculptural wavy sunglasses textured white frames with colourful lenses, large diamond Cuban link chain with 'NBA JOSH 444' diamond pendant, iced-out AP diamond watch. Tattoo right shoulder: NBA stars JOSH gothic. Full forearm sleeves. NO tattoos face neck. Wearing glossy red puffer jacket, wide-leg camo cargo pants, blue paisley basketball sneakers. Stands on wet urban street, officers frozen in charging position behind. Vintage silver hanging microphone from above. Calm unbothered. Static camera. Cinematic. 16:9.",
+          },
+        ],
+        toolLink: { label: "Open Aurora production preset", to: "/video-agent" },
+      },
+      {
+        id: "post-processing",
+        title: "Post-Processing Each Clip",
+        kind: "instruction",
+        description:
+          "After generating each clip, apply these fixes in CapCut before posting:\n\n**Per-clip edits (each standalone post):**\n1. **Sync audio** — lay the 24-second hook underneath, align so Josh's movement hits the beat drop\n2. **Colour grade** — golden-hour clips: warm orange lift, teal shadows. Night clips: deep blue/teal grade, crushed blacks\n3. **Motion blur on officers** — Video Effects → Motion Blur (medium) to sell the treadmill illusion\n4. **Vignette** — 25–35%, darkens edges, pulls eye to Josh\n5. **Subtitle overlay** (optional) — song title + @NBAJosh handle bottom-left\n6. **Export** — 1080×1920 (vertical for TikTok/Reels) or 1920×1080 (horizontal for YouTube)\n\n**Caption formula (per post):**\n\"[Outfit vibe] 🔥 They were running full speed. Didn't move an inch. #NBaJosh #LoopingOfficers #OutTheMud\"",
+        promptTemplate: "",
+        placeholders: [],
+        referenceSlots: [],
+        usesPreviousResult: true,
+        tips: [
+          "Each clip is its own post — different outfit = different day's content. Don't merge them.",
+          "The 24-second hook is the same audio under every clip — the outfit change is what keeps it fresh.",
+          "Officers' frozen running is the comedy/tension — the motion blur sells it as real effort going nowhere.",
+          "The calm smirk + walk-away at the end is the money shot. Make sure it's in every clip.",
+        ],
+        variants: [],
+      },
+    ],
+  },
+];
