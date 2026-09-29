@@ -723,7 +723,7 @@ function Index() {
   const latestCreation = creations.find((creation) => creation.status === "done" && creation.url);
 
   return (
-    <div className="aurora-body">
+    <div className="aurora-body aurora-canvas-page">
       <div className="aurora-logo-top">
         <div className="aurora-logo-mark">A</div>
         <span>Aurora<br /><small>Canvas</small></span>
