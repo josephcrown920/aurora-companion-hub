@@ -73,6 +73,7 @@ const STUDIO_FEATURES: Feature[] = [
   { to: "/studio",          label: "Image & Video Studio",  icon: Sparkles, previewImg: "/nav-previews/studio.jpg" },
   { to: "/previs",          label: "Previs Workspace",      icon: Clapperboard, previewImg: "/nav-previews/music-video.jpg", badge: "New" },
   { to: "/likeness",        label: "Locked Likeness Shoot", icon: Camera,   previewImg: "/nav-previews/avatar.jpg",        badge: "New" },
+  { to: "/reshoot",         label: "Multi-Angle Photoshoot", icon: Camera,  previewImg: "/nav-previews/avatar.jpg",        badge: "New" },
   { to: "/scene-builder",   label: "Scene Builder",         icon: Layers,   previewImg: "/nav-previews/scene-builder.jpg" },
   { to: "/agent",           label: "Video Agent",           icon: Film,     badge: "New" },
   { to: "/comfy",           label: "ComfyUI Workflow Studio", icon: Workflow, badge: "New" },
@@ -303,7 +304,9 @@ export function MobileNav() {
   // server-verified admin check has settled as admin — partner, referral and
   // ordinary accounts never see them, whatever sits in session/local storage.
   const gatedBadge = (f: Feature) => isHiddenFromUsers(featureKeyForRoute(f.to));
-  const globalNav = getGlobalMobileNavBranches({ isAdmin, showFeature });
+  // Hidden features stay out of the sidebar for everyone (admins manage them from /admin).
+  const navShowFeature = (key: Parameters<typeof showFeature>[0]) => showFeature(key) && !isHiddenFromUsers(key);
+  const globalNav = getGlobalMobileNavBranches({ isAdmin, showFeature: navShowFeature });
   const visibleTabs = globalNav.mobileTabs;
 
   const isCanvas  = isActive(pathname, "/canvas");
