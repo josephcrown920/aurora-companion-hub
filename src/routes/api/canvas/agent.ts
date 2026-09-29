@@ -20,7 +20,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/agent")({
+export const Route = createFileRoute("/api/canvas/agent")({
   server: {
     handlers: {
       POST: async ({ request }) => {

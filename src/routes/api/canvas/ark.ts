@@ -88,7 +88,7 @@ async function arkVideoFetch(path: string, key: string, init?: RequestInit) {
   });
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/ark")({
+export const Route = createFileRoute("/api/canvas/ark")({
   server: {
     handlers: {
       POST: async ({ request }) => {

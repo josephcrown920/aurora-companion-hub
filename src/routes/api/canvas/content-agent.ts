@@ -50,7 +50,7 @@ const tools = [
   },
 ];
 
-export const Route = createFileRoute("/api/canvas/canvas/content-agent")({
+export const Route = createFileRoute("/api/canvas/content-agent")({
   server: {
     handlers: {
       POST: async ({ request }) => {

@@ -16,7 +16,7 @@ function jsonError(message: string, status: number) {
   });
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/chat-stream")({
+export const Route = createFileRoute("/api/canvas/chat-stream")({
   server: {
     handlers: {
       POST: async ({ request }) => {

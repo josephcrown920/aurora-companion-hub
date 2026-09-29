@@ -37,7 +37,7 @@ async function zmFetch(path: string, key: string, init?: RequestInit) {
   });
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/zenmux")({
+export const Route = createFileRoute("/api/canvas/zenmux")({
   server: {
     handlers: {
       POST: async ({ request }) => {

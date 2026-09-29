@@ -20,7 +20,7 @@ function key() {
   return process.env["ARK_API_KEY"]?.trim();
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/assistant")({
+export const Route = createFileRoute("/api/canvas/assistant")({
   server: {
     handlers: {
       POST: async ({ request }) => {

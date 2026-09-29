@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { callAuroraDirector } from "@/features/aurora-canvas/lib/aurora-director.server";
 
-export const Route = createFileRoute("/api/canvas/canvas/modelark-director")({
+export const Route = createFileRoute("/api/canvas/modelark-director")({
   server: {
     handlers: {
       POST: async ({ request }) => {

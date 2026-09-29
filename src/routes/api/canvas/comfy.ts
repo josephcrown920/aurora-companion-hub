@@ -20,7 +20,7 @@ async function requestComfy(path: string, init: RequestInit = {}) {
   return data;
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/comfy")({
+export const Route = createFileRoute("/api/canvas/comfy")({
   server: {
     handlers: {
       GET: async () => {

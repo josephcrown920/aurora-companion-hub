@@ -46,7 +46,7 @@ async function ark(request: Request, path: string, init: RequestInit) {
   });
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/modelark")({
+export const Route = createFileRoute("/api/canvas/modelark")({
   server: {
     handlers: {
       POST: async ({ request }) => {

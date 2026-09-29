@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 
-export const Route = createFileRoute("/api/canvas/canvas/reference-upload")({
+export const Route = createFileRoute("/api/canvas/reference-upload")({
   server: {
     handlers: {
       POST: async ({ request }) => {

@@ -15,7 +15,7 @@ function jsonError(message: string, status: number) {
   });
 }
 
-export const Route = createFileRoute("/api/canvas/canvas/speech")({
+export const Route = createFileRoute("/api/canvas/speech")({
   server: {
     handlers: {
       POST: async ({ request }) => {
