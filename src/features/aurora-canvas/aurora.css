@@ -1294,3 +1294,22 @@
   .aurora-stage { min-height: 280px; }
   .aurora-gallery { width: 100%; margin-left: 0; padding: 24px 16px 60px; }
 }
+
+/* Route-scoped contrast protection: Creative Studio also uses the aurora class family. */
+.aurora-canvas-page .aurora-h1 { color: var(--canvas-ink); text-shadow: none; }
+.aurora-canvas-page .aurora-subhead { color: var(--canvas-muted); }
+.aurora-canvas-page .aurora-top-badge { color: var(--canvas-muted); background: oklch(1 0 0 / .82); }
+.aurora-canvas-page .aurora-mode-switch { background: oklch(1 0 0 / .84); border-color: var(--canvas-line); }
+.aurora-canvas-page .aurora-mode-btn { color: var(--canvas-muted); }
+.aurora-canvas-page .aurora-mode-btn.active { color: white; background: var(--canvas-purple); }
+.aurora-canvas-page .aurora-dir-title,
+.aurora-canvas-page .aurora-gallery h2,
+.aurora-canvas-page .aurora-empty h3 { color: var(--canvas-ink); text-shadow: none; }
+.aurora-canvas-page .aurora-dir-input,
+.aurora-canvas-page .aurora-prompt-input { color: var(--canvas-ink); background: white; }
+.aurora-canvas-page .aurora-dir-input::placeholder,
+.aurora-canvas-page .aurora-prompt-input::placeholder { color: var(--canvas-muted); }
+.aurora-canvas-page .aurora-stat-num { color: var(--canvas-purple); }
+.aurora-canvas-page .aurora-stat-label,
+.aurora-canvas-page .aurora-empty p { color: var(--canvas-muted); }
+.aurora-canvas-page .aurora-empty { background: white; border-color: var(--canvas-line); }
