@@ -59,10 +59,6 @@ import { GenerationErrorCard } from "@/components/ui/GenerationErrorCard";
 import { BlurredPreview } from "@/components/ui/BlurredPreview";
 import { PerformAnywhereGuide } from "@/components/onboarding/PerformAnywhereGuide";
 import { Check, ArrowRight } from "lucide-react";
-import {
-  SHOT_IMAGE_COST,
-  SHOT_KLING_COST,
-} from "@/lib/platform-template.functions";
 import { generateLyricVideoFromSong } from "@/lib/captions.functions";
 import {
   MUSIC_VIDEO_STYLES,
@@ -122,8 +118,6 @@ const MOTION_CAMERA = [
 ];
 
 type Mode = "pose" | "transfer" | "reskin" | "workflow" | "music-video";
-type ShotEngine = "seedream" | "gemini" | "kling";
-type ShotResult = { url: string; engine: ShotEngine; kind: "image" | "video"; fallbackFrom?: ShotEngine };
 
 const ANIMATE_DURATION_SECONDS = 5;
 
@@ -140,14 +134,6 @@ type AnimatePreviewKeyInput = {
 /** Stable identity for the inputs bound to an animation preview ticket. */
 function buildAnimatePreviewKey(input: AnimatePreviewKeyInput): string {
   return JSON.stringify(input);
-}
-
-const SHOT_ENGINE_LABEL: Record<ShotEngine, string> = { seedream: "SeedDream", gemini: "Gemini Omni", kling: "KlingAI" };
-
-const KLING_FALLBACK_TOAST = "KlingAI unavailable — generated a SeedDream portrait instead";
-
-function shotResultLabel(r: ShotResult): string {
-  return r.fallbackFrom ? `${SHOT_ENGINE_LABEL[r.engine]} (fallback)` : SHOT_ENGINE_LABEL[r.engine];
 }
 
 function MotionStudio() {
