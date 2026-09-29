@@ -33,7 +33,7 @@ import {
   type VideoVoice,
 } from "@/lib/video-agent-shared";
 
-export const Route = createLazyFileRoute("/video-agent")({
+export const Route = createLazyFileRoute("/video-agent-classic")({
   component: VideoAgentHome,
 });
 
@@ -235,7 +235,7 @@ function VideoAgentHome() {
   return (
     <main className="video-agent-shell">
       <header className="video-agent-header">
-        <Link to="/video-agent" className="video-agent-brand" aria-label="Aurora Video Agent">
+        <Link to="/video-agent-classic" className="video-agent-brand" aria-label="Aurora Video Agent">
           <span className="video-agent-brand-mark"><Sparkles className="size-4" /></span>
           <span>Aurora AI</span>
         </Link>
