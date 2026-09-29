@@ -124,7 +124,7 @@ const MOTION_CAMERA = [
   { v: "handheld", label: "Handheld" },
 ];
 
-type Mode = "pose" | "transfer" | "reskin" | "avatar-shots" | "live-avatar" | "music-video";
+type Mode = "pose" | "transfer" | "reskin" | "workflow" | "music-video";
 type ShotEngine = "seedream" | "gemini" | "kling";
 type ShotResult = { url: string; engine: ShotEngine; kind: "image" | "video"; fallbackFrom?: ShotEngine };
 
