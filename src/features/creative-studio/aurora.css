@@ -93,12 +93,21 @@
 .aurora-body .aurora-nav-link { flex: none; padding: 7px 10px; border-radius: 5px; color: var(--muted-foreground); text-decoration: none; font-size: 12px; font-weight: 600; }
 .aurora-body .aurora-nav-link:hover, .aurora-body .aurora-nav-link.active { background: var(--accent); color: var(--accent-foreground); }
 .aurora-body .aurora-nav-switch, .aurora-body .aurora-nav-right { display: none; }
+.aurora-studio-entry { position: relative; z-index: 2; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); }
+.aurora-studio-entry a { display: flex; flex-direction: column; justify-content: center; gap: 5px; min-width: 0; padding: 13px 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--secondary); color: var(--foreground); text-decoration: none; }
+.aurora-studio-entry a:hover { border-color: var(--primary); }
+.aurora-studio-entry a span { color: var(--muted-foreground); font-size: 11px; }
+.aurora-studio-entry a strong { font-size: 14px; font-weight: 700; }
+.aurora-studio-entry .aurora-studio-entry-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.aurora-studio-entry .aurora-studio-entry-primary span { color: inherit; opacity: .8; }
 @media (max-width: 760px) {
   .aurora-body .aurora-nav { gap: 6px; padding: 8px 12px; }
   .aurora-body .aurora-nav-links { order: 2; width: 100%; flex: auto; }
   .aurora-body .aurora-nav-tools { order: 3; }
   .aurora-theme-picker { position: relative; top: auto; right: auto; left: auto; margin: 10px 12px 0; }
   .aurora-theme-picker .aurora-bg-switch { flex-wrap: wrap; }
+  .aurora-studio-entry { grid-template-columns: 1fr 1fr; padding: 8px 12px; }
+  .aurora-studio-entry-primary { grid-column: 1 / -1; }
 }
 
 .aurora-logo-mark {
