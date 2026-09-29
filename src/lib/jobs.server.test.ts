@@ -1,0 +1,1789 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+
+let logSpy: ReturnType<typeof spyOn>;
+let warnSpy: ReturnType<typeof spyOn>;
+
+beforeAll(() => {
+  // Job worker loop emits progress/trace logs on every claim→dispatch→commit cycle;
+  // suppress here so batch-queue decision failures stand out in test output.
+  logSpy = spyOn(console, "log").mockImplementation(() => {});
+  warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterAll(() => {
+  logSpy.mockRestore();
+  warnSpy.mockRestore();
+});
+
+// The jobs worker loop (processOneJob/processBatch) backs the batch queue used by
+// TikTok remixes, UGC campaigns, performance reskins and plain media jobs. It
+// claims a job, runs the matching pipeline, then commits or releases the credit
+// reservation and routes the result onto the generations row. We mock supabaseAdmin
+// (claim queue + recorded RPCs/updates) and orchestrate so only the
+// claim→run→commit/release/retry decision logic is exercised.
+
+let claimQueue: Array<Record<string, unknown> | null> = [];
+// finalize_job (task #94: single all-or-nothing finish RPC) fences the CAS,
+// generation write, and credit settlement in one transaction and returns
+// 'finalized' | 'stale'. Flip this to false to simulate losing that CAS (the
+// stale-sweep reclaim race). The legacy retry-only finishJob() UPDATE uses the
+// same flag for its own guarded UPDATE ... RETURNING.
+let jobsCasWins = true;
+// Simulates finalize_job itself throwing (e.g. the transaction aborts) so tests
+// can prove the caller never falls through to a second finalize/refund attempt
+// and leaves no stranded reservation.
+let finalizeShouldThrow = false;
+// Rows the failed-orphan sweep (sweepFailedJobs) reads back from a jobs SELECT,
+// and the per-job requeue_failed_job RPC outcome it should observe.
+let failedJobsRows: Array<Record<string, unknown>> = [];
+let requeueOutcome = "requeued";
+// Rows returned by a gpu_workers SELECT (the hasActiveWorkerForKind preflight).
+// Default empty = no worker online; set to an assemble-capable worker to pass it.
+let gpuWorkers: Array<Record<string, unknown>> = [];
+// Rows the stuck-reservation sweep (sweepStuckReservations) reads back from its
+// `jobs` SELECT, and the per-job reconcile_stuck_reservation RPC outcome. Both
+// sweepFailedJobs and sweepStuckReservations read from `jobs` without an
+// UPDATE, so `jobsReadMode` picks which fixture array the mock returns for
+// that read — each test sets it right before calling the sweep under test.
+let stuckJobsRows: Array<Record<string, unknown>> = [];
+let reconcileOutcome = "reconciled";
+let jobsReadMode: "failed" | "stuck" = "failed";
+// How many times the (dependency-injected) orchestrate was invoked — lets a test
+// assert a job failed a preflight BEFORE reaching any paid generation stage.
+let orchCalls = 0;
+let orchRequests: unknown[] = [];
+let videoAgentProjectRow: { production: unknown; updated_at: string } | null = {
+  production: null,
+  updated_at: "2026-09-09T00:00:00.000Z",
+};
+let videoAgentProductionCasFailures = 0;
+let videoAgentConcurrentProduction: unknown = null;
+let orchestrateImpl: (req: unknown) => Promise<{
+  url: string;
+  provider: string;
+  endpoint: string;
+  latencyMs?: number;
+  costUsd?: number;
+  text?: string;
+}> = async () => ({
+  url: "https://out/img.png",
+  provider: "pollinations",
+  endpoint: "pollinations:flux",
+  latencyMs: 1,
+  costUsd: 0,
+});
+
+const calls = {
+  rpc: [] as Array<{ name: string; args: Record<string, unknown> }>,
+  updates: [] as Array<{ table: string; patch: Record<string, unknown> }>,
+  inserts: [] as Array<{ table: string; row: unknown }>,
+  upserts: [] as Array<{ table: string; row: unknown }>,
+};
+
+function builder(table: string) {
+  // After an UPDATE, a chained `.select()` resolves to the affected rows. finishJob
+  // relies on that to detect whether it won the ownership-fenced transition, so a
+  // jobs UPDATE returns one row by default (won) and zero rows when jobsCasWins is
+  // false (lost the lock). Reads (no UPDATE) keep the original {data:null} shape.
+  let updated = false;
+  let updatePatch: Record<string, unknown> | null = null;
+  const resolve = () =>
+    updated
+      ? table === "video_agent_projects" && updatePatch && "production" in updatePatch
+        ? videoAgentProductionCasFailures > 0
+          ? (
+              videoAgentProductionCasFailures--,
+              videoAgentConcurrentProduction !== null
+                ? videoAgentProjectRow = {
+                    production: videoAgentConcurrentProduction,
+                    updated_at: "2026-09-09T00:00:01.000Z",
+                  }
+                : undefined,
+              { data: null, error: null }
+            )
+          : { data: [{ id: "p1" }], error: null }
+        : { data: table === "jobs" && !jobsCasWins ? [] : [{ id: "x" }], error: null }
+      : // A read on `jobs` is either the failed-orphan sweep SELECT or the
+        // stuck-reservation sweep SELECT (picked via jobsReadMode), a read on
+        // `gpu_workers` is the worker preflight; everything else keeps the
+        // original {data:null} shape.
+        {
+          data:
+            table === "jobs"
+              ? jobsReadMode === "stuck"
+                ? stuckJobsRows
+                : failedJobsRows
+              : table === "gpu_workers"
+                ? gpuWorkers
+                : table === "video_agent_projects"
+                  ? videoAgentProjectRow
+                : null,
+          error: null,
+        };
+  const b: Record<string, unknown> = {};
+  for (const m of [
+    "select",
+    "eq",
+    "neq",
+    "lt",
+    "lte",
+    "gt",
+    "gte",
+    "order",
+    "limit",
+    "contains",
+    "is",
+    "in",
+  ])
+    b[m] = () => b;
+  b.update = (patch: Record<string, unknown>) => {
+    calls.updates.push({ table, patch });
+    updatePatch = patch;
+    updated = true;
+    return b;
+  };
+  b.insert = (row: unknown) => {
+    calls.inserts.push({ table, row });
+    return b;
+  };
+  b.upsert = (row: unknown) => {
+    calls.upserts.push({ table, row });
+    return Promise.resolve({ error: null });
+  };
+  b.maybeSingle = async () => resolve();
+  b.single = async () => resolve();
+  (b as { then: unknown }).then = (res: (v: unknown) => unknown) => res(resolve());
+  return b;
+}
+
+const supabaseAdmin = {
+  from: (t: string) => builder(t),
+  rpc: async (name: string, args: Record<string, unknown>) => {
+    calls.rpc.push({ name, args });
+    if (name === "claim_next_job_v2") return { data: claimQueue.shift() ?? null, error: null };
+    if (name === "requeue_failed_job") return { data: requeueOutcome, error: null };
+    if (name === "reconcile_stuck_reservation") return { data: reconcileOutcome, error: null };
+    if (name === "finalize_job") {
+      if (finalizeShouldThrow) return { data: null, error: { message: "finalize_job boom" } };
+      return { data: jobsCasWins ? "finalized" : "stale", error: null };
+    }
+    return { data: true, error: null };
+  },
+  storage: {
+    from: () => ({
+      upload: async () => ({ error: null }),
+      getPublicUrl: () => ({ data: { publicUrl: "https://pub/x" } }),
+    }),
+  },
+};
+
+mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin }));
+// result-store.server's default deps do a real fetch() of the provider URL to
+// re-persist/compress it. This suite has no real network, and worse, a leaked
+// global fetch mock from another test file running earlier in the same process
+// can make that fetch appear to "succeed" with bogus bytes (bun mock.module /
+// globalThis.fetch are process-global — see gpu-worker-health.test.ts for the
+// same class of bug). Stub persistResultUrl deterministically here instead of
+// depending on real or accidentally-leaked network behavior: this suite only
+// cares that jobs.server hands the (possibly persisted) URL to finalize_job,
+// not the persistence mechanics themselves — those are covered by
+// result-store.server's own tests.
+mock.module("./result-store.server", () => ({
+  persistResultUrl: async (args: { url: string }) => ({
+    url: args.url,
+    persisted: false,
+    compressed: false,
+  }),
+  resultMediaTypeForKind: (kind: string) =>
+    kind === "video" || kind === "lyric_video" || kind === "assemble" ? "video"
+    : kind === "tts" ? "audio"
+    : "image",
+}));
+mock.module("./hf.server", () => ({
+  hfTextToSpeech: async () => ({ bytes: new Uint8Array(), contentType: "audio/flac" }),
+  // orchestrator.server.ts is still imported at the top of jobs.server.ts (only
+  // the orchestrate CALL is dependency-injected, not the module import itself),
+  // so this mock must cover every hf.server export orchestrator.server touches
+  // or the whole suite fails at import time with a missing-export error.
+  hfTextToImage: async () => ({ bytes: new Uint8Array(), contentType: "image/png" }),
+}));
+
+const {
+  processOneJob: rawProcessOneJob,
+  processBatch: rawProcessBatch,
+  lanesForSlot,
+  classifyJobError,
+  nextRetryAt,
+  retryDecision,
+  sweepStaleProcessingJobs,
+  sweepHighValueStaleProcessingJobs,
+  sweepFailedJobs,
+  sweepStuckReservations,
+  recordSchedulerHeartbeat,
+  PERSISTENT_RETRY_MAX_ATTEMPTS,
+  PERSISTENT_RETRY_MAX_AGE_MS,
+  mergeVideoAgentRenderReceipt,
+} = await import("./jobs.server");
+
+// orchestrate is dependency-injected (NOT module-mocked) so this file never
+// registers a global mock for ./orchestrator.server — Bun's module mocks are
+// process-global and would otherwise leak a stub into the real orchestrator tests.
+const deps = {
+  orchestrate: ((req: unknown) => {
+    orchCalls++;
+    orchRequests.push(req);
+    return orchestrateImpl(req);
+  }) as never,
+  getUserTier: async () => "pro" as const,
+};
+const processOneJob = (workerId: string) => rawProcessOneJob(workerId, deps);
+const processBatch = (workerId: string, limit?: number) => rawProcessBatch(workerId, limit, deps);
+
+function job(over: Record<string, unknown> = {}) {
+  return {
+    id: "j1",
+    user_id: "u1",
+    kind: "image",
+    payload: { kind: "image", prompt: "hi" },
+    status: "running",
+    attempts: 0,
+    max_attempts: 3,
+    credits_reserved: 5,
+    generation_id: "g1",
+    parent_job_id: null,
+    created_at: new Date().toISOString(),
+    ...over,
+  };
+}
+
+let consoleErrorSpy: ReturnType<typeof spyOn> | null = null;
+beforeEach(() => {
+  consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
+  claimQueue = [];
+  jobsCasWins = true;
+  finalizeShouldThrow = false;
+  failedJobsRows = [];
+  requeueOutcome = "requeued";
+  stuckJobsRows = [];
+  reconcileOutcome = "reconciled";
+  jobsReadMode = "failed";
+  gpuWorkers = [];
+  orchCalls = 0;
+  orchRequests = [];
+  videoAgentProjectRow = {
+    production: null,
+    updated_at: "2026-09-09T00:00:00.000Z",
+  };
+  videoAgentProductionCasFailures = 0;
+  videoAgentConcurrentProduction = null;
+  calls.rpc.length = 0;
+  calls.updates.length = 0;
+  calls.inserts.length = 0;
+  calls.upserts.length = 0;
+  orchestrateImpl = async () => ({
+    url: "https://out/img.png",
+    provider: "pollinations",
+    endpoint: "pollinations:flux",
+    latencyMs: 1,
+    costUsd: 0,
+  });
+});
+afterEach(() => {
+  consoleErrorSpy?.mockRestore();
+  consoleErrorSpy = null;
+});
+
+describe("processOneJob", () => {
+  it("reports nothing processed when the queue is empty", async () => {
+    claimQueue = [];
+    expect(await processOneJob("w1")).toEqual({ processed: false });
+  });
+
+  it("finalizes succeeded jobs via ONE finalize_job RPC carrying the result (task #94)", async () => {
+    // finishJob -> markGeneration -> commit_reservation used to be three separate
+    // writes; now the CAS, the generation-result write, and the credit commit all
+    // happen inside one finalize_job transaction, so JS makes exactly one RPC call.
+    claimQueue = [job()];
+    const r = await processOneJob("w1");
+    expect(r).toMatchObject({ processed: true, status: "succeeded", jobId: "j1" });
+
+    const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+    expect(finalizeCalls).toHaveLength(1);
+    expect(finalizeCalls[0].args).toMatchObject({
+      _job: "j1",
+      _worker: "w1",
+      _outcome: "succeeded",
+      _result_image_url: "https://out/img.png",
+    });
+    expect(finalizeCalls[0].args._result_video_url).toBeNull();
+
+    // No standalone commit/release RPCs and no separate generations-table write —
+    // both are now folded into the finalize_job transaction itself.
+    expect(calls.rpc.find((c) => c.name === "commit_reservation")).toBeUndefined();
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+  });
+
+  it("does NOT finalize as succeeded when it has lost the lock to a stale-sweep reclaim", async () => {
+    // The job finished, but the stale-sweep already requeued it and another worker
+    // reclaimed it (locked_by changed) → finalize_job's internal CAS misses and
+    // returns 'stale', so this worker must treat nothing as committed/written.
+    jobsCasWins = false;
+    claimQueue = [job()];
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("stale");
+    expect(calls.rpc.find((c) => c.name === "finalize_job")?.args).toMatchObject({
+      _outcome: "succeeded",
+    });
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+  });
+
+  it("reports stale (never a second finalize attempt) when it has lost the lock on a terminal error", async () => {
+    // Same race on a terminal failure: only the worker that wins the CAS
+    // releases inside finalize_job, so a lost worker must never call it twice or
+    // refund a reservation the new owner still holds.
+    jobsCasWins = false;
+    claimQueue = [job({ attempts: PERSISTENT_RETRY_MAX_ATTEMPTS })];
+    orchestrateImpl = async () => {
+      throw new Error("provider exploded");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("stale");
+    const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+    expect(finalizeCalls).toHaveLength(1);
+    expect(finalizeCalls[0].args).toMatchObject({ _outcome: "failed" });
+  });
+
+  it("leaves no stranded reservation when finalize_job itself throws after a successful render", async () => {
+    // The render is delivered but the all-or-nothing finalize_job RPC throws
+    // (e.g. the transaction aborted). Because it's one transaction, nothing
+    // committed server-side; the CLIENT must not compensate by calling any
+    // second RPC (that would double-finalize or refund a delivered render) —
+    // it just reports stale and leaves the job for the stale-sweeper.
+    finalizeShouldThrow = true;
+    claimQueue = [job()];
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("stale");
+    expect(calls.rpc.filter((c) => c.name === "finalize_job")).toHaveLength(1);
+    expect(calls.rpc.find((c) => c.name === "commit_reservation")).toBeUndefined();
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+  });
+
+  it("leaves no stranded reservation when finalize_job itself throws on a terminal failure", async () => {
+    finalizeShouldThrow = true;
+    claimQueue = [job({ attempts: PERSISTENT_RETRY_MAX_ATTEMPTS })];
+    orchestrateImpl = async () => {
+      throw new Error("provider exploded");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("stale");
+    expect(calls.rpc.filter((c) => c.name === "finalize_job")).toHaveLength(1);
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+  });
+
+  it("routes a video job's result to result_video_url via finalize_job", async () => {
+    claimQueue = [job({ kind: "video", payload: { kind: "video", prompt: "x" } })];
+    orchestrateImpl = async () => ({
+      url: "https://out/clip.mp4",
+      provider: "replicate",
+      endpoint: "replicate:x",
+      latencyMs: 1,
+      costUsd: 0,
+    });
+    await processOneJob("w1");
+    const finalize = calls.rpc.find((c) => c.name === "finalize_job");
+    expect(finalize?.args).toMatchObject({ _result_video_url: "https://out/clip.mp4" });
+    expect(finalize?.args._result_image_url).toBeNull();
+  });
+
+  it("schedules a retry (no release) when a job fails but attempts remain", async () => {
+    claimQueue = [job({ attempts: 0, max_attempts: 3 })];
+    orchestrateImpl = async () => {
+      throw new Error("provider timeout");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("retry");
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    // Progress writes (task #284) also hit the jobs table now — assert on the
+    // update that actually carries the status transition.
+    const jobUpd = calls.updates.find((u) => u.table === "jobs" && "status" in u.patch);
+    expect(jobUpd?.patch.status).toBe("queued");
+    expect(jobUpd?.patch.scheduled_at).toBeDefined();
+  });
+
+  it("keeps retrying transient failures BEYOND the old max_attempts cap", async () => {
+    // attempts:5 well past the legacy max_attempts:3 — under persistent retry this
+    // must still re-queue (and never release) because it's transient & under ceiling.
+    claimQueue = [job({ attempts: 5, max_attempts: 3 })];
+    orchestrateImpl = async () => {
+      throw new Error("provider exploded");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("retry");
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    // Progress writes (task #284) also hit the jobs table now — assert on the
+    // update that actually carries the status transition.
+    const jobUpd = calls.updates.find((u) => u.table === "jobs" && "status" in u.patch);
+    expect(jobUpd?.patch.status).toBe("queued");
+    const gen = calls.updates.find((u) => u.table === "generations");
+    expect(gen?.patch).toMatchObject({ status: "retrying" });
+  });
+
+  it("finalizes as failed (release folded into the transaction) once the attempt ceiling is reached", async () => {
+    claimQueue = [job({ attempts: PERSISTENT_RETRY_MAX_ATTEMPTS, max_attempts: 3 })];
+    orchestrateImpl = async () => {
+      throw new Error("provider exploded");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("failed");
+    const finalize = calls.rpc.find((c) => c.name === "finalize_job");
+    expect(finalize?.args).toMatchObject({ _job: "j1", _worker: "w1", _outcome: "failed" });
+    expect(String(finalize?.args._error)).toContain("gave up after");
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+  });
+
+  it("finalizes as failed once the retry age deadline elapses", async () => {
+    claimQueue = [
+      job({
+        attempts: 2,
+        created_at: new Date(Date.now() - PERSISTENT_RETRY_MAX_AGE_MS - 60_000).toISOString(),
+      }),
+    ];
+    orchestrateImpl = async () => {
+      throw new Error("still flaky");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("failed");
+    expect(calls.rpc.find((c) => c.name === "finalize_job")?.args).toMatchObject({
+      _outcome: "failed",
+    });
+  });
+
+  it("stops immediately and finalizes as failed on terminal errors (variants)", async () => {
+    for (const msg of ["Unauthorized", "HTTP 403 forbidden", "invalid input image"]) {
+      calls.rpc.length = 0;
+      calls.updates.length = 0;
+      claimQueue = [job({ attempts: 0 })];
+      orchestrateImpl = async () => {
+        throw new Error(msg);
+      };
+      const r = await processOneJob("w1");
+      expect(r.status).toBe("failed");
+      expect(calls.rpc.find((c) => c.name === "finalize_job")?.args).toMatchObject({
+        _outcome: "failed",
+      });
+    }
+  });
+
+  it("does not retry non-retryable errors (insufficient_credits) and finalizes as failed immediately", async () => {
+    claimQueue = [job({ attempts: 0, max_attempts: 3 })];
+    orchestrateImpl = async () => {
+      throw new Error("insufficient_credits");
+    };
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("failed");
+    expect(calls.rpc.find((c) => c.name === "finalize_job")?.args).toMatchObject({
+      _outcome: "failed",
+    });
+  });
+
+  it("still finalizes (and commits nothing extra) when no credits were reserved", async () => {
+    // The commit/release-skip-when-zero logic now lives inside the finalize_job
+    // SQL transaction itself (not observable from JS); from the caller's side the
+    // only contract is that finalize_job is still invoked exactly once.
+    claimQueue = [job({ credits_reserved: 0 })];
+    await processOneJob("w1");
+    expect(calls.rpc.filter((c) => c.name === "finalize_job")).toHaveLength(1);
+    expect(calls.rpc.find((c) => c.name === "commit_reservation")).toBeUndefined();
+  });
+
+  it("marks the kids_stories row failed (owner-scoped) and releases exactly once with no assemble worker", async () => {
+    // No GPU worker is registered (the gpu_workers read returns no rows), so
+    // runKidsStory's assemble preflight fails terminally up front. Beyond the
+    // usual release + generation-failed, the kids_stories row MUST be flipped to
+    // failed so /kids stops spinning and shows the refunded state.
+    claimQueue = [
+      job({
+        kind: "kids_story",
+        credits_reserved: 12,
+        payload: {
+          storyId: "s1",
+          topic: "the moon",
+          contentType: "bedtime",
+          ageRange: "3-5",
+          lengthId: "short",
+          characterName: "Fuzz",
+        },
+      }),
+    ];
+
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("failed");
+
+    // Finalized exactly once (CAS + generation write + release all folded into
+    // the one finalize_job transaction).
+    const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+    expect(finalizeCalls).toHaveLength(1);
+    expect(finalizeCalls[0].args).toMatchObject({ _job: "j1", _outcome: "failed" });
+    expect(String(finalizeCalls[0].args._error)).toMatch(/required/i);
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+
+    // The kids-story row is marked failed and scoped to its owner (best-effort
+    // JS-side write outside the transaction, since /kids polls this table).
+    const story = calls.updates.find((u) => u.table === "kids_stories");
+    expect(story?.patch).toMatchObject({ status: "failed" });
+    expect(String(story?.patch.error)).toMatch(/required/i);
+  });
+
+  it("fails terminally and refunds a kids story when no TTS backend is configured, even with an assemble worker online", async () => {
+    // Narration is a REQUIRED stage. With an assemble-capable worker online but no
+    // HF_TOKEN to synthesize narration, the pipeline must fail fast and refund up
+    // front rather than silently shipping a video with no narration.
+    gpuWorkers = [{ in_flight: 0, max_concurrency: 1, last_heartbeat: null }];
+    const prevHf = process.env.HF_TOKEN;
+    delete process.env.HF_TOKEN;
+    try {
+      claimQueue = [
+        job({
+          kind: "kids_story",
+          credits_reserved: 12,
+          payload: {
+            storyId: "s1",
+            topic: "the moon",
+            contentType: "bedtime",
+            ageRange: "3-5",
+            lengthId: "short",
+            characterName: "Fuzz",
+          },
+        }),
+      ];
+
+      const r = await processOneJob("w1");
+      expect(r.status).toBe("failed");
+
+      // Finalized exactly once (terminal, no retry) — CAS + release folded into
+      // the finalize_job transaction.
+      const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+      expect(finalizeCalls).toHaveLength(1);
+      expect(finalizeCalls[0].args).toMatchObject({ _job: "j1", _outcome: "failed" });
+      expect(String(finalizeCalls[0].args._error)).toMatch(/narration/i);
+      expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+
+      // The story row is flipped to failed (owner-scoped) with a narration error.
+      const story = calls.updates.find((u) => u.table === "kids_stories");
+      expect(story?.patch).toMatchObject({ status: "failed" });
+      expect(String(story?.patch.error)).toMatch(/narration/i);
+
+      // It failed the narration preflight BEFORE any paid generation stage ran.
+      expect(orchCalls).toBe(0);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("marks the kids_stories row failed and releases exactly once when a render stage fails terminally with a worker online", async () => {
+    // A GPU worker IS eligible (assemble preflight and the narration/TTS preflight
+    // both pass), but a later stage — here the per-scene illustration call — fails
+    // terminally (attempts already at the persistent-retry ceiling). This is the
+    // more common real-world failure mode: everything looked fine up front, but
+    // the actual render died partway through. Same contract as the no-worker
+    // preflight case: refund exactly once and flip /kids to failed, never stuck
+    // "rendering".
+    gpuWorkers = [{ in_flight: 0, max_concurrency: 1, last_heartbeat: null }];
+    orchestrateImpl = async () => {
+      throw new Error("provider exploded mid-render");
+    };
+    claimQueue = [
+      job({
+        kind: "kids_story",
+        credits_reserved: 12,
+        attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+        payload: {
+          storyId: "s1",
+          topic: "the moon",
+          contentType: "bedtime",
+          ageRange: "3-5",
+          lengthId: "short",
+          characterName: "Fuzz",
+          // A pre-reviewed script (from the brief step) so this test exercises the
+          // render pipeline itself rather than a real LLM script-generation call.
+          script: {
+            title: "Fuzz and the Moon",
+            scenes: [{ narration: "Fuzz looked at the moon.", illustration: "Fuzz outside at night" }],
+          },
+        },
+      }),
+    ];
+
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("failed");
+
+    // The preflights passed and at least one paid generation stage was actually
+    // attempted before the failure (proving this isn't just re-hitting the
+    // no-worker/no-TTS preflight from the earlier tests).
+    expect(orchCalls).toBeGreaterThan(0);
+
+    // Finalized exactly once (CAS + generation write + release all folded into
+    // the one finalize_job transaction) — released exactly once, never twice.
+    const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+    expect(finalizeCalls).toHaveLength(1);
+    expect(finalizeCalls[0].args).toMatchObject({ _job: "j1", _outcome: "failed" });
+    expect(String(finalizeCalls[0].args._error)).toMatch(/provider exploded mid-render/i);
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+
+    // The kids-story row is marked failed and scoped to its owner so /kids stops
+    // spinning and shows the refunded state instead of hanging on "rendering".
+    // The render pipeline writes several progress updates first (scripting,
+    // rendering, per-scene status) before the terminal failStory() write, so
+    // check the LAST kids_stories update — the final state /kids will show.
+    const storyUpdates = calls.updates.filter((u) => u.table === "kids_stories");
+    const lastStoryUpdate = storyUpdates[storyUpdates.length - 1];
+    expect(lastStoryUpdate?.patch).toMatchObject({ status: "failed" });
+    expect(String(lastStoryUpdate?.patch.error)).toMatch(/provider exploded mid-render/i);
+  });
+
+  it("does NOT touch the kids_stories row when it has lost the lock to a stale-sweep reclaim", async () => {
+    // Lost the ownership CAS → another worker owns the job now; this worker must
+    // not release, not write the generation, and not flip the story row.
+    jobsCasWins = false;
+    claimQueue = [
+      job({
+        kind: "kids_story",
+        credits_reserved: 12,
+        payload: {
+          storyId: "s1",
+          topic: "the moon",
+          contentType: "bedtime",
+          ageRange: "3-5",
+          lengthId: "short",
+          characterName: "Fuzz",
+        },
+      }),
+    ];
+
+    const r = await processOneJob("w1");
+    expect(r.status).toBe("stale");
+    expect(calls.rpc.find((c) => c.name === "finalize_job")?.args).toMatchObject({
+      _outcome: "failed",
+    });
+    expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+    expect(calls.updates.find((u) => u.table === "kids_stories")).toBeUndefined();
+  });
+});
+
+describe("video_agent_render jobs", () => {
+  // Mirrors the kids_story contract: the project row (which /video-agent-edit
+  // polls) must always land on a terminal status when the job terminally fails,
+  // the reservation must release exactly once (inside finalize_job), and no
+  // paid generation stage may run when a preflight/validation fails.
+  const validScenes = [
+    { id: "sc1", index: 0, title: "Open", script: "Narration one.", description: "A sunrise over a quiet city", duration: 5 },
+    { id: "sc2", index: 1, title: "Close", script: "Narration two.", description: "A busy street at dusk", duration: 5 },
+  ];
+  const basePayload = {
+    projectId: "p1",
+    prompt: "make a launch video",
+    style: "cinematic",
+    targetDuration: 30,
+    scenes: validScenes,
+  };
+
+  async function nativePayload() {
+    const nativeScenes = validScenes.map((scene) => ({
+      ...scene,
+      frame: "https://storage.example.com/users/u1/frame.png",
+      plateQuality: "premium" as const,
+    }));
+    const baseFilmPlan = {
+      schemaVersion: 1 as const,
+      brief: { title: "Signal", logline: "A courier follows a signal.", format: "16:9" as const, assumptions: [] },
+      script: "A courier follows a signal.",
+      continuity: { identityAnchor: "same courier", wardrobe: "", environment: "", cameraRules: "", colorRules: "" },
+      continuityLedger: {
+        identity: ["same courier"], wardrobe: [], props: [], location: [], time: [],
+        lighting: [], screen_direction: [], audio: [],
+      },
+      renderPlan: {
+        rendererModel: "byteplus/seedance-2.5" as const,
+        aspectRatio: "16:9" as const,
+        resolution: "720p" as const,
+        fps: 24 as const,
+        generateAudio: true,
+        watermark: false,
+        seed: 42,
+      },
+      planner: {
+        planner: "film-planner",
+        provider: "byteplus",
+        model: "verified-planner",
+        provenanceTrust: "server-verified" as const,
+      },
+      adoptedAt: new Date().toISOString(),
+      renderApproval: null,
+    };
+    const { filmRenderFingerprintAsync } = await import("./video-agent-projects.functions");
+    const fingerprint = await filmRenderFingerprintAsync(nativeScenes, baseFilmPlan);
+    const filmPlan = {
+      ...baseFilmPlan,
+      renderApproval: { approved: true as const, fingerprint, approvedAt: new Date().toISOString() },
+    };
+    return {
+      ...basePayload,
+      scenes: nativeScenes,
+      filmPlan,
+      rendererModel: filmPlan.renderPlan.rendererModel,
+      renderParams: { generate_audio: true, watermark: false, seed: 42 },
+      approvalFingerprint: fingerprint,
+    };
+  }
+
+  it("dispatches the exact approved native model and parameters without fallback", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    const prevNative = process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+    process.env.HF_TOKEN = "test-token";
+    process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = "true";
+    try {
+      orchestrateImpl = async () => {
+        throw new Error("provider unavailable");
+      };
+      claimQueue = [job({
+        kind: "video_agent_render",
+        attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+        credits_reserved: 20,
+        payload: await nativePayload(),
+      })];
+      await processOneJob("w1");
+      expect(orchRequests[0]).toMatchObject({
+        kind: "video",
+        model: "byteplus/seedance-2.5",
+        duration: 5,
+        resolution: "720p",
+        aspectRatio: "16:9",
+        pinnedModelOnly: true,
+        forSubscriber: true,
+        params: { generate_audio: true, watermark: false, seed: 42 },
+      });
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+      if (prevNative === undefined) delete process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+      else process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = prevNative;
+    }
+  });
+
+  it("assembles native portrait shots with the approved fps and exact authored timeline", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    const prevNative = process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+    process.env.HF_TOKEN = "test-token";
+    process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = "true";
+    try {
+      const payload = await nativePayload();
+      const unapprovedPlan = {
+        ...payload.filmPlan,
+        renderPlan: {
+          ...payload.filmPlan.renderPlan,
+          aspectRatio: "9:16" as const,
+        },
+        renderApproval: null,
+      };
+      const { filmRenderFingerprintAsync } = await import("./video-agent-projects.functions");
+      const fingerprint = await filmRenderFingerprintAsync(payload.scenes, unapprovedPlan);
+      const filmPlan = {
+        ...unapprovedPlan,
+        renderApproval: {
+          approved: true as const,
+          fingerprint,
+          approvedAt: new Date().toISOString(),
+        },
+      };
+      let assemblyParams: Record<string, unknown> | null = null;
+      claimQueue = [job({
+        kind: "video_agent_render",
+        credits_reserved: 20,
+        payload: {
+          ...payload,
+          filmPlan,
+          rendererModel: filmPlan.renderPlan.rendererModel,
+          approvalFingerprint: fingerprint,
+        },
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        assembleVideoAgent: async (params) => {
+          assemblyParams = params as unknown as Record<string, unknown>;
+          return Buffer.from("assembled");
+        },
+        uploadVideoAgent: async () => "https://storage.example.com/native-final.mp4",
+      });
+      expect(result.status).toBe("succeeded");
+      expect(assemblyParams).toMatchObject({
+        style: null,
+        aspect: "9:16",
+        fps: 24,
+        preserveClipDuration: true,
+        targetClipDurationsSec: [5, 5],
+        maxDurationSec: 10,
+      });
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+      if (prevNative === undefined) delete process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+      else process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = prevNative;
+    }
+  });
+
+  it("uses the edited visual description for both generated plates and video dispatch", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    try {
+      const editedDescription = "Edited crane shot over a rain-lit avenue";
+      claimQueue = [job({
+        kind: "video_agent_render",
+        credits_reserved: 20,
+        payload: {
+          ...basePayload,
+          scenes: [{
+            ...validScenes[0],
+            description: editedDescription,
+            modelPrompt: "Stale original planner prompt",
+            frame: null,
+            plateQuality: undefined,
+          }],
+        },
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        assembleVideoAgent: async () => Buffer.from("assembled"),
+        uploadVideoAgent: async () => "https://storage.example.com/final.mp4",
+      });
+      expect(result.status).toBe("succeeded");
+      const imageRequest = orchRequests.find((request) =>
+        (request as { kind?: string }).kind === "image"
+      ) as { prompt?: string };
+      const videoRequest = orchRequests.find((request) =>
+        (request as { kind?: string }).kind === "video"
+      ) as { prompt?: string };
+      expect(imageRequest.prompt).toBe(editedDescription);
+      expect(videoRequest.prompt).toContain(editedDescription);
+      expect(videoRequest.prompt).not.toContain("Stale original planner prompt");
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("rejects native dispatch for a non-Pro user before any paid generation", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    const prevNative = process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+    process.env.HF_TOKEN = "test-token";
+    process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = "true";
+    try {
+      claimQueue = [job({
+        kind: "video_agent_render",
+        attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+        credits_reserved: 20,
+        payload: await nativePayload(),
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        getUserTier: async () => "free",
+      });
+      expect(result.status).toBe("failed");
+      expect(orchCalls).toBe(0);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+      if (prevNative === undefined) delete process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+      else process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = prevNative;
+    }
+  });
+
+  it("rejects the legacy paid Seedance path for a non-Pro user before any provider call", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    try {
+      claimQueue = [job({
+        kind: "video_agent_render",
+        attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+        credits_reserved: 20,
+        payload: basePayload,
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        getUserTier: async () => "free",
+      });
+      expect(result.status).toBe("failed");
+      expect(result.error).toMatch(/active Pro subscription/i);
+      expect(orchCalls).toBe(0);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("persists actual per-scene engines and labels reused plates after winning finalization", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    try {
+      videoAgentProjectRow = {
+        production: {
+          template: "legacy-custom-production",
+          unknownLegacyField: { keep: true },
+        },
+        updated_at: "2026-09-09T00:00:00.000Z",
+      };
+      const scenes = [
+        {
+          ...validScenes[0],
+          frame: "https://storage.example.com/reused.png",
+          plateQuality: "premium" as const,
+          plateGenerationId: "plate-gen-1",
+        },
+        validScenes[1],
+      ];
+      orchestrateImpl = async (request) => {
+        const kind = (request as { kind: string }).kind;
+        return kind === "image"
+          ? {
+              url: "https://out/generated-still.png",
+              provider: "image-provider-actual",
+              endpoint: "images/v9/actual",
+            }
+          : {
+              url: `https://out/clip-${orchCalls}.mp4`,
+              provider: "video-provider-actual",
+              endpoint: "video/v4/image-to-video",
+            };
+      };
+      claimQueue = [job({
+        kind: "video_agent_render",
+        credits_reserved: 20,
+        payload: { ...basePayload, scenes },
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        assembleVideoAgent: async () => Buffer.from("assembled"),
+        uploadVideoAgent: async () => "https://storage.example.com/final.mp4",
+      });
+
+      expect(result.status).toBe("succeeded");
+      const finalized = calls.rpc.find((call) =>
+        call.name === "finalize_job" && call.args._outcome === "succeeded"
+      );
+      const renderEngine = (
+        finalized?.args._result as { meta?: { renderEngine?: Record<string, unknown> } }
+      )?.meta?.renderEngine;
+      expect(renderEngine).toMatchObject({
+        version: 1,
+        scenes: [
+          {
+            sceneId: "sc1",
+            image: {
+              source: "reused",
+              plateQuality: "premium",
+              generationId: "plate-gen-1",
+            },
+            video: {
+              provider: "video-provider-actual",
+              endpoint: "video/v4/image-to-video",
+            },
+          },
+          {
+            sceneId: "sc2",
+            image: {
+              source: "generated",
+              provider: "image-provider-actual",
+              endpoint: "images/v9/actual",
+            },
+          },
+        ],
+      });
+      expect(calls.updates.findLast((update) =>
+        update.table === "video_agent_projects" && "production" in update.patch
+      )?.patch.production).toMatchObject({
+        template: "legacy-custom-production",
+        unknownLegacyField: { keep: true },
+        renderEngine,
+      });
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("preserves native Film Plan approval and provenance while attaching a receipt", async () => {
+    const native = await nativePayload();
+    const receipt = {
+      version: 1 as const,
+      scenes: [],
+      assembler: {
+        provider: "aurora-video-agent" as const,
+        endpoint: "local-ffmpeg-assemble" as const,
+      },
+    };
+    const merged = mergeVideoAgentRenderReceipt(native.filmPlan, receipt);
+    expect(merged).toMatchObject({
+      planner: native.filmPlan.planner,
+      renderApproval: native.filmPlan.renderApproval,
+      renderPlan: native.filmPlan.renderPlan,
+      renderEngine: receipt,
+    });
+  });
+
+  it("re-reads and preserves a concurrent production change after an optimistic CAS miss", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    videoAgentProjectRow = {
+      production: { legacy: "initial", untouched: 1 },
+      updated_at: "2026-09-09T00:00:00.000Z",
+    };
+    videoAgentProductionCasFailures = 1;
+    videoAgentConcurrentProduction = {
+      legacy: "concurrently-updated",
+      untouched: 1,
+      newlyAdded: { preserve: true },
+    };
+    try {
+      claimQueue = [job({
+        kind: "video_agent_render",
+        credits_reserved: 20,
+        payload: {
+          ...basePayload,
+          scenes: [{
+            ...validScenes[0],
+            frame: "https://storage.example.com/reused.png",
+            plateQuality: "free" as const,
+          }],
+        },
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        assembleVideoAgent: async () => Buffer.from("assembled"),
+        uploadVideoAgent: async () => "https://storage.example.com/final.mp4",
+      });
+      expect(result.status).toBe("succeeded");
+      const productionWrites = calls.updates.filter((update) =>
+        update.table === "video_agent_projects" && "production" in update.patch
+      );
+      expect(productionWrites).toHaveLength(2);
+      expect(productionWrites[1].patch.production).toMatchObject({
+        legacy: "concurrently-updated",
+        untouched: 1,
+        newlyAdded: { preserve: true },
+        renderEngine: { version: 1 },
+      });
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("does not persist engine production data after losing the finalization fence", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    jobsCasWins = false;
+    try {
+      claimQueue = [job({
+        kind: "video_agent_render",
+        credits_reserved: 20,
+        payload: {
+          ...basePayload,
+          scenes: [{
+            ...validScenes[0],
+            frame: "https://storage.example.com/reused.png",
+            plateQuality: "free" as const,
+          }],
+        },
+      })];
+      const result = await rawProcessOneJob("w1", {
+        ...deps,
+        assembleVideoAgent: async () => Buffer.from("assembled"),
+        uploadVideoAgent: async () => "https://storage.example.com/final.mp4",
+      });
+      expect(result.status).toBe("stale");
+      expect(calls.updates.some((update) =>
+        update.table === "video_agent_projects" && "production" in update.patch
+      )).toBe(false);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("rejects manually injected native jobs while the readiness gate is off", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    const prevNative = process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+    process.env.HF_TOKEN = "test-token";
+    delete process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+    try {
+      claimQueue = [job({
+        kind: "video_agent_render",
+        attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+        credits_reserved: 20,
+        payload: await nativePayload(),
+      })];
+      const result = await processOneJob("w1");
+      expect(result.status).toBe("failed");
+      expect(orchCalls).toBe(0);
+      expect(result.error).toMatch(/disabled pending production readiness/i);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+      if (prevNative === undefined) delete process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED;
+      else process.env.FILM_STUDIO_NATIVE_RENDER_ENABLED = prevNative;
+    }
+  });
+
+  it("fails terminally and refunds when no TTS backend is configured, before any paid stage", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    delete process.env.HF_TOKEN;
+    try {
+      claimQueue = [job({ kind: "video_agent_render", credits_reserved: 20, payload: basePayload })];
+      const r = await processOneJob("w1");
+      expect(r.status).toBe("failed");
+
+      const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+      expect(finalizeCalls).toHaveLength(1);
+      expect(finalizeCalls[0].args).toMatchObject({ _job: "j1", _outcome: "failed" });
+      expect(String(finalizeCalls[0].args._error)).toMatch(/narration/i);
+      expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+
+      // Failed the preflight BEFORE any paid generation stage ran.
+      expect(orchCalls).toBe(0);
+
+      // The project row lands on failed with the Aura-released message so the
+      // editor stops polling and shows the refunded state.
+      const projectUpdates = calls.updates.filter((u) => u.table === "video_agent_projects");
+      const last = projectUpdates[projectUpdates.length - 1];
+      expect(last?.patch).toMatchObject({ status: "failed" });
+      expect(String(last?.patch.status_message)).toMatch(/released/i);
+      expect(String(last?.patch.error)).toMatch(/narration/i);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("fails terminally on a scene missing narration before any paid stage runs", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    try {
+      claimQueue = [
+        job({
+          kind: "video_agent_render",
+          credits_reserved: 20,
+          // Force the terminal branch via the retry ceiling — the validation
+          // message itself may not be in the hopeless-error classifier.
+          attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+          payload: {
+            ...basePayload,
+            scenes: [{ ...validScenes[0], script: "   " }, validScenes[1]],
+          },
+        }),
+      ];
+      const r = await processOneJob("w1");
+      expect(r.status).toBe("failed");
+
+      // Scene 1 is validated before its first orchestrate call, so nothing was spent.
+      expect(orchCalls).toBe(0);
+
+      const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+      expect(finalizeCalls).toHaveLength(1);
+      expect(String(finalizeCalls[0].args._error)).toMatch(/missing narration/i);
+
+      // The runner honestly reported "processing" first, then landed on failed.
+      const projectUpdates = calls.updates.filter((u) => u.table === "video_agent_projects");
+      expect(projectUpdates[0]?.patch).toMatchObject({ status: "processing" });
+      const last = projectUpdates[projectUpdates.length - 1];
+      expect(last?.patch).toMatchObject({ status: "failed" });
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("marks the project failed and releases exactly once when a provider dies mid-render", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    process.env.HF_TOKEN = "test-token";
+    try {
+      orchestrateImpl = async () => {
+        throw new Error("provider exploded mid-render");
+      };
+      claimQueue = [
+        job({
+          kind: "video_agent_render",
+          credits_reserved: 20,
+          attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+          payload: basePayload,
+        }),
+      ];
+      const r = await processOneJob("w1");
+      expect(r.status).toBe("failed");
+
+      // At least one paid stage was genuinely attempted (not a preflight rerun).
+      expect(orchCalls).toBeGreaterThan(0);
+
+      const finalizeCalls = calls.rpc.filter((c) => c.name === "finalize_job");
+      expect(finalizeCalls).toHaveLength(1);
+      expect(finalizeCalls[0].args).toMatchObject({ _job: "j1", _outcome: "failed" });
+      expect(String(finalizeCalls[0].args._error)).toMatch(/provider exploded mid-render/i);
+      expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+      expect(calls.updates.find((u) => u.table === "generations")).toBeUndefined();
+
+      const projectUpdates = calls.updates.filter((u) => u.table === "video_agent_projects");
+      const last = projectUpdates[projectUpdates.length - 1];
+      expect(last?.patch).toMatchObject({ status: "failed" });
+      expect(String(last?.patch.status_message)).toMatch(/released/i);
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+
+  it("does NOT touch the project row when it has lost the lock to a stale-sweep reclaim", async () => {
+    const prevHf = process.env.HF_TOKEN;
+    delete process.env.HF_TOKEN; // fail the preflight before any project write
+    try {
+      jobsCasWins = false;
+      claimQueue = [job({ kind: "video_agent_render", credits_reserved: 20, payload: basePayload })];
+      const r = await processOneJob("w1");
+      expect(r.status).toBe("stale");
+      expect(calls.rpc.find((c) => c.name === "finalize_job")?.args).toMatchObject({
+        _outcome: "failed",
+      });
+      expect(calls.rpc.find((c) => c.name === "release_reservation")).toBeUndefined();
+      expect(calls.updates.find((u) => u.table === "video_agent_projects")).toBeUndefined();
+    } finally {
+      if (prevHf === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = prevHf;
+    }
+  });
+});
+
+describe("processBatch", () => {
+  it("drains queued jobs and stops at the first empty claim", async () => {
+    claimQueue = [job({ id: "a" }), job({ id: "b" })];
+    const results = await processBatch("w1", 5);
+    expect(results.filter((r) => r.processed)).toHaveLength(2);
+    expect(results[results.length - 1].processed).toBe(false);
+  });
+
+  it("respects the limit even when more jobs are queued", async () => {
+    claimQueue = [job({ id: "a" }), job({ id: "b" }), job({ id: "c" })];
+    const results = await processBatch("w1", 2);
+    expect(results).toHaveLength(2);
+    expect(results.every((r) => r.processed)).toBe(true);
+  });
+});
+
+describe("queue lanes", () => {
+  it("lanesForSlot reserves the final slot of a multi-slot batch for heavy", () => {
+    expect(lanesForSlot(0, 5)).toEqual(["standard", "heavy"]);
+    expect(lanesForSlot(3, 5)).toEqual(["standard", "heavy"]);
+    expect(lanesForSlot(4, 5)).toEqual(["heavy"]);
+    // A single-slot batch must never be heavy-only — standard would starve.
+    expect(lanesForSlot(0, 1)).toEqual(["standard", "heavy"]);
+  });
+
+  it("processBatch claims via claim_next_job_v2, heavy-only on the last slot", async () => {
+    claimQueue = [job({ id: "a" }), job({ id: "b" })];
+    await processBatch("w1", 2);
+    const claims = calls.rpc.filter((r) => r.name === "claim_next_job_v2");
+    expect(claims).toHaveLength(2);
+    expect(claims[0].args).toEqual({ _worker: "w1", _lanes: ["standard", "heavy"] });
+    expect(claims[1].args).toEqual({ _worker: "w1", _lanes: ["heavy"] });
+  });
+
+  it("a heavy-only miss on the reserved slot does not mark the batch drained early", async () => {
+    // 1 standard job, nothing heavy: slot 0 processes it, slot 1 (heavy-only)
+    // comes up empty — batch ends with exactly one processed result.
+    claimQueue = [job({ id: "a" })];
+    const results = await processBatch("w1", 2);
+    expect(results.filter((r) => r.processed)).toHaveLength(1);
+  });
+
+  it("standard jobs are not delayed by a queued heavy job — both get served in one batch", async () => {
+    // Scenario: one standard image job and one heavy lipsync job are both queued.
+    // With a 3-slot batch (slots 0,1 = mixed; slot 2 = heavy-only), both lanes
+    // should be served: the standard job wins a mixed slot, the lipsync wins the
+    // heavy-only slot, and no standard job ever has to wait behind lipsync.
+    //
+    // The mock is lane-aware: a mixed-lane call returns the standard job (the
+    // standard worker always prefers standard first), and the heavy-only call
+    // returns the lipsync job. Both are processed and neither blocks the other.
+    const standardJob = job({ id: "std", kind: "image", payload: { kind: "image", prompt: "photo" } });
+    const heavyJob = job({ id: "lsync", kind: "lipsync", payload: { kind: "lipsync", prompt: "lip" } });
+
+    // Simulate the DB queue: mixed-lane slots get the standard job, the heavy-only
+    // slot gets the lipsync job.  claimQueue acts as a FIFO consumed by each slot's
+    // claim_next_job_v2 call in processBatch — two mixed slots + one heavy-only slot.
+    claimQueue = [standardJob, heavyJob];
+
+    const results = await processBatch("w1", 3);
+
+    const processed = results.filter((r) => r.processed);
+    expect(processed).toHaveLength(2);
+    expect(processed.map((r) => r.jobId).sort()).toEqual(["lsync", "std"].sort());
+
+    // Verify slot assignments: slots 0,1 requested mixed lanes; slot 2 heavy-only.
+    const claims = calls.rpc.filter((r) => r.name === "claim_next_job_v2");
+    expect(claims[0].args._lanes).toEqual(["standard", "heavy"]);
+    expect(claims[1].args._lanes).toEqual(["standard", "heavy"]);
+    expect(claims[2].args._lanes).toEqual(["heavy"]);
+  });
+
+  it("a flood of standard jobs never fully starves the heavy lane in multi-slot batches", async () => {
+    // Even when standard work fills every mixed slot, the final slot is heavy-only
+    // so lipsync/4K renders always get at least one slot per tick.
+    const standardJobs = [
+      job({ id: "s1" }), job({ id: "s2" }), job({ id: "s3" }), job({ id: "s4" }),
+    ];
+    const heavyJob = job({ id: "h1", kind: "lipsync", payload: { kind: "lipsync" } });
+
+    // 5-slot batch: slots 0-3 = mixed (all claim standard jobs), slot 4 = heavy-only.
+    claimQueue = [...standardJobs, heavyJob];
+    const results = await processBatch("w1", 5);
+
+    const processed = results.filter((r) => r.processed);
+    expect(processed).toHaveLength(5);
+
+    const claims = calls.rpc.filter((r) => r.name === "claim_next_job_v2");
+    // First 4 slots: mixed lanes — standard jobs drain these.
+    for (let i = 0; i < 4; i++) {
+      expect(claims[i].args._lanes).toEqual(["standard", "heavy"]);
+    }
+    // Final slot: heavy-only — the lipsync job gets served here.
+    expect(claims[4].args._lanes).toEqual(["heavy"]);
+    expect(processed.find((r) => r.jobId === "h1")).toBeDefined();
+  });
+});
+
+describe("classifyJobError", () => {
+  it("treats network/provider flakiness as transient", () => {
+    for (const m of [
+      "provider timeout",
+      "ECONNRESET",
+      "rate limited 429",
+      "502 bad gateway",
+      "fetch failed",
+    ]) {
+      expect(classifyJobError(m)).toBe("transient");
+    }
+  });
+
+  it("treats auth / validation / capability errors as terminal", () => {
+    for (const m of [
+      "insufficient_credits",
+      "Unauthorized",
+      "HTTP 401",
+      "forbidden 403",
+      "HTTP 400 bad request",
+      "invalid input image",
+      "ugc_ad requires productPrompt",
+      "missing audio url",
+      "unsupported kind",
+      "no path for kind",
+      // AutoCut falls back to a local ffmpeg assembler when no self-hosted
+      // worker is online; if THAT render itself fails, it still fails
+      // cleanly (and refunds) rather than retrying indefinitely — "requires"
+      // must classify terminal so processOneJob releases the reservation.
+      "AutoCut requires a working video assembler and the render failed — your Aura was not charged. Please try again shortly.",
+    ]) {
+      expect(classifyJobError(m)).toBe("terminal");
+    }
+  });
+
+  it("video-chain-exhaustion errors classify by their preserved suffix (task #305)", () => {
+    // Config gap (nothing could even be tried): the reasons suffix carries
+    // "missing config/key" → terminal, so the reservation refunds as before.
+    expect(
+      classifyJobError(
+        'No video provider available right now — try again or switch model. — runpod: cooling down after recent failure; fal: missing config/key for model "?"',
+      ),
+    ).toBe("terminal");
+    // Transient outage: the last raw error is a 5xx → retry later, exactly as
+    // when orchestrate() threw the bare lastErr.
+    expect(
+      classifyJobError(
+        "No video provider available right now — try again or switch model. (last: Fal 503: upstream capacity)",
+      ),
+    ).toBe("transient");
+  });
+});
+
+describe("nextRetryAt", () => {
+  it("grows exponentially then caps at 30m (+jitter)", () => {
+    const now = 1_000_000_000_000;
+    const delay = (attempts: number) => new Date(nextRetryAt(attempts, now)).getTime() - now;
+    // attempt 1 ≈ base 30s window (+jitter), well under the cap
+    expect(delay(1)).toBeGreaterThanOrEqual(30_000);
+    expect(delay(1)).toBeLessThan(5 * 60_000);
+    // far-out attempts saturate at the 30m cap (plus a little jitter)
+    const big = delay(100);
+    expect(big).toBeGreaterThanOrEqual(30 * 60_000);
+    expect(big).toBeLessThanOrEqual(30 * 60_000 + 60_000);
+  });
+});
+
+describe("retryDecision", () => {
+  const fresh = new Date().toISOString();
+  it("retries transient failures under the ceiling and age deadline", () => {
+    const d = retryDecision({ attempts: 5, created_at: fresh }, "provider timeout");
+    expect(d).toEqual({ retry: true, reason: "transient" });
+  });
+  it("gives up at the attempt ceiling", () => {
+    const d = retryDecision(
+      { attempts: PERSISTENT_RETRY_MAX_ATTEMPTS, created_at: fresh },
+      "provider timeout",
+    );
+    expect(d).toEqual({ retry: false, reason: "max_attempts" });
+  });
+  it("gives up past the age deadline", () => {
+    const old = new Date(Date.now() - PERSISTENT_RETRY_MAX_AGE_MS - 1000).toISOString();
+    const d = retryDecision({ attempts: 1, created_at: old }, "provider timeout");
+    expect(d).toEqual({ retry: false, reason: "max_age" });
+  });
+  it("never retries terminal errors regardless of attempts", () => {
+    const d = retryDecision({ attempts: 0, created_at: fresh }, "unauthorized");
+    expect(d).toEqual({ retry: false, reason: "terminal" });
+  });
+});
+
+describe("sweepStaleProcessingJobs", () => {
+  it("invokes the reset_stale_processing_jobs RPC with the configured window", async () => {
+    await sweepStaleProcessingJobs(600);
+    const call = calls.rpc.find((c) => c.name === "reset_stale_processing_jobs");
+    expect(call?.args).toMatchObject({ _max_age_seconds: 600 });
+  });
+
+  // Task #345: the sweep enforces the SAME persistent-retry bounds as the
+  // worker's in-process error path, passed from the TS constants so the
+  // policy numbers never fork between the loop and the give-up sweep. A
+  // crash-looping worker (process death, never an in-process error) would
+  // otherwise cycle sweep→claim forever with the reservation stranded.
+  it("passes the persistent-retry give-up bounds to the sweep RPC", async () => {
+    await sweepStaleProcessingJobs();
+    const call = calls.rpc.find((c) => c.name === "reset_stale_processing_jobs");
+    expect(call?.args).toMatchObject({
+      _give_up_attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+      _give_up_age_seconds: Math.floor(PERSISTENT_RETRY_MAX_AGE_MS / 1000),
+    });
+  });
+});
+
+describe("sweepHighValueStaleProcessingJobs", () => {
+  it("passes the kind filter AND the same give-up bounds as the global sweep", async () => {
+    await sweepHighValueStaleProcessingJobs(180);
+    const call = calls.rpc.find((c) => c.name === "reset_stale_processing_jobs_for_kinds");
+    expect(call?.args).toMatchObject({
+      _kinds: ["motion", "performance_reskin"],
+      _max_age_seconds: 180,
+      _give_up_attempts: PERSISTENT_RETRY_MAX_ATTEMPTS,
+      _give_up_age_seconds: Math.floor(PERSISTENT_RETRY_MAX_AGE_MS / 1000),
+    });
+  });
+});
+
+describe("sweepFailedJobs", () => {
+  it("re-enqueues a failed job with a transient error via requeue_failed_job", async () => {
+    failedJobsRows = [{ id: "f1", error: "provider timeout" }];
+    const r = await sweepFailedJobs();
+    expect(r).toEqual({ requeued: 1, skipped: 0 });
+    const call = calls.rpc.find((c) => c.name === "requeue_failed_job");
+    expect(call?.args).toMatchObject({ _job: "f1" });
+  });
+
+  it("treats a failed job with no error string as transient and re-enqueues it", async () => {
+    failedJobsRows = [{ id: "f2", error: null }];
+    const r = await sweepFailedJobs();
+    expect(r.requeued).toBe(1);
+    expect(calls.rpc.find((c) => c.name === "requeue_failed_job")).toBeDefined();
+  });
+
+  it("skips terminally-failed jobs WITHOUT calling requeue_failed_job", async () => {
+    failedJobsRows = [{ id: "t1", error: "insufficient_credits" }];
+    const r = await sweepFailedJobs();
+    expect(r).toEqual({ requeued: 0, skipped: 1 });
+    expect(calls.rpc.find((c) => c.name === "requeue_failed_job")).toBeUndefined();
+  });
+
+  it("counts an unaffordable re-reservation as skipped, not requeued", async () => {
+    failedJobsRows = [{ id: "f3", error: "fetch failed" }];
+    requeueOutcome = "insufficient_credits";
+    const r = await sweepFailedJobs();
+    expect(r).toEqual({ requeued: 0, skipped: 1 });
+    // It still attempted the (atomic, credit-safe) re-reserve+requeue RPC.
+    expect(calls.rpc.find((c) => c.name === "requeue_failed_job")).toBeDefined();
+  });
+
+  it("does nothing when there are no orphaned failures", async () => {
+    failedJobsRows = [];
+    const r = await sweepFailedJobs();
+    expect(r).toEqual({ requeued: 0, skipped: 0 });
+    expect(calls.rpc.find((c) => c.name === "requeue_failed_job")).toBeUndefined();
+  });
+});
+
+describe("sweepStuckReservations", () => {
+  it("reconciles each candidate job via reconcile_stuck_reservation", async () => {
+    jobsReadMode = "stuck";
+    stuckJobsRows = [{ id: "s1" }, { id: "s2" }];
+    reconcileOutcome = "reconciled";
+    const r = await sweepStuckReservations();
+    expect(r).toEqual({ reconciled: 2, checked: 2 });
+    const rpcCalls = calls.rpc.filter((c) => c.name === "reconcile_stuck_reservation");
+    expect(rpcCalls.map((c) => c.args._job)).toEqual(["s1", "s2"]);
+  });
+
+  it("does not count a no-op outcome (already settled by a racing sweep) as reconciled", async () => {
+    jobsReadMode = "stuck";
+    stuckJobsRows = [{ id: "s3" }];
+    reconcileOutcome = "already_settled";
+    const r = await sweepStuckReservations();
+    expect(r).toEqual({ reconciled: 0, checked: 1 });
+  });
+
+  it("does nothing when there are no stuck reservations", async () => {
+    jobsReadMode = "stuck";
+    stuckJobsRows = [];
+    const r = await sweepStuckReservations();
+    expect(r).toEqual({ reconciled: 0, checked: 0 });
+    expect(calls.rpc.find((c) => c.name === "reconcile_stuck_reservation")).toBeUndefined();
+  });
+
+  it("honors custom grace/batch args without changing behavior", async () => {
+    jobsReadMode = "stuck";
+    stuckJobsRows = [{ id: "s4" }];
+    reconcileOutcome = "reconciled";
+    const r = await sweepStuckReservations(60, 5);
+    expect(r).toEqual({ reconciled: 1, checked: 1 });
+  });
+});
+
+describe("recordSchedulerHeartbeat", () => {
+  it("upserts an ok heartbeat", async () => {
+    await recordSchedulerHeartbeat("jobs_tick", true);
+    const up = calls.upserts.find((u) => u.table === "scheduler_heartbeats");
+    expect(up).toBeDefined();
+    expect(up?.row).toMatchObject({ name: "jobs_tick" });
+    expect((up?.row as Record<string, unknown>).last_ok_at).toBeDefined();
+  });
+
+  it("records the error on a failed heartbeat", async () => {
+    await recordSchedulerHeartbeat("jobs_tick", false, "boom");
+    const up = calls.upserts.find((u) => u.table === "scheduler_heartbeats");
+    expect(up?.row).toMatchObject({ name: "jobs_tick", last_error: "boom" });
+  });
+});
+
+// task #284 — real progress must flow through the DI'd orchestrate call.
+// This test exists because the wiring was once built and then NOT passed into
+// orch(): everything compiled, coarse seams still wrote, and provider progress
+// silently vanished.
+describe("processOneJob progress wiring", () => {
+  it("passes onProgress to orchestrate and lands banded provider pct on the jobs row", async () => {
+    orchestrateImpl = async (req) => {
+      const r = req as { onProgress?: (u: { pct?: number; stage?: string }) => void };
+      if (typeof r.onProgress !== "function") throw new Error("onProgress missing from orchestrate request");
+      r.onProgress({ pct: 50 });
+      return { url: "https://out/img.png", provider: "pollinations", endpoint: "pollinations:flux", latencyMs: 1, costUsd: 0 };
+    };
+    claimQueue = [job()];
+    const r = await processOneJob("w1");
+    expect(r.processed).toBe(true);
+    await Bun.sleep(5); // reporter writes are fire-and-forget
+    const prog = calls.updates.filter((u) => u.table === "jobs" && "progress_pct" in u.patch);
+    expect(prog.some((u) => u.patch.progress_pct === 2)).toBe(true); // claim seam (also resets stale pct)
+    expect(prog.some((u) => u.patch.progress_pct === 48)).toBe(true); // 5 + 50*0.85 = 47.5 → 48
+    expect(prog.some((u) => u.patch.progress_pct === 92)).toBe(true); // upload seam
+  });
+
+  it("tiktok_remix_child threads onProgress and lands banded provider pct", async () => {
+    orchestrateImpl = async (req) => {
+      const r = req as { onProgress?: (u: { pct?: number; stage?: string }) => void };
+      if (typeof r.onProgress !== "function")
+        throw new Error("onProgress missing from tiktok child orchestrate request");
+      r.onProgress({ pct: 100 });
+      return { url: "https://out/clip.mp4", provider: "fal", endpoint: "fal:seedance", latencyMs: 1, costUsd: 0 };
+    };
+    claimQueue = [job({
+      kind: "tiktok_remix_child",
+      payload: { sourceVideoUrl: "https://in/src.mp4", prompt: "remix", remixId: "r1", index: 0 },
+    })];
+    const r = await processOneJob("w1");
+    expect(r.processed).toBe(true);
+    await Bun.sleep(5);
+    const prog = calls.updates.filter((u) => u.table === "jobs" && "progress_pct" in u.patch);
+    expect(prog.some((u) => u.patch.progress_pct === 90)).toBe(true); // 5 + 100*0.85 = 90
+  });
+
+  it("performance_reskin threads onProgress into every stage with ascending bands and labels", async () => {
+    const seen: Array<{ kind?: string; hasCb: boolean }> = [];
+    orchestrateImpl = async (req) => {
+      const r = req as {
+        kind?: string;
+        onProgress?: (u: { pct?: number; stage?: string }) => void;
+      };
+      seen.push({ kind: r.kind, hasCb: typeof r.onProgress === "function" });
+      if (typeof r.onProgress !== "function")
+        throw new Error(`onProgress missing for reskin stage ${r.kind}`);
+      // The motion stage reports a mid-render provider percent under a
+      // free-text stage (stage changes bypass the reporter throttle, so this
+      // write is deterministic in-test): 50% of the 32–72 band → 52.
+      if (r.kind === "motion") r.onProgress({ pct: 50, stage: "rendering frames" });
+      else r.onProgress({ pct: 100, stage: "generating" });
+      const url =
+        r.kind === "image" ? "https://out/still.png"
+        : r.kind === "motion" ? "https://out/motion.mp4"
+        : "https://out/final.mp4";
+      return { url, provider: "replicate", endpoint: `replicate:${r.kind}`, latencyMs: 1, costUsd: 0 };
+    };
+    claimQueue = [job({
+      kind: "performance_reskin",
+      payload: {
+        performanceVideoUrl: "https://in/perf.mp4",
+        avatarImageUrl: "https://in/avatar.png",
+        audioUrl: "https://in/track.mp3",
+      },
+    })];
+    const r = await processOneJob("w1");
+    expect(r.processed).toBe(true);
+    await Bun.sleep(5);
+    expect(seen.map((s) => s.kind)).toEqual(["image", "motion", "lipsync"]);
+    expect(seen.every((s) => s.hasCb)).toBe(true);
+    const prog = calls.updates.filter((u) => u.table === "jobs" && "progress_pct" in u.patch);
+    const pcts = prog.map((u) => u.patch.progress_pct as number);
+    expect(pcts).toContain(5); // still stage start
+    expect(pcts).toContain(32); // motion stage start (carries prior high-water)
+    expect(pcts).toContain(52); // provider-derived mid-motion percent, banded
+    expect(pcts).toContain(74); // relip stage start
+    const stages = prog.map((u) => u.patch.progress_stage).filter(Boolean);
+    expect(stages).toContain("styling avatar");
+    expect(stages).toContain("animating performance");
+    expect(stages).toContain("rendering frames"); // provider free text passes through
+    expect(stages).toContain("syncing lips");
+  });
+
+  for (const duration of [30, 45] as const) {
+    it(`Content Line ${duration}s jobs assemble every scene and persist the captioned export`, async () => {
+      const oldXaiKey = process.env.XAI_API_KEY;
+      process.env.XAI_API_KEY = "test-key";
+      try {
+        let sceneCount = 0;
+        orchestrateImpl = async (request) => {
+          const req = request as { kind: string };
+          const url = req.kind === "caption_burn"
+            ? "https://out/captioned.mp4"
+            : `https://out/scene-${++sceneCount}.mp4`;
+          return { url, provider: "test-provider", endpoint: `test:${req.kind}`, latencyMs: 1, costUsd: 0 };
+        };
+        const script = "I used to wake up every night. Then I tried a new routine. Now I wake up feeling rested.";
+        claimQueue = [job({
+          kind: "ugc_ad",
+          payload: {
+            avatarImageUrl: "https://in/avatar.png",
+            avatarName: "Maya",
+            productPrompt: "A sleep routine",
+            scriptOverride: script,
+            captionText: "MY NEW ROUTINE",
+            aspect: "9:16",
+            duration,
+          },
+        })];
+        const bytes = Buffer.from("assembled-test-video");
+        const assemble = mock(async (params: {
+          clips: string[]; maxDurationSec?: number; targetClipDurationSec?: number; preserveClipDuration?: boolean;
+        }) => {
+          expect(params.clips).toEqual(Array.from({ length: duration / 15 }, (_, i) => `https://out/scene-${i + 1}.mp4`));
+          expect(params.preserveClipDuration).toBe(true);
+          expect(params.targetClipDurationSec).toBe(15);
+          expect(params.maxDurationSec).toBe(duration);
+          expect(params.clips.length * params.targetClipDurationSec!).toBe(duration);
+          return bytes;
+        });
+        const upload = mock(async (userId: string, jobId: string, video: Buffer) => {
+          expect(userId).toBe("u1");
+          expect(jobId).toBe("j1");
+          expect(video).toBe(bytes);
+          return "https://out/assembled.mp4";
+        });
+        const result = await rawProcessOneJob("w1", { ...deps, assembleUGC: assemble, uploadUGC: upload });
+        expect(result.status).toBe("succeeded");
+        expect(assemble).toHaveBeenCalledTimes(1);
+        expect(upload).toHaveBeenCalledTimes(1);
+        const requests = orchRequests as Array<{ kind: string; duration?: number; model?: string; prompt?: string; videoUrl?: string; segments?: unknown }>;
+        expect(requests.map((r) => r.kind)).toEqual([...Array(duration / 15).fill("video"), "caption_burn"]);
+        for (const request of requests.filter((r) => r.kind === "video")) {
+          expect(request.duration).toBe(15);
+          expect(request.model).toBe("xai/grok-imagine-video-1.5");
+        }
+        const caption = requests.at(-1)!;
+        expect(caption.videoUrl).toBe("https://out/assembled.mp4");
+        expect(caption.segments).toEqual([{ start: duration * 0.42, end: duration - 0.35, text: "MY NEW ROUTINE" }]);
+        const finish = calls.rpc.find((call) => call.name === "finalize_job");
+        expect(finish?.args._result_video_url).toBe("https://out/captioned.mp4");
+      } finally {
+        if (oldXaiKey === undefined) delete process.env.XAI_API_KEY;
+        else process.env.XAI_API_KEY = oldXaiKey;
+      }
+    });
+  }
+
+  it("Content Line UGC jobs preserve authored copy and persist the caption-burned video", async () => {
+    const oldXaiKey = process.env.XAI_API_KEY;
+    const oldHfToken = process.env.HF_TOKEN;
+    process.env.XAI_API_KEY = "test-key";
+    delete process.env.HF_TOKEN;
+    try {
+      orchestrateImpl = async (request) => {
+        const req = request as { kind: string };
+        const url = req.kind === "caption_burn"
+          ? "https://out/captioned.mp4"
+          : "https://out/raw.mp4";
+        return { url, provider: "test-provider", endpoint: `test:${req.kind}`, latencyMs: 1, costUsd: 0 };
+      };
+      claimQueue = [job({
+        kind: "ugc_ad",
+        payload: {
+          avatarImageUrl: "https://in/avatar.png",
+          avatarName: "Maya",
+          vibe: "Beauty reviewer",
+          sceneHint: "Window-lit bathroom mirror selfie",
+          sceneName: "testimonial",
+          productPrompt: "A magnesium sleep gummy",
+          scriptOverride: "I stopped waking up at 3 AM every single night.",
+          captionText: "I SLEEP THROUGH THE NIGHT NOW",
+          aspect: "9:16",
+          duration: 8,
+        },
+      })];
+
+      const result = await processOneJob("w1");
+
+      expect(result.processed).toBe(true);
+      const videoRequest = orchRequests.find((request) => (request as { kind?: string }).kind === "video") as { prompt?: string };
+      expect(videoRequest.prompt).toContain("I stopped waking up at 3 AM every single night.");
+      const captionRequest = orchRequests.find((request) => (request as { kind?: string }).kind === "caption_burn") as {
+        videoUrl?: string;
+        segments?: Array<{ text: string }>;
+      };
+      expect(captionRequest.videoUrl).toBe("https://out/raw.mp4");
+      expect(captionRequest.segments).toEqual(expect.arrayContaining([
+        expect.objectContaining({ text: "I SLEEP THROUGH THE NIGHT NOW" }),
+      ]));
+      const finish = calls.rpc.find((call) => call.name === "finalize_job");
+      expect(finish?.args._result_video_url).toBe("https://out/captioned.mp4");
+    } finally {
+      if (oldXaiKey === undefined) delete process.env.XAI_API_KEY;
+      else process.env.XAI_API_KEY = oldXaiKey;
+      if (oldHfToken === undefined) delete process.env.HF_TOKEN;
+      else process.env.HF_TOKEN = oldHfToken;
+    }
+  });
+});

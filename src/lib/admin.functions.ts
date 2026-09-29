@@ -1,0 +1,835 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { GENERATION_SUCCESS_STATUSES, aggregateByDayKind, bucketEarningsSeries } from "./cost-stats";
+import { computeProfitSplit, PROFIT_SPLIT_PCT, CREDIT_FUNDING_PCT } from "@/lib/profit-split";
+import { runModelWatchScan, type ModelWatchRow } from "@/lib/model-watch.server";
+import { z } from "zod";
+
+// Hidden owner gate. Validates against ADMIN_USERNAME + ADMIN_PASSCODE
+// secrets. Returns a short-lived token the client stores in sessionStorage
+// and replays via the X-Aurora-Admin header; server checks it on each
+// admin call in addition to the Supabase admin role.
+export const adminUnlock = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({ username: z.string().min(1).max(120), passcode: z.string().min(1).max(200) })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const u = process.env.ADMIN_USERNAME ?? "";
+    const p = process.env.ADMIN_PASSCODE ?? "";
+    if (!u || !p) throw new Error("Admin gate not configured");
+    if (data.username !== u || data.passcode !== p) {
+      // Constant-ish delay to slow brute force
+      await new Promise((r) => setTimeout(r, 600));
+      throw new Error("Invalid credentials");
+    }
+    return { ok: true, token: p }; // simple shared-secret token
+  });
+
+type SchedulerHeartbeat = {
+  name: string;
+  last_run_at: string | null;
+  last_ok_at: string | null;
+  last_error: string | null;
+};
+
+export async function assertAdmin(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Forbidden — admin only");
+}
+
+// Lets the client auto-skip the hidden owner passcode gate for accounts
+// that already hold the "admin" role in `user_roles` — the passcode gate
+// is a UI convenience layer only; every admin.* server function still
+// independently calls assertAdmin() against the real Supabase role, so a
+// non-admin can never see admin data even if they somehow bypass the gate.
+export const amIAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { isAdmin: !!data };
+  });
+
+export const adminOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+
+    // `scheduler_heartbeats` is not in the generated Supabase types yet.
+    const heartbeatTable = supabaseAdmin as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          eq: (
+            col: string,
+            val: string,
+          ) => { maybeSingle: () => Promise<{ data: SchedulerHeartbeat | null }> };
+        };
+      };
+    };
+
+    const [usersRes, gensRes, paymentsRes, jobsRes, heartbeatRes, stuckReservationsRes] =
+      await Promise.all([
+        supabaseAdmin
+          .from("profiles")
+          .select("user_id, email, display_name, credits, lifetime_credits_purchased, created_at")
+          .order("created_at", { ascending: false })
+          .limit(500),
+        supabaseAdmin
+          .from("generations")
+          .select(
+            "id, user_id, prompt, status, kind, model, result_image_url, result_video_url, credits_cost, created_at, error",
+          )
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabaseAdmin
+          .from("payments")
+          .select(
+            "id, user_id, reference, amount_kobo, currency, credits_granted, status, created_at",
+          )
+          .order("created_at", { ascending: false })
+          .limit(100),
+        supabaseAdmin
+          .from("jobs")
+          .select(
+            "id, generation_id, user_id, kind, status, attempts, error, scheduled_at, created_at",
+          )
+          .in("status", ["queued", "processing", "failed"])
+          .order("created_at", { ascending: false })
+          .limit(200),
+        heartbeatTable
+          .from("scheduler_heartbeats")
+          .select("name, last_run_at, last_ok_at, last_error")
+          .eq("name", "jobs_tick")
+          .maybeSingle(),
+        // Task #95: jobs left succeeded/failed with a reservation that
+        // sweepStuckReservations hasn't caught up to yet (or, if this keeps
+        // growing, evidence the sweep itself is stuck). Same grace window as
+        // the sweep (STUCK_RESERVATION_GRACE_SECONDS) — a job that finished a
+        // moment ago is normal (finalize_job settles it in the same
+        // transaction, but the sweep only runs once per tick).
+        supabaseAdmin
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["succeeded", "failed"])
+          .gt("credits_reserved", 0)
+          .is("credits_settled_at", null)
+          .lt("finished_at", new Date(Date.now() - 10 * 60_000).toISOString()),
+      ]);
+
+    const users = usersRes.data ?? [];
+    const generations = gensRes.data ?? [];
+    const payments = paymentsRes.data ?? [];
+    const jobs = jobsRes.data ?? [];
+    const scheduler = heartbeatRes.data ?? null;
+    const stuckReservations = { count: stuckReservationsRes.count ?? 0 };
+
+    const totalRevenueUsd = payments
+      .filter((p) => p.status === "succeeded")
+      .reduce((acc, p) => acc + (p.currency === "USD" ? p.amount_kobo / 100 : 0), 0);
+
+    const totalGens = generations.length;
+    const totalImages = generations.filter((g) => g.kind === "image").length;
+    const totalVideos = generations.filter((g) => g.kind === "video").length;
+
+    // Queue health snapshot for the retry/scheduler panel.
+    const queue = {
+      queued: jobs.filter((j) => j.status === "queued").length,
+      processing: jobs.filter((j) => j.status === "processing").length,
+      failed: jobs.filter((j) => j.status === "failed").length,
+      retrying: jobs.filter((j) => (j.attempts ?? 0) > 1 && j.status === "queued").length,
+    };
+
+    return {
+      users,
+      generations,
+      payments,
+      jobs,
+      scheduler,
+      queue,
+      stuckReservations,
+      stats: { totalRevenueUsd, totalGens, totalImages, totalVideos, totalUsers: users.length },
+    };
+  });
+
+export const adminGrantCredits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => {
+    const o = input as { userId?: string; amount?: number };
+    if (!o.userId || typeof o.amount !== "number") throw new Error("Bad input");
+    return { userId: o.userId, amount: Math.floor(o.amount) };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    await supabaseAdmin.rpc("grant_credits", {
+      _user: data.userId,
+      _amount: data.amount,
+      _reason: "admin_grant",
+      _ref: crypto.randomUUID(),
+      // Records which admin made this adjustment (credit_ledger.actor_id) so
+      // manual grants are auditable, not just their amount/reason.
+      _actor: context.userId,
+    });
+    return { ok: true };
+  });
+
+export type AdminStuckReservation = {
+  job_id: string;
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  credits_reserved: number;
+  status: "succeeded" | "failed";
+  updated_at: string;
+};
+
+export const adminListStuckReservations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+
+    const cutoff = new Date(Date.now() - 60 * 60_000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("jobs")
+      .select("id, user_id, credits_reserved, status, updated_at")
+      .in("status", ["succeeded", "failed"])
+      .gt("credits_reserved", 0)
+      .is("credits_settled_at", null)
+      .lt("updated_at", cutoff)
+      .order("updated_at", { ascending: true })
+      .limit(200);
+
+    if (error) throw new Error(error.message);
+    const jobs = data ?? [];
+    const userIds = [...new Set(jobs.map((job) => job.user_id))];
+    const { data: profiles, error: profilesError } = userIds.length
+      ? await supabaseAdmin
+          .from("profiles")
+          .select("user_id, email, display_name")
+          .in("user_id", userIds)
+      : { data: [], error: null };
+    if (profilesError) throw new Error(profilesError.message);
+
+    const profilesByUser = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
+    return jobs.map((job) => {
+      const profile = profilesByUser.get(job.user_id);
+      return {
+        job_id: job.id,
+        user_id: job.user_id,
+        email: profile?.email ?? null,
+        display_name: profile?.display_name ?? null,
+        credits_reserved: job.credits_reserved,
+        status: job.status as "succeeded" | "failed",
+        updated_at: job.updated_at,
+      };
+    }) satisfies AdminStuckReservation[];
+  });
+
+export const adminReleaseStuckReservation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        jobId: z.string().uuid(),
+        userId: z.string().uuid(),
+        expectedAmount: z.number().int().positive().max(2_147_483_647),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    // The generated client types intentionally lag additive admin RPCs.
+    const { data: outcome, error } = await supabaseAdmin.rpc(
+      "admin_reconcile_stuck_reservation" as never,
+      {
+        _job: data.jobId,
+        _user: data.userId,
+        _expected_amount: data.expectedAmount,
+        _actor: context.userId,
+      } as never,
+    );
+    if (error) throw new Error(error.message);
+    if (outcome !== "released" && outcome !== "committed") {
+      throw new Error(
+        outcome === "changed"
+          ? "Reservation changed or was already resolved. Refresh before trying again."
+          : "Reservation could not be released.",
+      );
+    }
+    return { ok: true, outcome };
+  });
+
+const EARNINGS_RANGES = { "7d": 7, "30d": 30, "90d": 90, all: null } as const;
+type EarningsRange = keyof typeof EARNINGS_RANGES;
+
+export interface EarningsPaymentRow {
+  amount_kobo: number;
+  currency: string;
+  credits_granted: number;
+  profit_amount_minor: number | null;
+  credit_funding_amount_minor: number | null;
+}
+
+export interface EarningsTotals {
+  transactions: number;
+  revenueMinor: number;
+  profitMinor: number;
+  creditFundingMinor: number;
+  creditsDistributed: number;
+}
+
+// Pure reconciliation core for adminEarnings — extracted so the money math can
+// be unit tested without a live Supabase/auth context. USD-only today; ignores
+// non-USD rows in the money totals. Falls back to computeProfitSplit for
+// legacy rows persisted before the profit/credit-funding columns existed, so
+// totals always reconcile with revenue (profit + credit-funding == revenue).
+export function reconcileEarningsTotals(payments: EarningsPaymentRow[]): EarningsTotals {
+  const usdPayments = payments.filter((p) => p.currency === "USD");
+
+  let revenueMinor = 0;
+  let profitMinor = 0;
+  let creditFundingMinor = 0;
+  let creditsDistributed = 0;
+  for (const p of usdPayments) {
+    revenueMinor += p.amount_kobo;
+    const fallback = computeProfitSplit(p.amount_kobo);
+    profitMinor += p.profit_amount_minor ?? fallback.profit_minor;
+    creditFundingMinor += p.credit_funding_amount_minor ?? fallback.credit_funding_minor;
+    creditsDistributed += p.credits_granted;
+  }
+
+  return {
+    transactions: usdPayments.length,
+    revenueMinor,
+    profitMinor,
+    creditFundingMinor,
+    creditsDistributed,
+  };
+}
+
+// Owner-facing earnings aggregation. Reads the real `payments` rows (only
+// successful charges), summing the persisted profit / credit-funding split and
+// credits distributed over a selectable time range, plus a recent-purchases
+// list joined to customer email/name. Admin-only.
+export const adminEarnings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => {
+    const o = (input ?? {}) as { range?: string };
+    const range: EarningsRange =
+      o.range && o.range in EARNINGS_RANGES ? (o.range as EarningsRange) : "30d";
+    return { range };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const days = EARNINGS_RANGES[data.range];
+    const since = days == null ? null : new Date(Date.now() - days * 86_400_000).toISOString();
+
+    let query = supabaseAdmin
+      .from("payments")
+      .select(
+        "id, user_id, amount_kobo, currency, credits_granted, status, created_at, profit_amount_minor, credit_funding_amount_minor, split_profit_pct",
+      )
+      .eq("status", "succeeded")
+      .order("created_at", { ascending: false });
+    if (since) query = query.gte("created_at", since);
+    const { data: paymentsRaw, error } = await query.limit(2000);
+    if (error) throw new Error(error.message);
+    const payments = paymentsRaw ?? [];
+    const { transactions, revenueMinor, profitMinor, creditFundingMinor, creditsDistributed } =
+      reconcileEarningsTotals(payments);
+
+    // Daily/weekly trend series for the earnings chart. Short ranges (<=30d)
+    // read best bucketed by day; longer ranges (90d/all) collapse to weekly
+    // buckets so the chart stays readable.
+    const granularity: "day" | "week" = days != null && days <= 30 ? "day" : "week";
+    const usdPayments = payments.filter((p) => p.currency === "USD");
+    const series = bucketEarningsSeries(
+      usdPayments.map((p) => {
+        const fallback = computeProfitSplit(p.amount_kobo);
+        return {
+          created_at: p.created_at,
+          revenueMinor: p.amount_kobo,
+          profitMinor: p.profit_amount_minor ?? fallback.profit_minor,
+        };
+      }),
+      granularity,
+    );
+
+    // Recent purchases joined to the buyer's email / name (no FK relationship
+    // defined on payments, so resolve profiles in a second query).
+    const recent = payments.slice(0, 20);
+    const userIds = [...new Set(recent.map((p) => p.user_id))];
+    const profileMap = new Map<string, { email: string | null; display_name: string | null }>();
+    if (userIds.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id, email, display_name")
+        .in("user_id", userIds);
+      for (const pr of profs ?? [])
+        profileMap.set(pr.user_id, { email: pr.email, display_name: pr.display_name });
+    }
+
+    const recentPurchases = recent.map((p) => {
+      const prof = profileMap.get(p.user_id);
+      return {
+        id: p.id,
+        user_id: p.user_id,
+        email: prof?.email ?? null,
+        display_name: prof?.display_name ?? null,
+        currency: p.currency,
+        amount_minor: p.amount_kobo,
+        profit_minor: p.profit_amount_minor ?? computeProfitSplit(p.amount_kobo).profit_minor,
+        credits_granted: p.credits_granted,
+        created_at: p.created_at,
+      };
+    });
+
+    return {
+      range: data.range,
+      profitPct: PROFIT_SPLIT_PCT,
+      creditFundingPct: CREDIT_FUNDING_PCT,
+      totals: {
+        transactions,
+        revenueUsd: revenueMinor / 100,
+        profitUsd: profitMinor / 100,
+        creditFundingUsd: creditFundingMinor / 100,
+        creditsDistributed,
+      },
+      recentPurchases,
+      series: {
+        granularity,
+        points: series.map((s) => ({
+          bucket: s.bucket,
+          revenueUsd: s.revenueMinor / 100,
+          profitUsd: s.profitMinor / 100,
+        })),
+      },
+    };
+  });
+// ─── Owner withdrawals (payouts against accumulated profit) ─────────────────
+// `payments` tells us total profit ever accumulated; `owner_withdrawals` is a
+// simple ledger of how much of that profit the owner has actually taken out,
+// so the Earnings tab can show total profit / total withdrawn / remaining.
+// Deliberately its own table (not the ai-credit-system bundle's
+// profit_tracker schema) per the migration in supabase/migrations/.
+
+export interface OwnerWithdrawalRow {
+  id: string;
+  withdrawn_at: string;
+  amount_minor: number;
+  note: string | null;
+}
+
+// `owner_withdrawals` is not in the generated Supabase types yet (same
+// situation as scheduler_heartbeats above) — narrow-cast just this table.
+// Only `.range()` is exposed (no `.limit()`) so every read here is forced
+// through the pagination helper below — an all-time ledger total must never
+// be computed from an arbitrarily-capped page.
+interface WithdrawalsOrderable {
+  // Chainable so a secondary tie-breaker column can be added for a fully
+  // stable sort during pagination (see fetchAllWithdrawals below).
+  order: (col: string, opts: { ascending: boolean }) => WithdrawalsOrderable;
+  range: (
+    from: number,
+    to: number,
+  ) => Promise<{ data: OwnerWithdrawalRow[] | null; error: { message: string } | null }>;
+}
+
+interface WithdrawalsEqChain {
+  eq: (col: string, val: string) => Promise<{ error: { message: string } | null }>;
+}
+
+const withdrawalsTable = supabaseAdmin as unknown as {
+  from: (t: "owner_withdrawals") => {
+    select: (c: string) => WithdrawalsOrderable;
+    insert: (row: {
+      amount_minor: number;
+      note: string | null;
+      withdrawn_at: string;
+      created_by: string;
+    }) => Promise<{ error: { message: string } | null }>;
+    update: (row: {
+      amount_minor?: number;
+      note?: string | null;
+      withdrawn_at?: string;
+    }) => WithdrawalsEqChain;
+    delete: () => WithdrawalsEqChain;
+  };
+};
+
+const PAGE_SIZE = 1000;
+
+// Pure per-row profit aggregation extracted from computeAllTimeProfitMinor so
+// the core math can be unit-tested without a live Supabase round-trip. USD-only
+// (non-USD rows are skipped); falls back to computeProfitSplit for legacy rows
+// that predate the persisted profit_amount_minor column.
+export function sumProfitFromPaymentRows(
+  rows: Array<{ amount_kobo: number; currency: string; profit_amount_minor: number | null }>,
+): number {
+  let profitMinor = 0;
+  for (const p of rows) {
+    if (p.currency !== "USD") continue;
+    profitMinor += p.profit_amount_minor ?? computeProfitSplit(p.amount_kobo).profit_minor;
+  }
+  return profitMinor;
+}
+
+// All-time profit total, independent of the Earnings range selector — a
+// withdrawal is recorded against the whole accumulated pool, not a slice of
+// it, so "remaining to withdraw" must reconcile against every payment ever
+// made rather than whatever date range happens to be selected in the UI.
+// Paginated (not a single capped `.limit()`) so the total stays correct no
+// matter how many payments have accumulated.
+export async function computeAllTimeProfitMinor(): Promise<number> {
+  let profitMinor = 0;
+  let from = 0;
+  for (;;) {
+    const { data, error } = await supabaseAdmin
+      .from("payments")
+      .select("amount_kobo, currency, profit_amount_minor")
+      .eq("status", "succeeded")
+      // Explicit stable order (by primary key) so pages don't drift/skip
+      // rows if new payments are inserted mid-scan.
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
+    profitMinor += sumProfitFromPaymentRows(rows);
+    if (rows.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return profitMinor;
+}
+
+// Fetches every recorded withdrawal (newest first), paginated so the
+// all-time "total withdrawn" figure is never derived from a capped page.
+async function fetchAllWithdrawals(): Promise<OwnerWithdrawalRow[]> {
+  const all: OwnerWithdrawalRow[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await withdrawalsTable
+      .from("owner_withdrawals")
+      .select("id, withdrawn_at, amount_minor, note")
+      .order("withdrawn_at", { ascending: false })
+      // Secondary tie-breaker on id — withdrawn_at alone isn't unique
+      // (same-day payouts), so pages could drift/skip without it.
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
+// Pure reconciliation core: all-time profit minus total withdrawn = what's
+// left. Extracted so the math has direct unit test coverage independent of
+// the DB round-trips in computeAllTimeProfitMinor/fetchAllWithdrawals.
+export function computeWithdrawalSummaryTotals(
+  totalProfitMinor: number,
+  withdrawals: { amount_minor: number }[],
+): { totalWithdrawnMinor: number; remainingMinor: number } {
+  const totalWithdrawnMinor = withdrawals.reduce((sum, w) => sum + w.amount_minor, 0);
+  return { totalWithdrawnMinor, remainingMinor: totalProfitMinor - totalWithdrawnMinor };
+}
+
+// Owner-facing withdrawal summary: all-time profit, total withdrawn, what's
+// left, plus a recent list of recorded payouts. Admin-only.
+export const adminWithdrawalSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+
+    const [totalProfitMinor, withdrawals] = await Promise.all([
+      computeAllTimeProfitMinor(),
+      fetchAllWithdrawals(),
+    ]);
+    const { totalWithdrawnMinor } = computeWithdrawalSummaryTotals(totalProfitMinor, withdrawals);
+
+    return {
+      totalProfitUsd: totalProfitMinor / 100,
+      totalWithdrawnUsd: totalWithdrawnMinor / 100,
+      remainingUsd: (totalProfitMinor - totalWithdrawnMinor) / 100,
+      // Recent-first slice for display only — the totals above already
+      // reflect the full all-time set.
+      withdrawals: withdrawals.slice(0, 200).map((w) => ({
+        id: w.id,
+        withdrawnAt: w.withdrawn_at,
+        amountUsd: w.amount_minor / 100,
+        note: w.note,
+      })),
+    };
+  });
+
+// Records a payout the owner actually took out of the business. Amount is
+// entered in whole USD from the UI and converted to minor units here so the
+// ledger stays in the same unit as `payments.profit_amount_minor`.
+export const adminRecordWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        amountUsd: z.number().positive().finite(),
+        note: z.string().trim().max(500).optional(),
+        withdrawnAt: z.string().datetime().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const amount_minor = Math.round(data.amountUsd * 100);
+    if (amount_minor <= 0) throw new Error("Amount must be greater than zero");
+
+    const { error } = await withdrawalsTable.from("owner_withdrawals").insert({
+      amount_minor,
+      note: data.note?.length ? data.note : null,
+      withdrawn_at: data.withdrawnAt ?? new Date().toISOString(),
+      created_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Reconciles a proposed payout amount against what's actually left before it
+// gets recorded — the client uses this to show a confirmation prompt when the
+// amount exceeds the remaining pool, rather than silently pushing "remaining"
+// negative. Not a hard block: legitimate backdated corrections can exceed the
+// current balance, so the owner can still confirm and proceed.
+export const adminCheckWithdrawalAmount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ amountUsd: z.number().positive().finite() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const [totalProfitMinor, withdrawals] = await Promise.all([
+      computeAllTimeProfitMinor(),
+      fetchAllWithdrawals(),
+    ]);
+    const { remainingMinor } = computeWithdrawalSummaryTotals(totalProfitMinor, withdrawals);
+    const remainingUsd = remainingMinor / 100;
+    return { exceedsRemaining: data.amountUsd > remainingUsd, remainingUsd };
+  });
+
+// Updates a previously recorded payout (amount/date/note). Owner-only, same as
+// recording — a mistaken entry (wrong amount, wrong date) should never
+// require a manual DB edit to correct.
+export const adminUpdateWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        amountUsd: z.number().positive().finite(),
+        note: z.string().trim().max(500).optional(),
+        withdrawnAt: z.string().datetime().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const amount_minor = Math.round(data.amountUsd * 100);
+    if (amount_minor <= 0) throw new Error("Amount must be greater than zero");
+    const { error } = await withdrawalsTable
+      .from("owner_withdrawals")
+      .update({
+        amount_minor,
+        note: data.note?.length ? data.note : null,
+        ...(data.withdrawnAt ? { withdrawn_at: data.withdrawnAt } : {}),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Removes a mistaken payout entry entirely. Owner-only.
+export const adminDeleteWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { error } = await withdrawalsTable.from("owner_withdrawals").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ─── Cost analytics (last 30 days) ────────────────────────────────────────────
+
+export const adminCostStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: gens, error } = await supabaseAdmin
+      .from("generations")
+      .select("kind, credits_cost, created_at, status")
+      .gte("created_at", since)
+      // Writers use 'succeeded' (API core) and 'complete' (studio fns) — the
+      // shared constant keeps this filter from drifting (a hand-rolled
+      // 'completed' here previously dropped every studio render from spend).
+      .in("status", [...GENERATION_SUCCESS_STATUSES])
+      .order("created_at", { ascending: false })
+      .limit(10000);
+
+    if (error) throw new Error(error.message);
+    const byDayKind = aggregateByDayKind(gens ?? []);
+
+    return { byDayKind, since };
+  });
+
+// ─── Model Watch (automatic new-AI-model discovery) ──────────────────────────
+// Rows live in `model_watch` (service-role only — not in generated types).
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const modelWatch = () => supabaseAdmin.from("model_watch" as any) as any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export const adminModelWatchList = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data, error } = await modelWatch()
+      .select("*")
+      .order("first_seen", { ascending: false })
+      .limit(400);
+    if (error) throw new Error(error.message);
+    return { rows: (data ?? []) as ModelWatchRow[] };
+  });
+
+export const adminModelWatchSetStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({ id: z.string().uuid(), status: z.enum(["new", "reviewed", "ignored"]) })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+    const { error } = await modelWatch()
+      .update({ status: data.status })
+      .eq("id", data.id)
+      // Anticipated rows keep their probe lifecycle — only catalog rows are
+      // review-workflow items.
+      .eq("watch_kind", "catalog");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminModelWatchScanNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    return await runModelWatchScan();
+  });
+
+// ─── Credit ledger search ─────────────────────────────────────────────────────
+// Used by /admin/ledger to search top-ups and debits by user, payment ref,
+// reason string, and date range. Returns up to `limit` rows (default 500)
+// plus a `truncated` flag so the UI can warn if the result set was capped.
+
+export const adminSearchLedger = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        userQuery: z.string().default(""),
+        refId:     z.string().default(""),
+        reason:    z.string().default(""),
+        fromDate:  z.string().default(""),
+        toDate:    z.string().default(""),
+        limit:     z.number().int().min(1).max(2000).default(500),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    // ── Resolve optional user filter to a set of user_ids ────────────────
+    let userIds: string[] | null = null;
+    if (data.userQuery.trim()) {
+      const q = data.userQuery.trim();
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id")
+        .or(
+          `email.ilike.%${q}%,display_name.ilike.%${q}%,user_id.eq.${q}`,
+        )
+        .limit(200);
+      userIds = (profiles ?? []).map((p: { user_id: string }) => p.user_id);
+      // If the query looks like a bare UUID try an exact match as well
+      if (userIds.length === 0) return { rows: [], truncated: false };
+    }
+
+    // ── Build ledger query ────────────────────────────────────────────────
+    let q = supabaseAdmin
+      .from("credit_ledger")
+      .select("id, user_id, delta, reason, ref_id, actor_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit + 1); // fetch one extra to detect truncation
+
+    if (userIds !== null) q = q.in("user_id", userIds);
+    if (data.refId.trim())   q = q.ilike("ref_id", `%${data.refId.trim()}%`);
+    if (data.reason.trim())  q = q.ilike("reason", `%${data.reason.trim()}%`);
+    if (data.fromDate)       q = q.gte("created_at", data.fromDate);
+    if (data.toDate)         q = q.lte("created_at", data.toDate);
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const truncated = (rows?.length ?? 0) > data.limit;
+    const ledgerRows = (rows ?? []).slice(0, data.limit);
+
+    // ── Enrich with profile email / display_name (subject + acting admin) ──
+    const actorIds = ledgerRows
+      .map((r: { actor_id: string | null }) => r.actor_id)
+      .filter((id: string | null): id is string => !!id);
+    const uniqueUserIds = [
+      ...new Set([...ledgerRows.map((r: { user_id: string }) => r.user_id), ...actorIds]),
+    ];
+    const profileMap = new Map<string, { email: string | null; display_name: string | null }>();
+    if (uniqueUserIds.length > 0) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id, email, display_name")
+        .in("user_id", uniqueUserIds);
+      for (const p of profs ?? []) {
+        profileMap.set(p.user_id, { email: p.email, display_name: p.display_name });
+      }
+    }
+
+    return {
+      truncated,
+      rows: ledgerRows.map((r: { id: string; user_id: string; delta: number; reason: string | null; ref_id: string | null; actor_id: string | null; created_at: string }) => ({
+        id:          r.id,
+        user_id:     r.user_id,
+        delta:       r.delta,
+        reason:      r.reason,
+        ref_id:      r.ref_id,
+        created_at:  r.created_at,
+        email:       profileMap.get(r.user_id)?.email ?? null,
+        displayName: profileMap.get(r.user_id)?.display_name ?? null,
+        actorId:      r.actor_id,
+        // Who performed this adjustment, e.g. for an "admin_grant" row — null
+        // for purchases, system grants, and user-initiated spends.
+        actorEmail:   r.actor_id ? (profileMap.get(r.actor_id)?.email ?? null) : null,
+      })),
+    };
+  });

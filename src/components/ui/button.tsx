@@ -5,7 +5,10 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  // "Liquid" feel: a soft spring on press (quick scale-down + ease-out release)
+  // plus a gentle inner highlight, so buttons feel fresh/tactile instead of
+  // robotic. transition-all keeps colour, shadow, transform and filter in sync.
+  "btn-liquid inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all duration-200 ease-out active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -16,11 +19,17 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        premium:
+          "bg-[image:var(--gradient-hero)] text-white shadow-[var(--shadow-glow-soft)] transition-[filter,box-shadow] hover:brightness-110 hover:shadow-[var(--shadow-glow)]",
+        glass:
+          "border border-[color:var(--border-strong)] bg-[color:var(--surface-glass-strong)] text-foreground backdrop-blur transition-[filter,background-color] hover:brightness-110",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-10 rounded-md px-8",
+        xl: "h-11 rounded-xl px-6 text-base",
+        pill: "h-9 rounded-full px-5",
         icon: "h-9 w-9",
       },
     },
