@@ -1,2 +1,2 @@
-- [ ] Aurora Video Agent: agents co-plan a brief; user approves before production
+- [x] Aurora Video Agent: agents co-plan a brief; user approves before production
 - [ ] Aurora Video Agent: less minimal studio (awaiting specifics)
