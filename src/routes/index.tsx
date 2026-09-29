@@ -648,6 +648,7 @@ function LandingPage() {
               }`}
             />
           ))}
+          </div>
         </div>
       </header>
 
