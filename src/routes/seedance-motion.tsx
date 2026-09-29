@@ -15,6 +15,10 @@ export const Route = createFileRoute("/seedance-motion")({
     meta: [
       { title: "Seedance Motion Control — Aurora" },
       { name: "description", content: "ModelArk Seedance reference-video motion control." },
+      { property: "og:title", content: "Seedance Motion Control — Aurora" },
+      { property: "og:description", content: "Transfer movement from a reference video to your subject with ModelArk Seedance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
