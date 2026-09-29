@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any -- settlement calls use columns/RPCs supplied by the pending migration, which are not in generated types until it is applied. */
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";

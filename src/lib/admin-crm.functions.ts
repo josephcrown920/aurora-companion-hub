@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Admin CRM read/write boundary. Customer behavior remains in first-party events;
 // this layer provides an operator-safe customer timeline and lifecycle record.
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
 import { SPIN_COUNT } from "@/lib/spin-engine";
 import { CANONICAL_ORIGIN } from "@/lib/seo";

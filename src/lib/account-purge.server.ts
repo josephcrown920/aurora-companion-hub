@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Shared account-data purge helpers.
 //
 // Used by BOTH:

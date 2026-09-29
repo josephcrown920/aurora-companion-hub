@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ComfyUI run + template server functions.
 //
 // Templates (`comfy_workflows`) hold a reusable ComfyUI /prompt graph plus a

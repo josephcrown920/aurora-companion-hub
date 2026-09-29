@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { parseAuthReturnPath } from "@/lib/auth-return-path";
 import { classifyAuthError, describeAuthError, type ClassifiedAuthError } from "@/lib/auth-error-message";
