@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import "@/features/creative-studio/aurora.css";
 import { StudioNav } from "@/features/creative-studio/components/studio/StudioNav";
@@ -128,8 +128,8 @@ function WorkflowsPage() {
     <div className="aurora-body aurora-page">
       <StudioNav />
       <div className="aurora-wrap">
-        <h1 className="aurora-page-title">Workflows</h1>
-        <p className="aurora-page-sub">Bring in ComfyUI workflows or build your own chain of steps and run it here.</p>
+        <h1 className="aurora-page-title">ComfyUI workflow builder</h1>
+        <p className="aurora-page-sub">Import ComfyUI JSON and arrange its steps here. To save a runnable workflow as an app with inputs and results, use <Link to="/comfy" className="underline">ComfyUI Apps</Link>.</p>
 
         <div className="aurora-panel">
           <div className="aurora-row wrap">

@@ -8,22 +8,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSystemPrompt } from "./aurora-skills";
 
 const opSchema = z.object({
-  op: z.string(),
-  type: z.string().nullable(),
-  id: z.string().nullable(),
-  name: z.string().nullable(),
-  prompt: z.string().nullable(),
-  kind: z.string().nullable(),
-  aspect: z.string().nullable(),
-  visible: z.boolean().nullable(),
-  locked: z.boolean().nullable(),
-  opacity: z.number().nullable(),
-  scale: z.number().nullable(),
-  x: z.number().nullable(),
-  y: z.number().nullable(),
-  start: z.number().nullable(),
-  duration: z.number().nullable(),
-  direction: z.string().nullable(),
+  op: z.enum(["add_layer", "update_layer", "remove_layer", "reorder_layer"]),
+  type: z.string().optional(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  prompt: z.string().optional(),
+  kind: z.string().optional(),
+  aspect: z.string().optional(),
+  visible: z.boolean().optional(),
+  locked: z.boolean().optional(),
+  opacity: z.number().optional(),
+  scale: z.number().optional(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+  start: z.number().optional(),
+  duration: z.number().optional(),
+  direction: z.string().optional(),
 });
 
 
@@ -66,7 +66,8 @@ export const agentEdit = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured for this studio yet. Add AI access and retry.");
 
-    const { structuredResponsesCall } = await import("./ai-gateway.server");
+    const { generateText } = await import("ai");
+    const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
 
     const system = `${buildSystemPrompt(["cinematic"], [])}
 
@@ -90,18 +91,15 @@ Rules:
 - When the request needs new footage, emit an add_layer with a generation prompt instead of inventing assets that do not exist.
 - Never combine edits that contradict each other. Keep the plan minimal — the smallest reliable set of operations.`;
 
-    const { data: result } = await structuredResponsesCall({
-      apiKey,
-      model: "openai/gpt-6-astra",
-      system,
-      messages: [
-        {
-          role: "user",
-          content: `Current layers:\n${JSON.stringify(data.layers)}\n\nInstruction: ${data.instruction}`,
-        },
-      ],
-      schema: agentSchema,
+    const { text } = await generateText({
+      model: createLovableAiGatewayProvider(apiKey)("google/gemini-2.5-flash"),
+      system: `${system}\nYour entire response must be a single JSON object with reply and ops keys. Example: {"reply":"Renamed the clip","ops":[{"op":"update_layer","id":"exact layer id","name":"Opening shot"}]}. No prose or markdown outside JSON.`,
+      prompt: `Current layers:\n${JSON.stringify(data.layers)}\n\nInstruction: ${data.instruction}\n\nReturn JSON only:`,
     });
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("The editor did not return an edit plan. Try again.");
+    const result = agentSchema.parse(JSON.parse(text.slice(start, end + 1)));
 
     const ops = result.ops
       .map((o) => ({ ...o, op: (o.op || "").trim() }))

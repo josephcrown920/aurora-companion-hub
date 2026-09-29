@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import "@/features/creative-studio/aurora.css";
 import bg1 from "@/features/creative-studio/assets/aurora-bg-1.jpg";
@@ -758,9 +758,7 @@ function Index() {
         <div className="aurora-bg-overlay" />
       </div>
 
-      <div className="aurora-logo-top">
-        <div className="aurora-logo-mark">A</div>
-        Aurora
+      <div className="aurora-logo-top aurora-theme-picker">
         <div className="aurora-bg-switch" role="group" aria-label="Background">
           {(["court", "moon", "chrome", "collage"] as BgTheme[]).map((t) => (
             <button
@@ -790,6 +788,18 @@ function Index() {
       </button>
 
       <StudioNav />
+
+      <nav className="aurora-studio-entry" aria-label="Video studio workspaces">
+        <Link to="/video-agent/timeline" className="aurora-studio-entry-primary">
+          <span>Video editor timeline</span><strong>Open agent editor →</strong>
+        </Link>
+        <Link to="/video-agent/workflows" className="aurora-studio-entry-secondary">
+          <span>ComfyUI workflow builder</span><strong>Import JSON →</strong>
+        </Link>
+        <Link to="/comfy" className="aurora-studio-entry-secondary">
+          <span>ComfyUI apps</span><strong>Run workflows →</strong>
+        </Link>
+      </nav>
 
       <div className="aurora-wrap">
 

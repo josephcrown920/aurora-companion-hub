@@ -979,6 +979,29 @@ function NewTemplateForm({
   );
   const [saving, setSaving] = useState(false);
 
+  const importGraph = async (file?: File) => {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const graph = parsed?.prompt ?? parsed;
+      if (!graph || typeof graph !== "object" || Array.isArray(graph) || !Object.values(graph).some((node) => node && typeof node === "object" && "class_type" in node && "inputs" in node)) {
+        throw new Error("Use a ComfyUI API-format workflow (Save API Format), not a UI-layout export.");
+      }
+      const fields = Object.entries(graph).flatMap(([id, node]) => {
+        const inputs = (node as { inputs?: Record<string, unknown> }).inputs ?? {};
+        return Object.entries(inputs)
+          .filter(([key, value]) => /^(text|prompt|seed|steps|cfg|filename_prefix)$/i.test(key) && (typeof value === "string" || typeof value === "number"))
+          .map(([key, value]) => ({ key: `${id}.${key}`, label: key.replace(/_/g, " "), type: /seed/i.test(key) ? "seed" : typeof value === "number" ? "number" : "text", default: value }));
+      });
+      setWorkflowText(JSON.stringify(graph, null, 2));
+      setInputsText(JSON.stringify(fields, null, 2));
+      setName(file.name.replace(/\.json$/i, ""));
+      toast.success("Workflow imported — review its inputs, then save it as an app.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to import workflow JSON");
+    }
+  };
+
   const submit = async () => {
     let workflowJson: unknown;
     let declaredInputs: unknown;
@@ -1043,6 +1066,10 @@ function NewTemplateForm({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="What this workflow does"
         />
+      </div>
+      <div className="mt-4">
+        <label className="block text-sm font-medium mb-1.5">Import ComfyUI API JSON</label>
+        <input type="file" accept=".json,application/json" className={FIELD_CLASS} onChange={(event) => void importGraph(event.target.files?.[0])} />
       </div>
       <div className="mt-4">
         <label className="block text-sm font-medium mb-1.5">
