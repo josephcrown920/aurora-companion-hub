@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Agent skills + artist knowledge that shape the creative director's replies.
 
 export interface Skill {

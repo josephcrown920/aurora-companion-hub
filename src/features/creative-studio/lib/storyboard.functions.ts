@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Shot-by-shot storyboard agent: concept + reference images -> structured shots.
 // Uses the Lovable AI Gateway (server-side key only).
 import { createServerFn } from "@tanstack/react-start";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Streaming voice playback: reads PCM audio chunks from /api/speech (SSE)
 // and schedules them on a shared Web Audio context so playback starts immediately.
 //

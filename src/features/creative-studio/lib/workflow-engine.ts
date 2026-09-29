@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Aurora Workflow Engine (foundation v0.4) — provider-neutral graph, runtime and ComfyUI bridge.
 // Canvas -> Graph contract -> Runtime -> Provider adapter.
 

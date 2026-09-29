@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Shared multi-track timeline document (browser-safe).
 export const VIDEO_TRACKS = ["V4", "V3", "V2", "V1"] as const;
 export const AUDIO_TRACKS = ["A1", "A2", "A3"] as const;

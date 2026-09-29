@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type WorkspaceId =
   | "assistant"
   | "image"

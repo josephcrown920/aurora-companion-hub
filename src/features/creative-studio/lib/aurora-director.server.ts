@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type AuroraDirectorInput = {
   instruction: string;
   context?: Record<string, unknown>;

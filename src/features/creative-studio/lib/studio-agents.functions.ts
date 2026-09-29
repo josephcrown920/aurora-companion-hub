@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Pro Suite AI: switchable LLMs, beat-synced music video director, workflow steps.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";

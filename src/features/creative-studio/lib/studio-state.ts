@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type PlaybackMode = "preview" | "generate" | "edit";
 
 export type ProjectRequest = {

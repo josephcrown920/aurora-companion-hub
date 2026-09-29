@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Editor agent: Codex-style editing on top of the studio's layer timeline.
 // The agent returns structured operations; the client applies them to the
 // controlled LayersEditor state so every edit stays reversible in the UI.

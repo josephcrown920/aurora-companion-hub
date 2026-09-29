@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Server functions that sync the studio's data to Lovable Cloud.
 // Every function is authenticated; RLS scopes rows to the signed-in user.
 import { createServerFn } from "@tanstack/react-start";

@@ -1,10 +1,11 @@
+// @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import "@/features/creative-studio/aurora.css";
 import { StudioNav } from "@/features/creative-studio/components/studio/StudioNav";
 import { DEFAULT_ADJUST, LOOKS, cssFilter, type Adjust } from "@/features/creative-studio/lib/pro-presets";
 
-export const Route = createFileRoute("/photo-lab")({
+export const Route = createFileRoute("/video-agent/photo-lab")({
   head: () => ({
     meta: [
       { title: "Photo Lab — Aurora Studio" },

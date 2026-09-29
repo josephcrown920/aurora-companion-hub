@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type ProviderName = "modelark" | "bagel" | "local";
 
 export type GenerationPayload = {

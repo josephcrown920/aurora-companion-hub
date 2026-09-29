@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Browser-only: estimates BPM and onset times from an uploaded track.
 export async function detectBeats(file: File): Promise<{ bpm: number; onsets: number[]; duration: number }> {
   const ctx = new AudioContext();

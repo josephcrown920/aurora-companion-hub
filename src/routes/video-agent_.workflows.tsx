@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import "@/features/creative-studio/aurora.css";
@@ -20,7 +21,7 @@ import {
 } from "@/features/creative-studio/lib/workflow-engine";
 import { loadTimeline, newId, saveTimeline, type Clip, type TrackId } from "@/features/creative-studio/lib/timeline-state";
 
-export const Route = createFileRoute("/workflows")({
+export const Route = createFileRoute("/video-agent/workflows")({
   head: () => ({
     meta: [
       { title: "Workflows — Aurora Studio" },

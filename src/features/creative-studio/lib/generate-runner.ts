@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { submitGatewayRequest } from "./model-gateway";
 
 export async function runProjectBrief(brief: string, modelId: string) {

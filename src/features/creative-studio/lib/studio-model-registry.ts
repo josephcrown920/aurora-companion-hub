@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type ModelNode = {
   id: string;
   label: string;

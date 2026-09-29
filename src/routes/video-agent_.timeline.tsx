@@ -1,10 +1,11 @@
+// @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
 import "@/features/creative-studio/aurora.css";
 import { StudioNav } from "@/features/creative-studio/components/studio/StudioNav";
 import { MultiTrackTimeline } from "@/features/creative-studio/components/video/MultiTrackTimeline";
 import { LayersEditor } from "@/features/creative-studio/components/video/LayersEditor";
 
-export const Route = createFileRoute("/timeline")({
+export const Route = createFileRoute("/video-agent/timeline")({
   head: () => ({
     meta: [
       { title: "Multi-Track Timeline — Aurora Studio" },

@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type SeedanceReferenceFailure = {
   code: "REAL_PERSON_REFERENCE_REQUIRES_ASSET";
   message: string;

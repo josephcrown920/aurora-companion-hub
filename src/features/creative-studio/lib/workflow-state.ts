@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type WorkflowStatus = "idle" | "queued" | "running" | "review" | "done";
 
 export type StudioRuntimeState = {

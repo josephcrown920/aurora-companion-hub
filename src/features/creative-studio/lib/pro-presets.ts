@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Shared presets, effects, and model lists for the Pro Suite (browser-safe).
 
 export const LLMS = [

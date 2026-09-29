@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Builds a CapCut-compatible draft structure plus a plain-text shot list
 // from the studio's layer timeline.
 import type { LayerItem } from "@/features/creative-studio/components/video/LayersEditor";

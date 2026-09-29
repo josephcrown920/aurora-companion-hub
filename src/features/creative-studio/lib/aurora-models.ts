@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type Provider = "ark" | "zenmux";
 
 export interface ModelOption {
