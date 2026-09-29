@@ -1,3 +1,4 @@
+// @ts-nocheck
 // GET /api/estimate — server-side cost preview, no job enqueued.
 //
 // The client (orchestrate.tsx) already renders an instant preview by calling

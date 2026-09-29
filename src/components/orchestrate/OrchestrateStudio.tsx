@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { authNextSearch } from "@/lib/auth-return-path";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";

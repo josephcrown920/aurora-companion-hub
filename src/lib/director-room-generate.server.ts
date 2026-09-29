@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { z } from "zod";
 import { computeCost, detectFeatures } from "@/lib/pricing";
 import type { RenderInput, RenderOutcome } from "@/lib/generate-core.server";

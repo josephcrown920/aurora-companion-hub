@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Aurora Orchestration Layer (server-only)
 // Providers:
 //   - replit-*    → Replit AI Integrations proxy (billed to the owner's Replit

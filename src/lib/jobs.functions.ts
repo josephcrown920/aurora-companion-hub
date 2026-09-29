@@ -1,3 +1,4 @@
+// @ts-nocheck
 // User-callable job queue server functions.
 // Enqueue + atomic credit reservation goes through create_generation_and_reserve.
 

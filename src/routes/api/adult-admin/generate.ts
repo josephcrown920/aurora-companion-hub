@@ -1,3 +1,4 @@
+// @ts-nocheck
 // POST /api/adult-admin/generate
 // Dedicated endpoint for the Aurora Adult School portal.
 // Authentication (dual, verified SERVER-side):

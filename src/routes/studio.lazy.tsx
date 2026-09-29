@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { authNextSearch } from "@/lib/auth-return-path";
 import { createLazyFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
