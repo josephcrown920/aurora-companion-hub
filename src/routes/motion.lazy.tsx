@@ -2166,23 +2166,20 @@ function MotionStudio() {
         </div>{/* ← end mode panels */}
       </div>{/* ← end left sidebar */}
 
-      {/* ── Right panel: hero + inspiration — desktop only ─────────── */}
+      {/* ── Right panel: guidance — desktop only, no imagery ───────── */}
       <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:h-full lg:overflow-y-auto bg-zinc-900/40 scrollbar-none">
-        <HiggsHero
-          kicker="Motion Control"
-          lines={["RECREATE ANY", "MOTION", "WITH YOUR IMAGE"]}
-          bracketWord="MOTION"
-          description="Copy the exact movement from any video and place your character into the same performance."
-        />
-        <FanPhotos
-          photos={[
-            { src: "/josh/josh-concert-performance.webp", alt: "Live performance" },
-            { src: "/josh/josh-pink-mic-portrait.jpg",    alt: "Stage energy" },
-            { src: "/josh/josh-blue-portrait.webp",       alt: "Cinematic shot" },
-          ]}
-        />
-        <HiggsDivider label="MOTION LIBRARY" />
-        <div className="px-4 pb-8">
+        <div className="px-6 pt-10 pb-8 border-b border-white/5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "#CCFF00" }}>Motion Control</p>
+          <h2 className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-tight text-white">
+            Recreate any<br />
+            <span style={{ color: "#CCFF00" }}>[ motion ]</span><br />
+            with your image
+          </h2>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/45">
+            Copy the exact movement from any video and place your character into the same performance — no studio, no crew.
+          </p>
+        </div>
+        <div className="px-6 py-8">
           <MotionInspirationBlock />
         </div>
       </div>
