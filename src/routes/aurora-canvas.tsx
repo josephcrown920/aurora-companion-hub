@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { upload } from "@vercel/blob/client";
+import { supabase } from "@/integrations/supabase/client";
 import "@/features/aurora-canvas/aurora.css";
 import bg1 from "@/features/aurora-canvas/assets/aurora-bg-1.jpg";
 import bg2 from "@/features/aurora-canvas/assets/aurora-bg-2.jpg";
@@ -237,10 +237,12 @@ function Index() {
     if (!usable.length) return;
     try {
       for (const file of usable) {
-        const blob = await upload("references/" + crypto.randomUUID() + "-" + file.name, file, {
-          access: "public",
-          handleUploadUrl: "/api/canvas/reference-upload",
-        });
+        const { data: auth } = await supabase.auth.getUser();
+        if (!auth.user) throw new Error("Sign in to upload references.");
+        const path = `${auth.user.id}/references/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("studio").upload(path, file, { contentType: file.type });
+        if (upErr) throw upErr;
+        const blob = { url: supabase.storage.from("studio").getPublicUrl(path).data.publicUrl };
         if (file.type.startsWith("video/")) setReferenceVideo(blob.url);
         else if (file.type.startsWith("audio/")) setReferenceAudio(blob.url);
         else if (file.type.startsWith("image/")) setRefs((prev) => [...prev, blob.url].slice(0, MAX_REFS));
