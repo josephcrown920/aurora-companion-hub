@@ -19,7 +19,7 @@ import {
 } from "./byteplus-video-contract";
 
 // ModelArk public API base for the AP Southeast BytePlus region.
-const DEFAULT_BASE = "https://ark.ap-southeast.byteplus.com/api/v3";
+const DEFAULT_BASE = "https://ark.ap-southeast.bytepluses.com/api/v3";
 
 /** The direct ByteDance key, if configured. `BYTEPLUS_API_KEY` or `ARK_API_KEY`. */
 export function getBytePlusKey(): string | undefined {
