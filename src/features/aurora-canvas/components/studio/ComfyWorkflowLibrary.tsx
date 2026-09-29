@@ -6,7 +6,7 @@ import {
   saveStoredWorkflows,
   validateWorkflow,
   type ComfyWorkflow,
-} from "../../lib/comfy-workflows";
+} from "@/features/aurora-canvas/lib/comfy-workflows";
 
 export default function ComfyWorkflowLibrary() {
   const [workflows, setWorkflows] = useState<ComfyWorkflow[]>([]);

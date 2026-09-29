@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 
-import { WORKSPACES, defaultWorkspace, type WorkspaceId } from "../lib/studio-workspaces";
-import { MODEL_REGISTRY, getModelsByCategory } from "../lib/studio-model-registry";
-import { defaultStudioRuntimeState } from "../lib/workflow-state";
-import { requestModelGeneration } from "../lib/provider-adapters";
-import { primeSpeech, speak } from "../lib/aurora-voice";
+import { WORKSPACES, defaultWorkspace, type WorkspaceId } from "@/features/aurora-canvas/lib/studio-workspaces";
+import { MODEL_REGISTRY, getModelsByCategory } from "@/features/aurora-canvas/lib/studio-model-registry";
+import { defaultStudioRuntimeState } from "@/features/aurora-canvas/lib/workflow-state";
+import { requestModelGeneration } from "@/features/aurora-canvas/lib/provider-adapters";
+import { primeSpeech, speak } from "@/features/aurora-canvas/lib/aurora-voice";
 import ComfyWorkflowLibrary from "./ComfyWorkflowLibrary";
 
 const WORKFLOW_STEPS = [
