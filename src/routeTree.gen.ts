@@ -146,7 +146,6 @@ import { Route as ApiCanvasComfyRouteImport } from './routes/api/canvas/comfy'
 import { Route as ApiCanvasContentAgentRouteImport } from './routes/api/canvas/content-agent'
 import { Route as ApiCanvasModelarkRouteImport } from './routes/api/canvas/modelark'
 import { Route as ApiCanvasModelarkDirectorRouteImport } from './routes/api/canvas/modelark-director'
-import { Route as ApiCanvasReferenceUploadRouteImport } from './routes/api/canvas/reference-upload'
 import { Route as ApiCanvasSpeechRouteImport } from './routes/api/canvas/speech'
 import { Route as ApiCanvasZenmuxRouteImport } from './routes/api/canvas/zenmux'
 import { Route as ApiDirectorsBoardBrainRouteImport } from './routes/api/directors-board/brain'
@@ -939,12 +938,6 @@ const ApiCanvasModelarkDirectorRoute =
     path: '/api/canvas/modelark-director',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiCanvasReferenceUploadRoute =
-  ApiCanvasReferenceUploadRouteImport.update({
-    id: '/api/canvas/reference-upload',
-    path: '/api/canvas/reference-upload',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiCanvasSpeechRoute = ApiCanvasSpeechRouteImport.update({
   id: '/api/canvas/speech',
   path: '/api/canvas/speech',
@@ -1419,7 +1412,6 @@ export interface FileRoutesByFullPath {
   '/api/canvas/content-agent': typeof ApiCanvasContentAgentRoute
   '/api/canvas/modelark': typeof ApiCanvasModelarkRoute
   '/api/canvas/modelark-director': typeof ApiCanvasModelarkDirectorRoute
-  '/api/canvas/reference-upload': typeof ApiCanvasReferenceUploadRoute
   '/api/canvas/speech': typeof ApiCanvasSpeechRoute
   '/api/canvas/zenmux': typeof ApiCanvasZenmuxRoute
   '/api/directors-board/brain': typeof ApiDirectorsBoardBrainRoute
@@ -1622,7 +1614,6 @@ export interface FileRoutesByTo {
   '/api/canvas/content-agent': typeof ApiCanvasContentAgentRoute
   '/api/canvas/modelark': typeof ApiCanvasModelarkRoute
   '/api/canvas/modelark-director': typeof ApiCanvasModelarkDirectorRoute
-  '/api/canvas/reference-upload': typeof ApiCanvasReferenceUploadRoute
   '/api/canvas/speech': typeof ApiCanvasSpeechRoute
   '/api/canvas/zenmux': typeof ApiCanvasZenmuxRoute
   '/api/directors-board/brain': typeof ApiDirectorsBoardBrainRoute
@@ -1827,7 +1818,6 @@ export interface FileRoutesById {
   '/api/canvas/content-agent': typeof ApiCanvasContentAgentRoute
   '/api/canvas/modelark': typeof ApiCanvasModelarkRoute
   '/api/canvas/modelark-director': typeof ApiCanvasModelarkDirectorRoute
-  '/api/canvas/reference-upload': typeof ApiCanvasReferenceUploadRoute
   '/api/canvas/speech': typeof ApiCanvasSpeechRoute
   '/api/canvas/zenmux': typeof ApiCanvasZenmuxRoute
   '/api/directors-board/brain': typeof ApiDirectorsBoardBrainRoute
@@ -2033,7 +2023,6 @@ export interface FileRouteTypes {
     | '/api/canvas/content-agent'
     | '/api/canvas/modelark'
     | '/api/canvas/modelark-director'
-    | '/api/canvas/reference-upload'
     | '/api/canvas/speech'
     | '/api/canvas/zenmux'
     | '/api/directors-board/brain'
@@ -2236,7 +2225,6 @@ export interface FileRouteTypes {
     | '/api/canvas/content-agent'
     | '/api/canvas/modelark'
     | '/api/canvas/modelark-director'
-    | '/api/canvas/reference-upload'
     | '/api/canvas/speech'
     | '/api/canvas/zenmux'
     | '/api/directors-board/brain'
@@ -2440,7 +2428,6 @@ export interface FileRouteTypes {
     | '/api/canvas/content-agent'
     | '/api/canvas/modelark'
     | '/api/canvas/modelark-director'
-    | '/api/canvas/reference-upload'
     | '/api/canvas/speech'
     | '/api/canvas/zenmux'
     | '/api/directors-board/brain'
@@ -2625,7 +2612,6 @@ export interface RootRouteChildren {
   ApiCanvasContentAgentRoute: typeof ApiCanvasContentAgentRoute
   ApiCanvasModelarkRoute: typeof ApiCanvasModelarkRoute
   ApiCanvasModelarkDirectorRoute: typeof ApiCanvasModelarkDirectorRoute
-  ApiCanvasReferenceUploadRoute: typeof ApiCanvasReferenceUploadRoute
   ApiCanvasSpeechRoute: typeof ApiCanvasSpeechRoute
   ApiCanvasZenmuxRoute: typeof ApiCanvasZenmuxRoute
   ApiDirectorsBoardBrainRoute: typeof ApiDirectorsBoardBrainRoute
@@ -3657,13 +3643,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCanvasModelarkDirectorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/canvas/reference-upload': {
-      id: '/api/canvas/reference-upload'
-      path: '/api/canvas/reference-upload'
-      fullPath: '/api/canvas/reference-upload'
-      preLoaderRoute: typeof ApiCanvasReferenceUploadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/canvas/speech': {
       id: '/api/canvas/speech'
       path: '/api/canvas/speech'
@@ -4307,7 +4286,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCanvasContentAgentRoute: ApiCanvasContentAgentRoute,
   ApiCanvasModelarkRoute: ApiCanvasModelarkRoute,
   ApiCanvasModelarkDirectorRoute: ApiCanvasModelarkDirectorRoute,
-  ApiCanvasReferenceUploadRoute: ApiCanvasReferenceUploadRoute,
   ApiCanvasSpeechRoute: ApiCanvasSpeechRoute,
   ApiCanvasZenmuxRoute: ApiCanvasZenmuxRoute,
   ApiDirectorsBoardBrainRoute: ApiDirectorsBoardBrainRoute,
