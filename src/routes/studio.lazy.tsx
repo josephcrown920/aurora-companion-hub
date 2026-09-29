@@ -710,7 +710,6 @@ function StudioPage() {
           kicker="Aurora Studio"
           headline="Direct the next visual."
           sub="Start from a reference, then make the composition yours."
-          media={DEMO_ASSETS.studio.hero}
         />
 
         {/* ── Hero composer — the signed-in front door ──────────── */}
