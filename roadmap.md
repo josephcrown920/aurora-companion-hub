@@ -1,2 +1,5 @@
-- [x] Aurora Video Agent: agents co-plan a brief; user approves before production
-- [ ] Aurora Video Agent: less minimal studio (awaiting specifics)
+# Roadmap
+
+- [ ] Add a chat-controlled editing timeline to Music Video.
+- [ ] Support a motion-control test using the creator’s uploaded image and performance video.
+- [ ] Verify the updated Perform Anywhere workflow.
