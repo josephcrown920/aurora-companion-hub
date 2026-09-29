@@ -32,6 +32,7 @@ import {
 } from "@/lib/performance-workflow";
 import { Button } from "@/components/ui/button";
 import { PerformanceVariantWorkflow } from "@/components/performance/PerformanceVariantWorkflow";
+import { ColorsGatewayPreview } from "@/components/performance/ColorsGatewayPreview";
 import { WorkflowSelectorVisual } from "@/components/performance/WorkflowVisualGuide";
 
 export const Route = createLazyFileRoute("/colors-show")({
@@ -975,6 +976,7 @@ function TwoAngleWorkflow() {
           </div>
         )}
       </div>
+      <ColorsGatewayPreview />
     </div>
   );
 }
