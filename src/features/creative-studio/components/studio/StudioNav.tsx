@@ -2,7 +2,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { LLMS, type LlmId } from "@/features/creative-studio/lib/pro-presets";
-import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 
 export const WORKSPACES = [
   { to: "/video-agent", icon: "🎨", name: "Generator & Director", note: "Images, video and the creative director" },
@@ -59,7 +58,7 @@ export function StudioNav() {
   return (
     <div className="aurora-nav" ref={wrap}>
       <Link to="/video-agent" className="aurora-nav-brand" aria-label="Aurora Studio home">
-        <img src={auroraLogo.url} alt="" width={34} height={34} /> <span>Aurora Studio</span>
+        <img src="/icons/aurora-icon-192.png" alt="" width={34} height={34} /> <span>Aurora Studio</span>
       </Link>
 
       <nav className="aurora-nav-links" aria-label="Studio workspaces">
