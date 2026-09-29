@@ -59,19 +59,16 @@ import { GenerationErrorCard } from "@/components/ui/GenerationErrorCard";
 import { BlurredPreview } from "@/components/ui/BlurredPreview";
 import { PerformAnywhereGuide } from "@/components/onboarding/PerformAnywhereGuide";
 import { Check, ArrowRight } from "lucide-react";
-import { generateLyricVideoFromSong } from "@/lib/captions.functions";
 import {
   MUSIC_VIDEO_STYLES,
   MUSIC_VIDEO_MODES,
   buildMusicVideoPrompt,
-  buildLyricVideoSegments,
   LOCATION_SUGGESTIONS,
   SUBJECT_SUGGESTIONS,
   type MusicVideoMode,
   type MusicVideoStyle,
 } from "@/lib/music-video-prompts";
 import { useBeatDetect } from "@/hooks/use-beat-detect";
-import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
 import "@/features/creative-studio/aurora.css";
 import { MultiTrackTimeline } from "@/features/creative-studio/components/video/MultiTrackTimeline";
@@ -366,52 +363,24 @@ function MotionStudio() {
   );
   const [mvImage, setMvImage] = useState<string | null>(null);
   const [mvVideoModel, setMvVideoModel] = useState(VIDEO_MODEL_LIST[0].value);
-  const [lyricAudioUrl, setLyricAudioUrl] = useState<string | null>(null);
-  const [lyricAudioDuration, setLyricAudioDuration] = useState<number | null>(null);
-  const [lyricsText, setLyricsText] = useState("");
 
   const beatFileRef = useRef<HTMLInputElement>(null);
   const [beatFileName, setBeatFileName] = useState<string | null>(null);
   const { state: beatState, analyze: analyzeBeat, reset: resetBeat } = useBeatDetect();
 
-  const isMvLyric = mvMode === "lyric-style";
-  const lyricBeatAnalysis = useLyricBeatAnalysis(lyricAudioUrl, isMvLyric);
   const mvCurrentMode = MUSIC_VIDEO_MODES.find((m) => m.key === mvMode)!;
   const mvVideoCost = computeCost({ features: ["video"], model: mvVideoModel, durationSeconds: 5, resolution: "720p" }).total;
-  const mvLyricCost = computeCost({ features: ["lyric_video"] }).total;
-  const mvDisplayCost = isMvLyric ? mvLyricCost : mvCurrentMode?.needsImage ? mvVideoCost : 1;
-
-  const lyricLines = lyricsText.split("\n").map((l) => l.trim()).filter(Boolean);
-  const lyricBeatTimestamps = lyricBeatAnalysis.beatTimestamps;
-  const lyricGenerationGate = lyricBeatAnalysis.gate;
-  const lyricSegments = buildLyricVideoSegments(
-    lyricAudioDuration,
-    lyricLines,
-    lyricBeatTimestamps,
-  );
+  const mvDisplayCost = mvCurrentMode?.needsImage ? mvVideoCost : 1;
 
   useEffect(() => {
     setMvPrompt(buildMusicVideoPrompt(mvMode, mvStyle, mvLocation, mvSubject));
   }, [mvMode, mvStyle, mvLocation, mvSubject]);
-
-  useEffect(() => {
-    if (!lyricAudioUrl) { setLyricAudioDuration(null); return; }
-    const audio = new Audio();
-    audio.preload = "metadata";
-    const onLoaded = () => setLyricAudioDuration(audio.duration || null);
-    const onError = () => { setLyricAudioDuration(null); toast.error("Couldn't read that audio file's duration"); };
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("error", onError);
-    audio.src = lyricAudioUrl;
-    return () => { audio.removeEventListener("loadedmetadata", onLoaded); audio.removeEventListener("error", onError); };
-  }, [lyricAudioUrl]);
 
   // Real server-side progress (task #284) for the wrapped enqueue+poll flows.
   const [poseJobProg, setPoseJobProg] = useState<{ pct: number | null; stage: string | null } | null>(null);
   const [animateJobProg, setAnimateJobProg] = useState<{ pct: number | null; stage: string | null } | null>(null);
   const genFn = usePerformanceShotJobFn({ onProgress: (u) => setPoseJobProg({ pct: u.pct, stage: u.stage }) });
   const videoFn = useVideoFromImageJobFn({ onProgress: (u) => setAnimateJobProg({ pct: u.pct, stage: u.stage }) });
-  const lyricVideoFn = useServerFn(generateLyricVideoFromSong);
   const motionFn = useServerFn(generateMimicMotion);
   const reskinFn = useServerFn(generatePerformanceReskin);
   const listFn = useServerFn(listGenerations);
