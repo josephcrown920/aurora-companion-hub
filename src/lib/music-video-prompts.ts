@@ -4,7 +4,6 @@ export type MusicVideoMode =
   | "image-to-video"
   | "ai-performance"
   | "beat-sync"
-  | "lyric-style"
   | "style-transfer";
 
 export const MUSIC_VIDEO_STYLES: Record<
@@ -75,12 +74,6 @@ export const MUSIC_VIDEO_MODES: {
     needsImage: false,
   },
   {
-    key: "lyric-style",
-    label: "Lyric Style",
-    description: "Caption / lyric video direction",
-    needsImage: false,
-  },
-  {
     key: "style-transfer",
     label: "Style Transfer",
     description: "Regrading existing footage",
@@ -108,9 +101,6 @@ export function buildMusicVideoPrompt(
 
     case "beat-sync":
       return `Fast-cut music video visuals synced to a strong beat, ${styleDetail}. Quick transitions, flashing lights, motion blur, dynamic camera angles. Urban night scenes, crowd energy, performance vibe. High intensity, rhythmic motion, cinematic lighting. Each shot holds 1–2 seconds, hard cut on the beat.`;
-
-    case "lyric-style":
-      return `Animated lyric captions in bold modern typography, ${styleDetail} color palette. Kinetic text synced to music rhythm. Glitch effects, neon highlights, smooth transitions. High contrast, readable, engaging for short-form vertical video.`;
 
     case "style-transfer":
       return `Transform this video into a ${MUSIC_VIDEO_STYLES[style].label} music video. Apply consistent color grading (${styleDetail}), cinematic lighting style, and atmospheric tone. Preserve motion but enhance mood and visual energy. Film grain, color grade, professional post-production look.`;

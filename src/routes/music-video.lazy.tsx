@@ -23,7 +23,6 @@ import { toast } from "sonner";
 import { listGenerations } from "@/lib/studio.functions";
 import { deleteGeneration } from "@/lib/gallery.functions";
 import { usePerformanceShotJobFn, useVideoFromImageJobFn } from "@/lib/use-job-polling";
-import { generateLyricVideoFromSong } from "@/lib/captions.functions";
 import { handleGenerationError } from "@/lib/error-toasts";
 import { markFirstGenComplete } from "@/lib/first-run";
 import { computeCost } from "@/lib/pricing";
@@ -40,14 +39,12 @@ import {
   MUSIC_VIDEO_STYLES,
   MUSIC_VIDEO_MODES,
   buildMusicVideoPrompt,
-  buildLyricVideoSegments,
   LOCATION_SUGGESTIONS,
   SUBJECT_SUGGESTIONS,
   type MusicVideoMode,
   type MusicVideoStyle,
 } from "@/lib/music-video-prompts";
 import { useBeatDetect } from "@/hooks/use-beat-detect";
-import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
 import { EditableCopy } from "@/components/EditableCopy";
 import { useSiteCopyValue } from "@/components/landing/SiteCopyProvider";
@@ -76,15 +73,7 @@ function MusicVideoPage() {
   const beatFileRef = useRef<HTMLInputElement>(null);
   const [beatFileName, setBeatFileName] = useState<string | null>(null);
   const { state: beatState, analyze: analyzeBeat, reset: resetBeat } = useBeatDetect();
-  // Lyric Video mode — the shared hook is also used by /motion, so either
-  // entry point waits for the same beat analysis before submitting a render.
-  const [lyricAudioUrl, setLyricAudioUrl] = useState<string | null>(null);
-  const [lyricAudioDuration, setLyricAudioDuration] = useState<number | null>(null);
-  const [lyricsText, setLyricsText] = useState("");
-
   const currentMode = MUSIC_VIDEO_MODES.find((m) => m.key === mode)!;
-  const isLyricVideo = mode === "lyric-style";
-  const lyricBeatAnalysis = useLyricBeatAnalysis(lyricAudioUrl, isLyricVideo);
 
   const videoCost = useMemo(
     () =>
@@ -93,20 +82,7 @@ function MusicVideoPage() {
     [videoModel],
   );
 
-  const lyricVideoCost = useMemo(() => computeCost({ features: ["lyric_video"] }).total, []);
-
-  const displayCost = isLyricVideo ? lyricVideoCost : currentMode.needsImage ? videoCost : IMAGE_COST;
-
-  const lyricLines = useMemo(
-    () => lyricsText.split("\n").map((l) => l.trim()).filter(Boolean),
-    [lyricsText],
-  );
-  const lyricBeatTimestamps = lyricBeatAnalysis.beatTimestamps;
-  const lyricGenerationGate = lyricBeatAnalysis.gate;
-  const lyricSegments = useMemo(
-    () => buildLyricVideoSegments(lyricAudioDuration, lyricLines, lyricBeatTimestamps),
-    [lyricAudioDuration, lyricLines, lyricBeatTimestamps],
-  );
+  const displayCost = currentMode.needsImage ? videoCost : IMAGE_COST;
 
   useEffect(() => {
     if (!loading && !user) void navigate({ to: "/auth", search: authNextSearch() });
@@ -116,31 +92,8 @@ function MusicVideoPage() {
     setPrompt(buildMusicVideoPrompt(mode, style, location, subject));
   }, [mode, style, location, subject]);
 
-  // Read the uploaded song's duration client-side once its signed URL is set.
-  useEffect(() => {
-    if (!lyricAudioUrl) {
-      setLyricAudioDuration(null);
-      return;
-    }
-    const audio = new Audio();
-    audio.preload = "metadata";
-    const onLoaded = () => setLyricAudioDuration(audio.duration || null);
-    const onError = () => {
-      setLyricAudioDuration(null);
-      toast.error("Couldn't read that audio file's duration — try a different file.");
-    };
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("error", onError);
-    audio.src = lyricAudioUrl;
-    return () => {
-      audio.removeEventListener("loadedmetadata", onLoaded);
-      audio.removeEventListener("error", onError);
-    };
-  }, [lyricAudioUrl]);
-
   const genFn = usePerformanceShotJobFn();
   const videoFn = useVideoFromImageJobFn();
-  const lyricVideoFn = useServerFn(generateLyricVideoFromSong);
   const listFn = useServerFn(listGenerations);
 
   const { data: history } = useQuery({
@@ -177,21 +130,6 @@ function MusicVideoPage() {
     onError: (e) => handleGenerationError(e),
   });
 
-  const lyricGenMut = useMutation({
-    mutationFn: async () => {
-      if (!lyricAudioUrl) throw new Error("Upload a song first");
-      if (lyricSegments.length === 0) throw new Error("Paste at least one lyric line");
-      const res = await lyricVideoFn({ data: { audioUrl: lyricAudioUrl, lines: lyricSegments } });
-      if (!res.ok) throw new Error(res.error);
-      return res;
-    },
-    onSuccess: () => {
-      markFirstGenComplete();
-      toast.success("Queued — view your result in Gallery");
-      qc.invalidateQueries({ queryKey: ["mv-gens"] });
-    },
-    onError: (e) => handleGenerationError(e),
-  });
 
   const delFn = useServerFn(deleteGeneration);
   const delMut = useMutation({
