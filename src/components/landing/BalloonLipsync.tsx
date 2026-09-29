@@ -11,13 +11,19 @@ const lipsyncDemoVideo = "/videos/face-sings-hero.mp4";
 type Cue = { t: number; text: string };
 
 const DEFAULT_LYRICS: Cue[] = [
-  { t: 0.0,  text: "Lights up, the stage is calling me tonight" },
-  { t: 4.0,  text: "Every note I sing becomes a satellite" },
-  { t: 8.0,  text: "Watch the crowd ignite, we're burning bright" },
-  { t: 13.0, text: "Turn it up, the whole room feels alive" },
-  { t: 17.0, text: "Every face sings when the music arrives" },
-  { t: 21.0, text: "Let the rhythm take us higher, higher" },
-  { t: 25.0, text: "We were made to shine right through the fire" },
+  { t: 0.0,  text: "To the feds, I just duck and roll" },
+  { t: 2.0,  text: "or slide and jump" },
+  { t: 3.8,  text: "like it's COD take all loaded guns" },
+  { t: 6.0,  text: "And I ain't on the run" },
+  { t: 8.0,  text: "But the feds, they go see you" },
+  { t: 10.0, text: "act like they lost they memory or something" },
+  { t: 12.2, text: "talking about" },
+  { t: 13.5, text: "ain't you the one??" },
+  { t: 15.2, text: "Yeah yeah and I'm still the one" },
+  { t: 17.2, text: "I'm Finna rule my Gun" },
+  { t: 19.2, text: "I ain't never fuck with no thot thot thot thot" },
+  { t: 21.4, text: "Let's have some fun, No diddy" },
+  { t: 23.2, text: "Come chill with me get litty" },
 ];
 
 export function BalloonLipsync() {
