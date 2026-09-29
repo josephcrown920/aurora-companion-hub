@@ -20,6 +20,7 @@ import { Route as AffiliateRouteImport } from './routes/affiliate'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AuroraAdultRouteImport } from './routes/aurora-adult'
 import { Route as AuroraCanvasRouteImport } from './routes/aurora-canvas'
+import { Route as AuroraStudioShellRouteImport } from './routes/aurora-studio-shell'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AvatarRouteImport } from './routes/avatar'
 import { Route as BillingRouteImport } from './routes/billing'
@@ -259,6 +260,11 @@ const AuroraAdultRoute = AuroraAdultRouteImport.update({
 const AuroraCanvasRoute = AuroraCanvasRouteImport.update({
   id: '/aurora-canvas',
   path: '/aurora-canvas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuroraStudioShellRoute = AuroraStudioShellRouteImport.update({
+  id: '/aurora-studio-shell',
+  path: '/aurora-studio-shell',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -1284,6 +1290,7 @@ export interface FileRoutesByFullPath {
   '/agent': typeof AgentRoute
   '/aurora-adult': typeof AuroraAdultRoute
   '/aurora-canvas': typeof AuroraCanvasRoute
+  '/aurora-studio-shell': typeof AuroraStudioShellRoute
   '/auth': typeof AuthRoute
   '/avatar': typeof AvatarRoute
   '/billing': typeof BillingRoute
@@ -1486,6 +1493,7 @@ export interface FileRoutesByTo {
   '/agent': typeof AgentRoute
   '/aurora-adult': typeof AuroraAdultRoute
   '/aurora-canvas': typeof AuroraCanvasRoute
+  '/aurora-studio-shell': typeof AuroraStudioShellRoute
   '/auth': typeof AuthRoute
   '/avatar': typeof AvatarRoute
   '/billing': typeof BillingRoute
@@ -1690,6 +1698,7 @@ export interface FileRoutesById {
   '/agent': typeof AgentRoute
   '/aurora-adult': typeof AuroraAdultRoute
   '/aurora-canvas': typeof AuroraCanvasRoute
+  '/aurora-studio-shell': typeof AuroraStudioShellRoute
   '/auth': typeof AuthRoute
   '/avatar': typeof AvatarRoute
   '/billing': typeof BillingRoute
@@ -1895,6 +1904,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/aurora-adult'
     | '/aurora-canvas'
+    | '/aurora-studio-shell'
     | '/auth'
     | '/avatar'
     | '/billing'
@@ -2097,6 +2107,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/aurora-adult'
     | '/aurora-canvas'
+    | '/aurora-studio-shell'
     | '/auth'
     | '/avatar'
     | '/billing'
@@ -2300,6 +2311,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/aurora-adult'
     | '/aurora-canvas'
+    | '/aurora-studio-shell'
     | '/auth'
     | '/avatar'
     | '/billing'
@@ -2504,6 +2516,7 @@ export interface RootRouteChildren {
   AgentRoute: typeof AgentRoute
   AuroraAdultRoute: typeof AuroraAdultRoute
   AuroraCanvasRoute: typeof AuroraCanvasRoute
+  AuroraStudioShellRoute: typeof AuroraStudioShellRoute
   AuthRoute: typeof AuthRoute
   AvatarRoute: typeof AvatarRoute
   BillingRoute: typeof BillingRoute
@@ -2739,6 +2752,13 @@ declare module '@tanstack/react-router' {
       path: '/aurora-canvas'
       fullPath: '/aurora-canvas'
       preLoaderRoute: typeof AuroraCanvasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aurora-studio-shell': {
+      id: '/aurora-studio-shell'
+      path: '/aurora-studio-shell'
+      fullPath: '/aurora-studio-shell'
+      preLoaderRoute: typeof AuroraStudioShellRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -4178,6 +4198,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgentRoute: AgentRoute,
   AuroraAdultRoute: AuroraAdultRoute,
   AuroraCanvasRoute: AuroraCanvasRoute,
+  AuroraStudioShellRoute: AuroraStudioShellRoute,
   AuthRoute: AuthRoute,
   AvatarRoute: AvatarRoute,
   BillingRoute: BillingRoute,
