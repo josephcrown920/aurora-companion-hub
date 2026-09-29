@@ -382,7 +382,7 @@ function LandingPage() {
   const slideCount = heroSlides.length;
   useEffect(() => {
     if (introVisible || slideCount === 0) return;
-    const t = setInterval(() => setSlideIdx((i) => (i + 1) % slideCount), 5000);
+    const t = setInterval(() => setSlideIdx((i) => (i + 1) % slideCount), 7000);
     return () => clearInterval(t);
   }, [introVisible, slideCount]);
   // Keep the index in range when the slide list shrinks after the live
