@@ -10,7 +10,7 @@ export type ToolDirectoryItem = {
   label?: string;
   description: string;
   price: string;
-  to: "/motion" | "/colors" | "/spin" | "/video-agent" | "/music-video" | "/lipsync" | "/canvas";
+  to: "/motion" | "/colors" | "/spin" | "/video-agent" | "/music-video" | "/lipsync" | "/canvas" | "/prompt-lab";
 };
 
 /** Shared live-tool metadata used by the landing directory and Studio shortcuts. */
@@ -22,4 +22,5 @@ export const TOOL_DIRECTORY: ReadonlyArray<ToolDirectoryItem> = [
   { number: "04", name: "Music Video", description: "Cinematic visual studio", price: `From ${computeCost({ features: ["image"] }).total} Aura`, to: "/music-video" },
   { number: "05", name: "Lip Sync", description: "Audio-synced video", price: `From ${LIPSYNC_TIER_AURA.budget} Aura`, to: "/lipsync" },
   { number: "06", name: "Canvas", label: "New", description: "Build connected creative workflows", price: `From ${computeCost({ features: ["image"] }).total} Aura`, to: "/canvas" },
+  { number: "07", name: "Prompt Lab", label: "New", description: "Turn an idea into a Seedream or Seedance prompt", price: "Free", to: "/prompt-lab" },
 ] as const;
