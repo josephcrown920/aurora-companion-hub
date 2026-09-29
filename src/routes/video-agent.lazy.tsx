@@ -25,6 +25,7 @@ import {
   listVideoAgentProjects,
   type VideoAgentProjectDto,
 } from "@/lib/video-agent-projects.functions";
+import { draftVideoBrief, type VideoBrief } from "@/lib/video-brief.functions";
 import {
   styleDescriptions,
   voiceLabels,
@@ -135,6 +136,9 @@ function VideoAgentHome() {
   const [campaignCount, setCampaignCount] = useState(1);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [voice, setVoice] = useState<VideoVoice>("narrator-warm");
+  const draftBrief = useServerFn(draftVideoBrief);
+  const [brief, setBrief] = useState<VideoBrief | null>(null);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/auth", search: authNextSearch() });
@@ -146,15 +150,44 @@ function VideoAgentHome() {
     enabled: !!user,
   });
   const projects = projectsQuery.data ?? [];
-  async function handleCreate() {
+  async function handleCreate(revise = false) {
     const trimmed = prompt.trim();
     if (!trimmed) return toast.error("Describe your video first");
     if (trimmed.length < 10) return toast.error("Add a bit more detail");
+    if (revise && !feedback.trim()) return toast.error("Tell the agents what to change");
 
     setLoading(true);
     try {
+      const next = await draftBrief({
+        data: {
+          idea: trimmed,
+          style,
+          durationSec: duration,
+          previous: revise && brief ? brief : undefined,
+          feedback: revise ? feedback.trim() : undefined,
+        },
+      });
+      setBrief(next);
+      setFeedback("");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleApprove() {
+    if (!brief) return;
+    const approved = [
+      `${brief.title}. ${brief.logline}`,
+      `Audience: ${brief.audience}. Tone: ${brief.tone}. Look: ${brief.visualStyle}.`,
+      `Beats: ${brief.beats.map((b, i) => `${i + 1}) ${b}`).join(" ")}`,
+      `Original idea: ${prompt.trim()}`,
+    ].join("\n").slice(0, 4000);
+    setLoading(true);
+    try {
       const project = await createProject({
-        data: { prompt: trimmed, style, voice, targetDuration: duration },
+        data: { prompt: approved, style, voice, targetDuration: duration },
       });
       await navigate({ to: "/video-agent-process", search: { id: project.id } });
     } catch (err) {
@@ -223,7 +256,7 @@ function VideoAgentHome() {
           <p className="video-agent-greeting-muted">what shall we create?</p>
         </div>
 
-        <form className="video-agent-composer" onSubmit={(event) => { event.preventDefault(); void handleCreate(); }}>
+        <form className="video-agent-composer" onSubmit={(event) => { event.preventDefault(); void handleCreate(false); }}>
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -245,7 +278,45 @@ function VideoAgentHome() {
           </div>
         </form>
 
-        <p className="mt-3 text-center text-xs text-muted-foreground">Aurora handles the script, shots, storyboard, and render for you.</p>
+        <p className="mt-3 text-center text-xs text-muted-foreground">The agents draft a brief with you first. Nothing is made until you approve it.</p>
+
+        {brief && (
+          <section className="mt-4 rounded-2xl border border-primary/30 bg-card/60 p-4 text-sm" aria-label="Creative brief">
+            <p className="text-xs uppercase tracking-wider text-primary">Brief for your approval</p>
+            <h2 className="mt-1 text-lg font-semibold">{brief.title}</h2>
+            <p className="mt-1 text-muted-foreground">{brief.logline}</p>
+            <dl className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div><dt className="text-xs text-muted-foreground">Audience</dt><dd>{brief.audience}</dd></div>
+              <div><dt className="text-xs text-muted-foreground">Tone</dt><dd>{brief.tone}</dd></div>
+              <div><dt className="text-xs text-muted-foreground">Look</dt><dd>{brief.visualStyle}</dd></div>
+            </dl>
+            <ol className="mt-3 list-decimal space-y-1 pl-5">
+              {brief.beats.map((b, i) => <li key={i}>{b}</li>)}
+            </ol>
+            {brief.questions.length > 0 && (
+              <div className="mt-3 rounded-lg bg-muted/40 p-3">
+                <p className="text-xs text-muted-foreground">The agents want to know:</p>
+                <ul className="mt-1 list-disc pl-5">{brief.questions.map((q, i) => <li key={i}>{q}</li>)}</ul>
+              </div>
+            )}
+            <Textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Answer questions or ask for changes…"
+              className="mt-3 min-h-[70px]"
+              disabled={loading}
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => void handleCreate(true)} disabled={loading} className="rounded-full border border-border px-4 py-2 text-xs hover:border-primary/50">
+                Revise brief
+              </button>
+              <button type="button" onClick={() => void handleApprove()} disabled={loading} className="rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
+                {loading ? "Working…" : "Approve & start production"}
+              </button>
+              <button type="button" onClick={() => setBrief(null)} disabled={loading} className="px-2 text-xs text-muted-foreground">Discard</button>
+            </div>
+          </section>
+        )}
 
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Example ideas">
           {EXAMPLE_PROMPTS.map((example) => (
