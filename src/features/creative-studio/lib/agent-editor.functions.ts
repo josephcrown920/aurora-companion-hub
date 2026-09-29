@@ -66,7 +66,8 @@ export const agentEdit = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured for this studio yet. Add AI access and retry.");
 
-    const { structuredResponsesCall } = await import("./ai-gateway.server");
+    const { generateText } = await import("ai");
+    const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
 
     const system = `${buildSystemPrompt(["cinematic"], [])}
 
@@ -90,18 +91,12 @@ Rules:
 - When the request needs new footage, emit an add_layer with a generation prompt instead of inventing assets that do not exist.
 - Never combine edits that contradict each other. Keep the plan minimal — the smallest reliable set of operations.`;
 
-    const { data: result } = await structuredResponsesCall({
-      apiKey,
-      model: "openai/gpt-6-astra",
-      system,
-      messages: [
-        {
-          role: "user",
-          content: `Current layers:\n${JSON.stringify(data.layers)}\n\nInstruction: ${data.instruction}`,
-        },
-      ],
-      schema: agentSchema,
+    const { text } = await generateText({
+      model: createLovableAiGatewayProvider(apiKey)("google/gemini-2.5-flash"),
+      system: `${system}\nReturn only JSON matching {"reply":"short explanation","ops":[{"op":"update_layer","id":"exact id","name":"new name"}]}. Include nullable fields as null when not used.`,
+      prompt: `Current layers:\n${JSON.stringify(data.layers)}\n\nInstruction: ${data.instruction}`,
     });
+    const result = agentSchema.parse(JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim()));
 
     const ops = result.ops
       .map((o) => ({ ...o, op: (o.op || "").trim() }))

@@ -49,7 +49,7 @@ function TimelinePage() {
     ["flash", "White flash", "Beat-synced transition"], ["blur", "Motion blur", "Smooth camera movement"],
   ];
   const agents = [
-    ["AI edit planner", "Preview and approve changes below"], ["GPT-6 Astra", "AI editor model"],
+    ["AI edit planner", "Preview and approve changes below"], ["Gemini Flash", "AI editor model"],
     ["ModelArk director", "Open Generator & Director to plan shots"],
   ];
   return (
