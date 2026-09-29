@@ -3,7 +3,6 @@ import { authNextSearch } from "@/lib/auth-return-path";
 import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AutoplayVideo } from "@/components/ui/AutoplayVideo";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ExampleOutputGrid } from "@/components/studio/ExampleOutputGrid";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,7 +60,6 @@ import { BlurredPreview } from "@/components/ui/BlurredPreview";
 import { PerformAnywhereGuide } from "@/components/onboarding/PerformAnywhereGuide";
 import { Check, ArrowRight } from "lucide-react";
 import {
-  generateAvatarShot,
   SHOT_IMAGE_COST,
   SHOT_KLING_COST,
 } from "@/lib/platform-template.functions";
@@ -79,7 +77,6 @@ import {
 import { useBeatDetect } from "@/hooks/use-beat-detect";
 import { useLyricBeatAnalysis } from "@/hooks/use-lyric-beat-analysis";
 import { cn, AUDIO_ACCEPT } from "@/lib/utils";
-import { HiggsHero, HiggsDivider, FanPhotos } from "@/components/studio/HiggsLayout";
 
 export const Route = createLazyFileRoute("/motion")({ component: MotionStudio });
 
@@ -151,51 +148,6 @@ const KLING_FALLBACK_TOAST = "KlingAI unavailable — generated a SeedDream port
 
 function shotResultLabel(r: ShotResult): string {
   return r.fallbackFrom ? `${SHOT_ENGINE_LABEL[r.engine]} (fallback)` : SHOT_ENGINE_LABEL[r.engine];
-}
-
-/**
- * Result cards for Avatar Shots / Live Avatar. Branches on the media kind the
- * server ACTUALLY served — a KlingAI request that fell back to SeedDream is a
- * still image, so it must never be poured into a <video> element.
- */
-function ShotResultsSection({ results }: { results: ShotResult[] }) {
-  if (results.length === 0) return null;
-  return (
-    <section className="space-y-3" aria-label="Generated avatar shots">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Results</p>
-        <Link to="/gallery" className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 text-xs font-semibold text-emerald-400 no-underline hover:bg-emerald-500/20 transition-colors">
-          <Check className="size-3.5" /> Saved to Gallery
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {results.map((r, i) => (
-          <div key={`${r.url}-${i}`} className="rounded-2xl border border-border bg-card/60 overflow-hidden" data-testid={`shot-result-${r.kind}`}>
-            {r.kind === "video" ? (
-              <video src={r.url} controls playsInline preload="metadata" className="w-full aspect-video object-cover bg-black" />
-            ) : (
-              <img src={r.url} alt={`${shotResultLabel(r)} avatar shot ${i + 1}`} className="w-full aspect-square object-cover" loading="lazy" />
-            )}
-            <div className="p-2 flex items-center justify-between gap-2">
-              <span
-                className={cn("text-[10px] font-medium", r.fallbackFrom ? "text-amber-400" : "text-muted-foreground")}
-                title={r.fallbackFrom ? `${SHOT_ENGINE_LABEL[r.fallbackFrom]} was unavailable, so ${SHOT_ENGINE_LABEL[r.engine]} served this shot` : undefined}
-              >
-                {shotResultLabel(r)}
-              </span>
-              <button
-                type="button"
-                onClick={() => void saveAssetToDisk(r.url, `shot-${Date.now()}.${r.kind === "video" ? "mp4" : "jpg"}`)}
-                className="text-xs text-primary flex items-center gap-1"
-              >
-                <Download className="size-3" /> Save
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
 }
 
 function MotionStudio() {
@@ -414,10 +366,6 @@ function MotionStudio() {
   }, [user, loading, navigate]);
 
   // ── Avatar Shots state ────────────────────────────────────────────────────
-  const [shotEngine, setShotEngine] = useState<ShotEngine>("seedream");
-  const [shotPrompt, setShotPrompt] = useState("");
-  const [shotResults, setShotResults] = useState<ShotResult[]>([]);
-  const [shotLoading, setShotLoading] = useState(false);
 
   // ── Music Video (embedded) state ──────────────────────────────────────────
   const [mvStyle, setMvStyle] = useState<MusicVideoStyle>("trap");
@@ -474,7 +422,6 @@ function MotionStudio() {
   const [animateJobProg, setAnimateJobProg] = useState<{ pct: number | null; stage: string | null } | null>(null);
   const genFn = usePerformanceShotJobFn({ onProgress: (u) => setPoseJobProg({ pct: u.pct, stage: u.stage }) });
   const videoFn = useVideoFromImageJobFn({ onProgress: (u) => setAnimateJobProg({ pct: u.pct, stage: u.stage }) });
-  const shotFn = useServerFn(generateAvatarShot);
   const lyricVideoFn = useServerFn(generateLyricVideoFromSong);
   const motionFn = useServerFn(generateMimicMotion);
   const reskinFn = useServerFn(generatePerformanceReskin);
