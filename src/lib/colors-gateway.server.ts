@@ -7,7 +7,7 @@ const table = () => supabaseAdmin.from("colors_gateway_previews" as never) as an
 async function gateway(path: string, key: string, init?: RequestInit) {
   const response = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${key}`, "X-Lovable-AIG-SDK": "fetch", ...init?.headers },
+    headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "fetch", ...init?.headers },
   });
   if (!response.ok) {
     const error = await response.json().catch(() => null) as { message?: string } | null;
@@ -20,7 +20,7 @@ async function media(path: string, mime: string, maxBytes: number) {
   const { data, error } = await supabaseAdmin.storage.from("studio").download(path);
   if (error || !data) throw new Error(error?.message ?? "Could not read uploaded media");
   if (data.size > maxBytes) throw new Error("Media is too large for a preview");
-  return { type: mime, data: Buffer.from(await data.arrayBuffer()).toString("base64"), mime_type: mime };
+  return { data: Buffer.from(await data.arrayBuffer()).toString("base64"), mime_type: mime };
 }
 
 function ownPath(path: string, userId: string) {
@@ -41,7 +41,7 @@ export async function createColorsPreview(userId: string, imagePath: string, vid
   const response = await gateway("", key, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODEL, input: [{ type: "text", text: prompt }, { type: "image", data: image.data, mime_type: image.mime_type }, { type: "video", data: video.data, mime_type: video.mime_type }], response_format: { type: "video", resolution: "360p", duration: "3s", aspect_ratio: "9:16" } }),
+    body: JSON.stringify({ model: MODEL, input: [{ type: "text", text: prompt }, { type: "image", ...image }, { type: "video", ...video }], response_format: { type: "video", resolution: "360p", duration: "3s" } }),
   });
   const job = await response.json() as { id?: string; status?: string };
   if (!job.id) throw new Error("Video service did not return a job");
