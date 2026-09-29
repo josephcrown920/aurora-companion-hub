@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { upload } from "@vercel/blob/client";
-import NexusDolaStudioScaffold from "../components/studio/NexusDolaStudioScaffold";
+import NexusDolaStudioScaffold from "@/features/aurora-canvas/components/studio/NexusDolaStudioScaffold";
 import "../aurora.css";
-import bg1 from "../assets/aurora-bg-1.jpg";
-import bg2 from "../assets/aurora-bg-2.jpg";
-import bg3 from "../assets/aurora-bg-3.jpg";
-import bg4 from "../assets/aurora-bg-4.jpg";
-import bg5 from "../assets/aurora-bg-5.jpg";
-import moonAsset from "../assets/aurora-moon.jpg.asset.json";
-import chromeAsset from "../assets/aurora-chrome.jpg.asset.json";
-import courtBg from "../assets/aurora-court.jpg";
+import bg1 from "@/features/aurora-canvas/assets/aurora-bg-1.jpg";
+import bg2 from "@/features/aurora-canvas/assets/aurora-bg-2.jpg";
+import bg3 from "@/features/aurora-canvas/assets/aurora-bg-3.jpg";
+import bg4 from "@/features/aurora-canvas/assets/aurora-bg-4.jpg";
+import bg5 from "@/features/aurora-canvas/assets/aurora-bg-5.jpg";
+import moonAsset from "@/features/aurora-canvas/assets/aurora-moon.jpg.asset.json";
+import chromeAsset from "@/features/aurora-canvas/assets/aurora-chrome.jpg.asset.json";
+import courtBg from "@/features/aurora-canvas/assets/aurora-court.jpg";
 import {
   CHAT_MODELS,
   DIRECTOR_MODELS,
@@ -20,11 +20,11 @@ import {
   modelProvider,
   type ModelOption,
   type Provider,
-} from "../lib/aurora-models";
-import { SKILLS, buildSystemPrompt } from "../lib/aurora-skills";
-import { primeSpeech, speak, stopSpeech } from "../lib/aurora-voice";
-import { classifySeedanceReferenceError, isLasAssetReference } from "../lib/seedance-reference";
-import { LayersEditor } from "../components/video/LayersEditor";
+} from "@/features/aurora-canvas/lib/aurora-models";
+import { SKILLS, buildSystemPrompt } from "@/features/aurora-canvas/lib/aurora-skills";
+import { primeSpeech, speak, stopSpeech } from "@/features/aurora-canvas/lib/aurora-voice";
+import { classifySeedanceReferenceError, isLasAssetReference } from "@/features/aurora-canvas/lib/seedance-reference";
+import { LayersEditor } from "@/features/aurora-canvas/components/video/LayersEditor";
 
 export const Route = createFileRoute("/aurora-canvas")({
   head: () => ({
