@@ -1,0 +1,101 @@
+.aurora-editor-workstation {
+  --editor-surface: oklch(0.16 0.012 285);
+  --editor-panel: oklch(0.205 0.014 285);
+  --editor-raised: oklch(0.25 0.016 285);
+  --editor-line: oklch(0.34 0.015 285);
+  --editor-ink: oklch(0.96 0.006 285);
+  --editor-muted: oklch(0.69 0.012 285);
+  --editor-accent: oklch(0.72 0.18 300);
+  min-height: 100vh;
+  color: var(--editor-ink);
+  background: var(--editor-surface);
+}
+
+.aurora-editor-workstation .aurora-nav { border-bottom-color: var(--editor-line); background: var(--editor-panel); }
+.aurora-editor-shell { width: 100%; padding: 10px 12px 22px; }
+.aurora-editor-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.aurora-editor-titlebar h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: 0; }
+.aurora-editor-titlebar p { margin: 2px 0 0; color: var(--editor-muted); font-size: 11px; }
+.aurora-editor-status { display: flex; align-items: center; gap: 8px; color: var(--editor-muted); font-size: 11px; }
+.aurora-editor-status i { width: 7px; height: 7px; border-radius: 50%; background: oklch(0.76 0.16 150); box-shadow: 0 0 10px color-mix(in oklab, oklch(0.76 0.16 150) 60%, transparent); }
+
+.aurora-editor-upper { display: grid; grid-template-columns: minmax(180px, 240px) minmax(360px, 1fr) minmax(220px, 280px); min-height: 430px; border: 1px solid var(--editor-line); background: var(--editor-panel); }
+.aurora-editor-pane { min-width: 0; padding: 12px; border-right: 1px solid var(--editor-line); }
+.aurora-editor-pane:last-child { border-right: 0; }
+.aurora-editor-tabs { display: flex; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--editor-line); }
+.aurora-editor-tab { padding: 7px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--editor-muted); font-size: 11px; }
+.aurora-editor-tab.active { background: var(--editor-raised); color: var(--editor-ink); }
+.aurora-editor-section-title { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 8px; font-size: 11px; font-weight: 650; }
+.aurora-editor-section-title span { color: var(--editor-muted); font-size: 9px; font-weight: 500; }
+.aurora-editor-assets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.aurora-editor-asset { min-height: 64px; padding: 8px; border: 1px solid var(--editor-line); border-radius: 5px; background: var(--editor-raised); color: var(--editor-ink); text-align: left; cursor: grab; }
+.aurora-editor-asset:active { cursor: grabbing; }
+.aurora-editor-asset b { display: block; font-size: 10px; }
+.aurora-editor-asset small { display: block; margin-top: 3px; color: var(--editor-muted); font-size: 9px; line-height: 1.25; }
+.aurora-editor-asset.effect { border-left: 3px solid var(--editor-accent); }
+.aurora-editor-import { display: grid; place-items: center; min-height: 74px; margin-top: 10px; border: 1px dashed var(--editor-line); border-radius: 5px; color: var(--editor-muted); font-size: 10px; }
+
+.aurora-editor-monitor { display: flex; flex-direction: column; min-width: 0; padding: 12px; background: oklch(0.12 0.008 285); }
+.aurora-editor-monitor-bar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; color: var(--editor-muted); font-size: 10px; }
+.aurora-editor-screen { position: relative; display: grid; flex: 1; min-height: 310px; place-items: center; overflow: hidden; border: 1px solid var(--editor-line); background: oklch(0.08 0.005 285); }
+.aurora-editor-screen::before { content: ""; width: min(68%, 380px); aspect-ratio: 16 / 9; border: 1px solid color-mix(in oklab, var(--editor-accent) 35%, var(--editor-line)); background: radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--editor-accent) 12%, transparent), transparent 55%); }
+.aurora-editor-screen-copy { position: absolute; text-align: center; }
+.aurora-editor-screen-copy strong { display: block; font-size: 14px; }
+.aurora-editor-screen-copy small { display: block; margin-top: 5px; color: var(--editor-muted); font-size: 10px; }
+.aurora-editor-transport { display: flex; align-items: center; justify-content: center; gap: 14px; height: 38px; color: var(--editor-muted); font-size: 11px; }
+.aurora-editor-transport b { color: var(--editor-ink); font-size: 16px; }
+
+.aurora-agent-stack { display: grid; gap: 7px; }
+.aurora-agent-card { display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 8px; padding: 9px; border: 1px solid var(--editor-line); border-radius: 6px; background: color-mix(in oklab, var(--editor-raised) 75%, transparent); }
+.aurora-agent-card i { width: 7px; height: 7px; border-radius: 50%; background: oklch(0.76 0.16 150); }
+.aurora-agent-card b { display: block; font-size: 10px; }
+.aurora-agent-card small { display: block; margin-top: 2px; color: var(--editor-muted); font-size: 8px; }
+.aurora-agent-card em { color: var(--editor-muted); font-size: 8px; font-style: normal; }
+.aurora-editor-workstation .aurora-tl { margin-top: 10px; border: 1px solid var(--editor-line); background: var(--editor-panel); color: var(--editor-ink); }
+.aurora-editor-workstation .aurora-tl-bar, .aurora-editor-workstation .aurora-tl-presets { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 8px; border-bottom: 1px solid var(--editor-line); }
+.aurora-editor-workstation .aurora-tl-bar button, .aurora-editor-workstation .aurora-tl-bar select, .aurora-editor-workstation .aurora-tl-bar input, .aurora-editor-workstation .aurora-tl-presets button { min-height: 28px; border: 1px solid var(--editor-line); border-radius: 5px; background: var(--editor-raised); color: var(--editor-ink); font-size: 9px; }
+.aurora-editor-workstation .aurora-tl-spacer { flex: 1; }
+.aurora-editor-workstation .aurora-tl-field { display: flex; align-items: center; gap: 4px; color: var(--editor-muted); font-size: 9px; }
+.aurora-editor-workstation .aurora-tl-field input { width: 56px; }
+.aurora-editor-workstation .aurora-tl-grid { display: grid; grid-template-columns: 150px minmax(0, 1fr); }
+.aurora-editor-workstation .aurora-tl-head, .aurora-editor-workstation .aurora-tl-lane { min-height: 46px; border-bottom: 1px solid var(--editor-line); }
+.aurora-editor-workstation .aurora-tl-head { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 5px; padding: 0 7px; color: var(--editor-muted); font-size: 9px; }
+.aurora-editor-workstation .aurora-tl-head.ruler-space { min-height: 34px; }
+.aurora-editor-workstation .aurora-tl-head .tbtns { display: flex; }
+.aurora-editor-workstation .aurora-tl-head button { width: 22px; border: 0; background: transparent; font-size: 10px; }
+.aurora-editor-workstation .aurora-tl-lanes { overflow-x: auto; }
+.aurora-editor-workstation .aurora-tl-ruler { position: relative; height: 34px; border-bottom: 1px solid var(--editor-line); }
+.aurora-editor-workstation .aurora-tl-ruler .tick { position: absolute; top: 5px; color: var(--editor-muted); font-size: 8px; }
+.aurora-editor-workstation .aurora-tl-ruler .beat, .aurora-editor-workstation .aurora-tl-ruler .hit { position: absolute; bottom: 0; width: 1px; height: 11px; background: var(--editor-line); }
+.aurora-editor-workstation .aurora-tl-ruler .hit { width: 5px; height: 5px; rotate: 45deg; background: var(--editor-accent); }
+.aurora-editor-workstation .aurora-tl-lane { position: relative; background-image: linear-gradient(90deg, color-mix(in oklab, var(--editor-line) 36%, transparent) 1px, transparent 1px); background-size: 28px 100%; }
+.aurora-editor-workstation .aurora-tl-lane.effect-drop { box-shadow: inset 0 0 0 1px var(--editor-accent); }
+.aurora-editor-workstation .aurora-tl-clip { position: absolute; top: 5px; height: 36px; overflow: hidden; border: 1px solid color-mix(in oklab, var(--editor-ink) 18%, transparent); border-radius: 4px; user-select: none; touch-action: none; }
+.aurora-editor-workstation .aurora-tl-clip.sel { box-shadow: 0 0 0 2px var(--editor-accent); }
+.aurora-editor-workstation .aurora-tl-clip .lbl { display: block; overflow: hidden; padding: 8px 7px; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
+.aurora-editor-workstation .aurora-tl-clip .grip { position: absolute; top: 0; bottom: 0; width: 5px; background: color-mix(in oklab, var(--editor-ink) 22%, transparent); }
+.aurora-editor-workstation .aurora-tl-clip .grip.left { left: 0; }.aurora-editor-workstation .aurora-tl-clip .grip.right { right: 0; }
+.aurora-editor-workstation .aurora-tl-playhead { position: absolute; z-index: 4; top: 0; bottom: 0; width: 1px; background: oklch(0.68 0.2 25); }
+.aurora-editor-workstation .aurora-tl-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px; }
+.aurora-editor-workstation .aurora-tl-foot h4 { margin: 0 0 8px; font-size: 11px; }
+.aurora-editor-workstation .aurora-tl-inspector .rows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.aurora-editor-workstation .aurora-tl-inspector label { display: grid; gap: 3px; color: var(--editor-muted); font-size: 9px; }
+.aurora-editor-workstation .aurora-tl-inspector input, .aurora-editor-workstation .aurora-tl-inspector select, .aurora-editor-workstation .aurora-tl-inspector textarea { min-width: 0; border: 1px solid var(--editor-line); border-radius: 4px; background: var(--editor-surface); color: var(--editor-ink); }
+.aurora-editor-workstation .aurora-tl-inspector .wide { grid-column: 1 / -1; }
+.aurora-editor-workstation .aurora-tl-tools .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.aurora-editor-workstation .aurora-tl-tools .chip { padding: 5px 7px; border: 1px solid var(--editor-line); border-radius: 4px; color: var(--editor-muted); font-size: 9px; }
+.aurora-editor-workstation .aurora-layers-panel { max-width: none; border-radius: 0; border-color: var(--editor-line); background: var(--editor-panel); }
+
+@media (max-width: 900px) {
+  .aurora-editor-upper { grid-template-columns: 190px 1fr; }
+  .aurora-editor-pane.orchestrator { grid-column: 1 / -1; border-top: 1px solid var(--editor-line); }
+}
+@media (max-width: 640px) {
+  .aurora-editor-shell { padding: 6px; }
+  .aurora-editor-upper { display: flex; flex-direction: column; }
+  .aurora-editor-pane { border-right: 0; border-bottom: 1px solid var(--editor-line); }
+  .aurora-editor-screen { min-height: 260px; }
+  .aurora-editor-workstation .aurora-tl-grid { grid-template-columns: 104px minmax(0, 1fr); }
+  .aurora-editor-workstation .aurora-tl-head .tname { display: none; }
+  .aurora-editor-workstation .aurora-tl-foot { grid-template-columns: 1fr; }
+}
