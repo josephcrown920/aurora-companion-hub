@@ -8,22 +8,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSystemPrompt } from "./aurora-skills";
 
 const opSchema = z.object({
-  op: z.string(),
-  type: z.string().nullable(),
-  id: z.string().nullable(),
-  name: z.string().nullable(),
-  prompt: z.string().nullable(),
-  kind: z.string().nullable(),
-  aspect: z.string().nullable(),
-  visible: z.boolean().nullable(),
-  locked: z.boolean().nullable(),
-  opacity: z.number().nullable(),
-  scale: z.number().nullable(),
-  x: z.number().nullable(),
-  y: z.number().nullable(),
-  start: z.number().nullable(),
-  duration: z.number().nullable(),
-  direction: z.string().nullable(),
+  op: z.enum(["add_layer", "update_layer", "remove_layer", "reorder_layer"]),
+  type: z.string().optional(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  prompt: z.string().optional(),
+  kind: z.string().optional(),
+  aspect: z.string().optional(),
+  visible: z.boolean().optional(),
+  locked: z.boolean().optional(),
+  opacity: z.number().optional(),
+  scale: z.number().optional(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+  start: z.number().optional(),
+  duration: z.number().optional(),
+  direction: z.string().optional(),
 });
 
 
