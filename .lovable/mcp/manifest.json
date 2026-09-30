@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://hcdortqpdtenzpwtjpot.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "aurora-setup-guide",
+      "version": "0.1.0",
+      "title": "Aurora Setup Guide"
+    },
+    "tools": [
+      {
+        "name": "list_my_generations",
+        "title": "List my generations",
+        "description": "List the signed-in user's recent Aurora image and video generations.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 20,
+              "description": "How many to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "kind": {
+              "description": "Optional kind filter, e.g. image or video.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_comfy_apps",
+        "title": "List ComfyUI apps",
+        "description": "List ComfyUI workflow apps available to the signed-in user (their own and public ones).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 20,
+              "description": "How many to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
