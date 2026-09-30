@@ -9,6 +9,7 @@
 // twice (bit us once already: a resolveId hook double-prefixed its virtual ids).
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { cartographer } from "@replit/vite-plugin-cartographer";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 
 // NOTE: do NOT mark @tanstack/react-start/server, @tanstack/react-start-server
 // or @tanstack/start-server-core as ssr.external here. That was tried (Aug 2026)
@@ -131,7 +132,7 @@ const serverFileClientStub = {
 // with identical output. If it only runs on client (via vite.plugins), the
 // server renders elements without data-replit-metadata but the client adds them,
 // causing a hydration mismatch on every page load.
-const extraPlugins = [monacoSsrStub, serverFileClientStub];
+const extraPlugins = [monacoSsrStub, serverFileClientStub, mcpPlugin()];
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
