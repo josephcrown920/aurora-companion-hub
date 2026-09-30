@@ -117,7 +117,8 @@ export function ColorsGatewayPreview() {
     setStatus("Preparing motion reference…");
     try {
       if (!/^image\/jpeg$/.test(photo.type) || photo.size > 12 * 1024 * 1024) throw new Error("Choose a JPEG portrait under 12 MB");
-      if (!clip.type.startsWith("video/") || clip.size > 100 * 1024 * 1024) throw new Error("Choose a video under 100 MB");
+      const isVideo = clip.type.startsWith("video/") || /\.(mov|mp4|webm|m4v|avi|mkv)$/i.test(clip.name);
+      if (!isVideo || clip.size > 100 * 1024 * 1024) throw new Error("Choose a video under 100 MB");
       const sample = await sampleMotion(clip);
       setStatus("Uploading your portrait and motion…");
       const [imagePath, videoPath] = await Promise.all([upload(photo, "image"), upload(sample, "video")]);
