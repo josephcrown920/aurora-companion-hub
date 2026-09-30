@@ -54,6 +54,7 @@ import { Route as LipsyncRouteImport } from './routes/lipsync'
 import { Route as LiveStudioRouteImport } from './routes/live-studio'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MasteringRouteImport } from './routes/mastering'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MotionRouteImport } from './routes/motion'
 import { Route as MusicVideoRouteImport } from './routes/music-video'
 import { Route as NexusarbRouteImport } from './routes/nexusarb'
@@ -95,6 +96,7 @@ import { Route as VideoAgentEditRouteImport } from './routes/video-agent-edit'
 import { Route as VideoAgentProcessRouteImport } from './routes/video-agent-process'
 import { Route as VideoEditorRouteImport } from './routes/video-editor'
 import { Route as WorkflowsRouteImport } from './routes/workflows'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AdminAssetsRouteImport } from './routes/admin.assets'
 import { Route as AdminComfyRouteImport } from './routes/admin.comfy'
 import { Route as AdminCostsRouteImport } from './routes/admin.costs'
@@ -131,6 +133,7 @@ import { Route as VideoAgentBeatDirectorRouteImport } from './routes/video-agent
 import { Route as VideoAgentPhotoLabRouteImport } from './routes/video-agent_.photo-lab'
 import { Route as VideoAgentTimelineRouteImport } from './routes/video-agent_.timeline'
 import { Route as VideoAgentWorkflowsRouteImport } from './routes/video-agent_.workflows'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiAdminFeatureVisibilityRouteImport } from './routes/api/admin/feature-visibility'
 import { Route as ApiAdminRunSmokeStep14RouteImport } from './routes/api/admin/run-smoke-step14'
 import { Route as ApiAdminUploadImageRouteImport } from './routes/api/admin/upload-image'
@@ -447,6 +450,11 @@ const MasteringRoute = MasteringRouteImport.update({
   path: '/mastering',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/mastering.lazy').then((d) => d.Route))
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MotionRoute = MotionRouteImport.update({
   id: '/motion',
   path: '/motion',
@@ -662,6 +670,12 @@ const WorkflowsRoute = WorkflowsRouteImport.update({
   path: '/workflows',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/workflows.lazy').then((d) => d.Route))
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminIndexLazyRoute = AdminIndexLazyRouteImport.update({
   id: '/',
   path: '/',
@@ -866,6 +880,11 @@ const VideoAgentTimelineRoute = VideoAgentTimelineRouteImport.update({
 const VideoAgentWorkflowsRoute = VideoAgentWorkflowsRouteImport.update({
   id: '/video-agent_/workflows',
   path: '/video-agent/workflows',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminFeatureVisibilityRoute =
@@ -1349,6 +1368,7 @@ export interface FileRoutesByFullPath {
   '/live-studio': typeof LiveStudioRoute
   '/marketplace': typeof MarketplaceRoute
   '/mastering': typeof MasteringRoute
+  '/mcp': typeof McpRoute
   '/motion': typeof MotionRoute
   '/music-video': typeof MusicVideoRoute
   '/nexusarb': typeof NexusarbRoute
@@ -1391,6 +1411,7 @@ export interface FileRoutesByFullPath {
   '/video-editor': typeof VideoEditorRoute
   '/workflows': typeof WorkflowsRoute
   '/beat-reel': typeof BeatReelLazyRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/assets': typeof AdminAssetsRoute
   '/admin/comfy': typeof AdminComfyRoute
   '/admin/costs': typeof AdminCostsRoute
@@ -1429,6 +1450,7 @@ export interface FileRoutesByFullPath {
   '/cli/': typeof CliIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/admin/': typeof AdminIndexLazyRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/admin/feature-visibility': typeof ApiAdminFeatureVisibilityRoute
   '/api/admin/run-smoke-step14': typeof ApiAdminRunSmokeStep14Route
   '/api/admin/upload-image': typeof ApiAdminUploadImageRoute
@@ -1556,6 +1578,7 @@ export interface FileRoutesByTo {
   '/live-studio': typeof LiveStudioRoute
   '/marketplace': typeof MarketplaceRoute
   '/mastering': typeof MasteringRoute
+  '/mcp': typeof McpRoute
   '/motion': typeof MotionRoute
   '/music-video': typeof MusicVideoRoute
   '/nexusarb': typeof NexusarbRoute
@@ -1598,6 +1621,7 @@ export interface FileRoutesByTo {
   '/video-editor': typeof VideoEditorRoute
   '/workflows': typeof WorkflowsRoute
   '/beat-reel': typeof BeatReelLazyRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/assets': typeof AdminAssetsRoute
   '/admin/comfy': typeof AdminComfyRoute
   '/admin/costs': typeof AdminCostsRoute
@@ -1636,6 +1660,7 @@ export interface FileRoutesByTo {
   '/cli': typeof CliIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/admin': typeof AdminIndexLazyRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/admin/feature-visibility': typeof ApiAdminFeatureVisibilityRoute
   '/api/admin/run-smoke-step14': typeof ApiAdminRunSmokeStep14Route
   '/api/admin/upload-image': typeof ApiAdminUploadImageRoute
@@ -1765,6 +1790,7 @@ export interface FileRoutesById {
   '/live-studio': typeof LiveStudioRoute
   '/marketplace': typeof MarketplaceRoute
   '/mastering': typeof MasteringRoute
+  '/mcp': typeof McpRoute
   '/motion': typeof MotionRoute
   '/music-video': typeof MusicVideoRoute
   '/nexusarb': typeof NexusarbRoute
@@ -1807,6 +1833,7 @@ export interface FileRoutesById {
   '/video-editor': typeof VideoEditorRoute
   '/workflows': typeof WorkflowsRoute
   '/beat-reel': typeof BeatReelLazyRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/assets': typeof AdminAssetsRoute
   '/admin/comfy': typeof AdminComfyRoute
   '/admin/costs': typeof AdminCostsRoute
@@ -1845,6 +1872,7 @@ export interface FileRoutesById {
   '/cli/': typeof CliIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/admin/': typeof AdminIndexLazyRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/admin/feature-visibility': typeof ApiAdminFeatureVisibilityRoute
   '/api/admin/run-smoke-step14': typeof ApiAdminRunSmokeStep14Route
   '/api/admin/upload-image': typeof ApiAdminUploadImageRoute
@@ -1975,6 +2003,7 @@ export interface FileRouteTypes {
     | '/live-studio'
     | '/marketplace'
     | '/mastering'
+    | '/mcp'
     | '/motion'
     | '/music-video'
     | '/nexusarb'
@@ -2017,6 +2046,7 @@ export interface FileRouteTypes {
     | '/video-editor'
     | '/workflows'
     | '/beat-reel'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/assets'
     | '/admin/comfy'
     | '/admin/costs'
@@ -2055,6 +2085,7 @@ export interface FileRouteTypes {
     | '/cli/'
     | '/guides/'
     | '/admin/'
+    | '/.lovable/oauth/consent'
     | '/api/admin/feature-visibility'
     | '/api/admin/run-smoke-step14'
     | '/api/admin/upload-image'
@@ -2182,6 +2213,7 @@ export interface FileRouteTypes {
     | '/live-studio'
     | '/marketplace'
     | '/mastering'
+    | '/mcp'
     | '/motion'
     | '/music-video'
     | '/nexusarb'
@@ -2224,6 +2256,7 @@ export interface FileRouteTypes {
     | '/video-editor'
     | '/workflows'
     | '/beat-reel'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/assets'
     | '/admin/comfy'
     | '/admin/costs'
@@ -2262,6 +2295,7 @@ export interface FileRouteTypes {
     | '/cli'
     | '/guides'
     | '/admin'
+    | '/.lovable/oauth/consent'
     | '/api/admin/feature-visibility'
     | '/api/admin/run-smoke-step14'
     | '/api/admin/upload-image'
@@ -2390,6 +2424,7 @@ export interface FileRouteTypes {
     | '/live-studio'
     | '/marketplace'
     | '/mastering'
+    | '/mcp'
     | '/motion'
     | '/music-video'
     | '/nexusarb'
@@ -2432,6 +2467,7 @@ export interface FileRouteTypes {
     | '/video-editor'
     | '/workflows'
     | '/beat-reel'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/assets'
     | '/admin/comfy'
     | '/admin/costs'
@@ -2470,6 +2506,7 @@ export interface FileRouteTypes {
     | '/cli/'
     | '/guides/'
     | '/admin/'
+    | '/.lovable/oauth/consent'
     | '/api/admin/feature-visibility'
     | '/api/admin/run-smoke-step14'
     | '/api/admin/upload-image'
@@ -2599,6 +2636,7 @@ export interface RootRouteChildren {
   LiveStudioRoute: typeof LiveStudioRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MasteringRoute: typeof MasteringRoute
+  McpRoute: typeof McpRoute
   MotionRoute: typeof MotionRoute
   MusicVideoRoute: typeof MusicVideoRoute
   NexusarbRoute: typeof NexusarbRoute
@@ -2641,6 +2679,7 @@ export interface RootRouteChildren {
   VideoEditorRoute: typeof VideoEditorRoute
   WorkflowsRoute: typeof WorkflowsRoute
   BeatReelLazyRoute: typeof BeatReelLazyRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiBalanceRoute: typeof ApiBalanceRoute
   ApiContentAgentRoute: typeof ApiContentAgentRoute
   ApiEstimateRoute: typeof ApiEstimateRoute
@@ -2659,6 +2698,7 @@ export interface RootRouteChildren {
   VideoAgentWorkflowsRoute: typeof VideoAgentWorkflowsRoute
   CliIndexRoute: typeof CliIndexRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiAdminFeatureVisibilityRoute: typeof ApiAdminFeatureVisibilityRoute
   ApiAdminRunSmokeStep14Route: typeof ApiAdminRunSmokeStep14Route
   ApiAdminUploadImageRoute: typeof ApiAdminUploadImageRoute
@@ -3052,6 +3092,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasteringRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/motion': {
       id: '/motion'
       path: '/motion'
@@ -3339,6 +3386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkflowsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -3603,6 +3657,13 @@ declare module '@tanstack/react-router' {
       path: '/video-agent/workflows'
       fullPath: '/video-agent/workflows'
       preLoaderRoute: typeof VideoAgentWorkflowsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/feature-visibility': {
@@ -4313,6 +4374,7 @@ const rootRouteChildren: RootRouteChildren = {
   LiveStudioRoute: LiveStudioRoute,
   MarketplaceRoute: MarketplaceRoute,
   MasteringRoute: MasteringRoute,
+  McpRoute: McpRoute,
   MotionRoute: MotionRoute,
   MusicVideoRoute: MusicVideoRoute,
   NexusarbRoute: NexusarbRoute,
@@ -4355,6 +4417,8 @@ const rootRouteChildren: RootRouteChildren = {
   VideoEditorRoute: VideoEditorRoute,
   WorkflowsRoute: WorkflowsRoute,
   BeatReelLazyRoute: BeatReelLazyRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiBalanceRoute: ApiBalanceRoute,
   ApiContentAgentRoute: ApiContentAgentRoute,
   ApiEstimateRoute: ApiEstimateRoute,
@@ -4373,6 +4437,7 @@ const rootRouteChildren: RootRouteChildren = {
   VideoAgentWorkflowsRoute: VideoAgentWorkflowsRoute,
   CliIndexRoute: CliIndexRoute,
   GuidesIndexRoute: GuidesIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiAdminFeatureVisibilityRoute: ApiAdminFeatureVisibilityRoute,
   ApiAdminRunSmokeStep14Route: ApiAdminRunSmokeStep14Route,
   ApiAdminUploadImageRoute: ApiAdminUploadImageRoute,
