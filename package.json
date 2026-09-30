@@ -66,10 +66,10 @@
     "@supabase/supabase-js": "^2.117.2",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.83.0",
-    "@tanstack/react-router": "1.170.37",
-    "@tanstack/react-start": "1.168.55",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
     "@tanstack/router-core": "1.171.31",
-    "@tanstack/router-plugin": "1.168.39",
+    "@tanstack/router-plugin": "1.168.42",
     "@xyflow/react": "^12.10.2",
     "ai": "^6.0.191",
     "class-variance-authority": "^0.7.1",
@@ -100,7 +100,7 @@
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "zod": "^4.6.5"
+    "zod": "^3.24.2"
   },
   "overrides": {
     "@tanstack/router-core": "1.171.31",
