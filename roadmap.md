@@ -15,3 +15,4 @@
 - [x] Add Multi-Angle Photoshoot to sidebar
 - [x] Hide hidden features from sidebar
 - [ ] Real human faces with Seedance (authorized asset route)
+- [ ] Add Apple sign-in button to sign-in page
