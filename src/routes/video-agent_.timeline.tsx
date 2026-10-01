@@ -59,6 +59,8 @@ function TimelinePage() {
     ["freeze", "Boomerang", "Loop a selected beat"], ["zoom", "Bar reveal", "Animated crop reveal"],
     ["speed", "Speed ramp", "Accelerate into the cut"], ["rgb", "RGB split", "Chromatic impact hit"],
     ["flash", "White flash", "Beat-synced transition"], ["blur", "Motion blur", "Smooth camera movement"],
+    ["vhs", "VHS filter", "Retro tape look"], ["bw", "Black & white", "Mono film grade"], ["glitch", "Glitch", "Digital glitch hit"],
+    ["bgremove", "Background removal", "Cut subject onto a new layer"], ["layer", "Layer overlay", "Stack a clip on V2–V4"], ["switch", "Scene switch", "Hard switch between clips on the beat"],
   ];
   const agents = [
     ["AI edit planner", "Preview and approve changes below"], ["Gemini Flash", "AI editor model"],
