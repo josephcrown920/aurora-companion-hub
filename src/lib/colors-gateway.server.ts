@@ -64,7 +64,7 @@ export async function createMusicScene(userId: string, imagePath: string, brief:
   });
   const job = await response.json() as { id?: string; status?: string };
   if (!job.id) throw new Error("Video service did not return a job");
-  const { error } = await table().insert({ user_id: userId, gateway_job_id: job.id, image_path: imagePath, video_path: null, scene: "music" });
+  const { error } = await table().insert({ user_id: userId, gateway_job_id: job.id, image_path: imagePath, video_path: "", scene: "music" });
   if (error) throw new Error(error.message);
   return { jobId: job.id, status: job.status ?? "queued" };
 }
