@@ -106,3 +106,26 @@
   .aurora-editor-workstation .aurora-tl-head .tname { display: none; }
   .aurora-editor-workstation .aurora-tl-foot { grid-template-columns: 1fr; }
 }
+/* Glassmorphism layer for the unified studio */
+.aurora-editor-workstation { background: radial-gradient(1200px 600px at 10% -10%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 60%), radial-gradient(900px 500px at 110% 10%, color-mix(in oklab, var(--accent, var(--primary)) 18%, transparent), transparent 60%), var(--background); }
+.aurora-editor-workstation .aurora-editor-pane,
+.aurora-editor-workstation .aurora-editor-monitor,
+.aurora-editor-workstation .aurora-editor-titlebar,
+.aurora-glass { background: color-mix(in oklab, var(--card) 55%, transparent); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent); box-shadow: 0 10px 40px -12px color-mix(in oklab, var(--background) 70%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 10%, transparent); border-radius: 16px; }
+.aurora-director-panel { display: flex; flex-direction: column; gap: 8px; padding: 14px; margin: 12px 0; color: var(--foreground); }
+.aurora-director-head { display: flex; justify-content: space-between; align-items: center; }
+.aurora-director-head small, .aurora-director-muted, .aurora-director-label { display: block; font-size: 11px; color: var(--muted-foreground); }
+.aurora-director-label { text-transform: uppercase; letter-spacing: .14em; margin-top: 4px; }
+.aurora-glass-input { width: 100%; min-width: 0; flex: 1; background: color-mix(in oklab, var(--background) 45%, transparent); border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent); border-radius: 10px; padding: 8px 10px; font-size: 13px; color: var(--foreground); outline: none; }
+.aurora-glass-input:focus { border-color: var(--primary); }
+.aurora-glass-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; font-size: 12px; background: color-mix(in oklab, var(--foreground) 8%, transparent); border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent); color: var(--foreground); }
+.aurora-glass-btn.primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+.aurora-glass-btn:disabled { opacity: .5; }
+.aurora-director-row { display: flex; gap: 6px; align-items: center; }
+.aurora-director-memory { max-height: 120px; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.aurora-director-memory li { display: flex; justify-content: space-between; gap: 6px; font-size: 12px; padding: 4px 8px; border-radius: 8px; background: color-mix(in oklab, var(--primary) 10%, transparent); }
+.aurora-director-chat { max-height: 220px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.aurora-director-msg { font-size: 12px; padding: 8px 10px; border-radius: 10px; }
+.aurora-director-msg.user { margin-left: 24px; background: color-mix(in oklab, var(--foreground) 8%, transparent); }
+.aurora-director-msg.director { margin-right: 24px; background: color-mix(in oklab, var(--primary) 14%, transparent); }
+.aurora-director-pending { padding: 10px; border-radius: 12px; border: 1px dashed var(--primary); font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
