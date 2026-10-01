@@ -49,6 +49,15 @@ export function MultiTrackTimeline() {
   }, [doc]);
 
   useEffect(() => {
+    const onPlayhead = (event: Event) => {
+      const time = (event as CustomEvent<number>).detail;
+      if (Number.isFinite(time)) setPlayhead(Math.max(0, time));
+    };
+    window.addEventListener("aurora:playhead-change", onPlayhead);
+    return () => window.removeEventListener("aurora:playhead-change", onPlayhead);
+  }, []);
+
+  useEffect(() => {
     const applyLayers = (event: Event) => {
       const layers = (event as CustomEvent<Array<{ id: string; type: Clip["kind"]; name: string; start: number; duration: number; locked: boolean }>>).detail;
       if (!Array.isArray(layers)) return;
@@ -75,7 +84,7 @@ export function MultiTrackTimeline() {
       const clip: Clip = { id: newId(), track, start: media.start ?? 0, duration: media.duration ?? 5, name: media.name, kind: media.kind === "audio" ? "audio" : media.kind === "image" ? "image" : "video", src: media.src };
       setDoc((current) => {
         setPast((history) => [...history.slice(-49), current]);
-        return { ...current, clips: [...current.clips, clip] };
+        return { ...current, seconds: Math.max(current.seconds, Math.ceil(clip.start + clip.duration)), clips: [...current.clips, clip] };
       });
       setSelected(clip.id);
     };
@@ -157,7 +166,7 @@ export function MultiTrackTimeline() {
       return;
     }
     const left: Clip = { ...hit, duration: +(playhead - hit.start).toFixed(3) };
-    const right: Clip = { ...hit, id: newId(), start: +playhead.toFixed(3), duration: +(hit.start + hit.duration - playhead).toFixed(3) };
+    const right: Clip = { ...hit, id: newId(), start: +playhead.toFixed(3), duration: +(hit.start + hit.duration - playhead).toFixed(3), sourceOffset: +((hit.sourceOffset ?? 0) + playhead - hit.start).toFixed(3) };
     setClips([...doc.clips.filter((c) => c.id !== hit.id), left, right]);
     setNote("Clip split at the playhead.");
   };
@@ -184,7 +193,7 @@ export function MultiTrackTimeline() {
         if (d.mode === "left") {
           const end = c.start + c.duration;
           const start = Math.min(end - 0.2, Math.max(0, target));
-          return clampClip({ ...c, start, duration: end - start }, cur.seconds);
+          return clampClip({ ...c, start, duration: end - start, sourceOffset: +((c.sourceOffset ?? 0) + start - c.start).toFixed(3) }, cur.seconds);
         }
         return clampClip({ ...c, duration: Math.max(0.2, target - c.start) }, cur.seconds);
       }),
@@ -330,7 +339,11 @@ export function MultiTrackTimeline() {
 
         <div className="aurora-tl-lanes" ref={lane}>
           <div style={{ width }}>
-            <div className="aurora-tl-ruler" onPointerDown={(e) => setPlayhead(snapOn ? snap(xToTime(e.clientX), grid) : xToTime(e.clientX))}>
+            <div className="aurora-tl-ruler" onPointerDown={(e) => {
+              const time = snapOn ? snap(xToTime(e.clientX), grid) : xToTime(e.clientX);
+              setPlayhead(time);
+              window.dispatchEvent(new CustomEvent("aurora:seek", { detail: time }));
+            }}>
               {Array.from({ length: Math.floor(doc.seconds) + 1 }).map((_, s) =>
                 s % (zoom < 18 ? 5 : 1) === 0 ? (
                   <span key={s} className="tick" style={{ left: s * zoom }}>

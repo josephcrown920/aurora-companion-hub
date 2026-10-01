@@ -21,7 +21,7 @@ export const Route = createFileRoute("/video-agent_/music-video")({
   component: MusicVideoPage,
 });
 
-type Scene = { jobId: string; status: string; progress: number; url?: string; error?: string };
+type Scene = { jobId: string; status: string; progress: number; url?: string; videoId?: string; error?: string };
 const SCENE_SECONDS = 3;
 
 function MusicVideoPage() {
@@ -29,7 +29,7 @@ function MusicVideoPage() {
   const navigate = useNavigate();
   const start = useServerFn(startMusicScene);
   const poll = useServerFn(pollColorsGatewayPreview);
-  const [song, setSong] = useState<{ path: string; url: string; name: string } | null>(null);
+  const [song, setSong] = useState<{ path: string; url: string; name: string; duration: number } | null>(null);
   const [performer, setPerformer] = useState<{ path: string; url: string; mime: string } | null>(null);
   const [brief, setBrief] = useState("");
   const [count, setCount] = useState(3);
@@ -51,7 +51,18 @@ function MusicVideoPage() {
   async function onSong(file?: File) {
     if (!file) return;
     setError(null); setBusy("song");
-    try { const r = await upload(file, "music-video/songs"); setSong({ ...r, name: file.name }); }
+    try {
+      const r = await upload(file, "music-video/songs");
+      const audio = document.createElement("audio");
+      audio.preload = "metadata";
+      audio.src = URL.createObjectURL(file);
+      const duration = await new Promise<number>((resolve) => {
+        audio.onloadedmetadata = () => resolve(Number.isFinite(audio.duration) ? audio.duration : 0);
+        audio.onerror = () => resolve(0);
+      });
+      URL.revokeObjectURL(audio.src);
+      setSong({ ...r, name: file.name, duration });
+    }
     catch (e) { setError((e as Error).message); } finally { setBusy(null); }
   }
   async function onPerformer(file?: File) {
@@ -63,7 +74,7 @@ function MusicVideoPage() {
   }
 
   async function generate() {
-    if (!performer || brief.trim().length < 10) return setError("Add a performer photo and a brief (10+ characters)");
+    if (!song || !performer || brief.trim().length < 10) return setError("Add a song, a performer photo and a brief (10+ characters)");
     setError(null); setBusy("generate"); setScenes([]);
     try {
       const next: Scene[] = [];
@@ -90,7 +101,7 @@ function MusicVideoPage() {
   const ready = scenes.filter((s) => s.url);
   function sendToTimeline() {
     const items = ready.map((s, i) => ({ name: `Scene ${i + 1}`, src: s.url!, kind: "video", start: i * SCENE_SECONDS, duration: SCENE_SECONDS }));
-    if (song) items.push({ name: song.name, src: song.url, kind: "audio", start: 0, duration: Math.max(ready.length * SCENE_SECONDS, 5) });
+    if (song) items.push({ name: song.name, src: song.url, kind: "audio", start: 0, duration: song.duration || ready.length * SCENE_SECONDS });
     localStorage.setItem("aurora_pending_imports", JSON.stringify(items));
     navigate({ to: "/video-agent/timeline" });
   }
@@ -133,14 +144,14 @@ function MusicVideoPage() {
         </Step>
 
         <Step n={4} title="Generate & preview" icon={<Film className="h-4 w-4" />}>
-          <Button onClick={generate} disabled={!user || !!busy || !performer}>
+          <Button onClick={generate} disabled={!user || !!busy || !song || !performer}>
             {busy === "generate" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Generate scenes
           </Button>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {scenes.map((s, i) => (
               <div key={s.jobId} className="space-y-1 rounded-md border border-border p-2 text-xs">
                 <div>Scene {i + 1} · {s.status}{s.status !== "completed" && s.status !== "failed" ? ` ${Math.round(s.progress)}%` : ""}</div>
-                {s.url ? <video src={s.url} controls playsInline className="w-full rounded" /> : s.error ? <p className="text-destructive">{s.error}</p> : <div className="flex aspect-[9/16] items-center justify-center rounded bg-muted"><Loader2 className="h-4 w-4 animate-spin" /></div>}
+                {s.url ? <><video src={s.url} controls playsInline className="w-full rounded" />{s.videoId && <Link to="/library/$videoId" params={{ videoId: s.videoId }} className="text-primary underline">Open in My Video Library</Link>}</> : s.error ? <p className="text-destructive">{s.error}</p> : <div className="flex aspect-[9/16] items-center justify-center rounded bg-muted"><Loader2 className="h-4 w-4 animate-spin" /></div>}
               </div>
             ))}
           </div>

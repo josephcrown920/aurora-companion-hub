@@ -53,6 +53,11 @@ export const EFFECTS = [
   { id: "smoke", name: "Smoke Overlay", beat: "bed" },
   { id: "letterbox", name: "Letterbox", beat: "bed" },
   { id: "invert", name: "Invert Hit", beat: "808" },
+  { id: "vhs", name: "VHS Filter", beat: "bed" },
+  { id: "bw", name: "Black & White", beat: "bed" },
+  { id: "bgremove", name: "Background Removal", beat: "bed" },
+  { id: "layer", name: "Layer Overlay", beat: "bed" },
+  { id: "switch", name: "Scene Switch", beat: "cut" },
 ] as const;
 export type EffectId = (typeof EFFECTS)[number]["id"];
 

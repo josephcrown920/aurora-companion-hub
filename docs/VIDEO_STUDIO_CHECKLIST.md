@@ -9,13 +9,14 @@ Source: creator-supplied **AI Video Editor Technical Specification** (October 20
 - [ ] Tag uploaded audio, performer and other references in the brief with `@` bindings.
 - [ ] Analyze actual song beats and drive cuts, effects and sound cues from that analysis (manual BPM is available now).
 - [ ] Render timed lyrics and genuine audio-reactive graphics for their respective modes.
-- [ ] Save each finished generated scene into the creator's private library with its own video page.
+- [x] Save each finished generated scene into the creator's private library with its own video page (once its generation finishes and polling saves it).
 - [ ] Assemble/export a finished music video with the uploaded song; generated scenes currently have no song audio.
 
 ## Editor and VFX
 - [x] Shared multi-track editor, manual split/trim, layers, undo/redo, effect cards and editable shot plan.
-- [ ] Preview and scrub the assembled cut against its audio tracks, including source offsets after trimming and splitting.
-- [ ] Make supported filters (VHS, black-and-white, blur, glitch) affect preview and final rendered export.
+- [x] Preview and scrub imported clips against the audio tracks; left trims and splits retain source offsets. Playback is in-browser, not a rendered final video.
+- [x] VHS, black-and-white, blur and look presets affect the in-browser monitor; imported song length is read from the file.
+- [ ] Make these effects part of a rendered final video export; glitch is currently only a basic preview grade, not pixel-level processing.
 - [ ] Implement real background isolation/replacement, pixel-preserving subject swap (SwitchX), relighting and editable image-layer extraction. **Current background-removal and layer/switch cards do not process pixels.**
 - [ ] Export rendered video, audio and captions; current CapCut draft/shot list exports are edit descriptions, not MP4s.
 - [ ] Noise removal, voiceover, recording, auto-cut, upscale, SRT captions and external drive import.
