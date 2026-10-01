@@ -15,7 +15,8 @@ Source: creator-supplied **AI Video Editor Technical Specification** (October 20
 ## Editor and VFX
 - [x] Shared multi-track editor, manual split/trim, layers, undo/redo, effect cards and editable shot plan.
 - [x] Preview and scrub imported clips against the audio tracks; left trims and splits retain source offsets. Playback is in-browser, not a rendered final video.
-- [ ] Make supported filters (VHS, black-and-white, blur, glitch) affect preview and final rendered export.
+- [x] VHS, black-and-white, blur and look presets affect the in-browser monitor; imported song length is read from the file.
+- [ ] Make these effects part of a rendered final video export; glitch is currently only a basic preview grade, not pixel-level processing.
 - [ ] Implement real background isolation/replacement, pixel-preserving subject swap (SwitchX), relighting and editable image-layer extraction. **Current background-removal and layer/switch cards do not process pixels.**
 - [ ] Export rendered video, audio and captions; current CapCut draft/shot list exports are edit descriptions, not MP4s.
 - [ ] Noise removal, voiceover, recording, auto-cut, upscale, SRT captions and external drive import.

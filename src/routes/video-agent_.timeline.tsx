@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play, SkipBack } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fmtTime, loadTimeline, type Clip, type TimelineDoc } from "@/features/creative-studio/lib/timeline-state";
+import { LOOKS, cssFilter, DEFAULT_ADJUST } from "@/features/creative-studio/lib/pro-presets";
 import "@/features/creative-studio/aurora.css";
 import "@/features/creative-studio/editor-workstation.css";
 import { StudioNav } from "@/features/creative-studio/components/studio/StudioNav";
@@ -64,17 +65,32 @@ function TimelinePage() {
       if (first) setTime(first.start ?? 0);
     } catch { /* ignore bad hand-off */ }
   }, []);
-  const importMedia = (files: FileList | null) => {
+  const importMedia = async (files: FileList | null) => {
     if (!files) return;
     for (const file of Array.from(files)) {
       if (!/^(video|audio|image)\//.test(file.type)) continue;
       const url = URL.createObjectURL(file);
-      window.dispatchEvent(new CustomEvent("aurora:import-media", { detail: { name: file.name, src: url, kind: file.type.split("/")[0] } }));
+      const kind = file.type.split("/")[0];
+      let duration = 5;
+      if (kind !== "image") {
+        const probe = document.createElement(kind === "audio" ? "audio" : "video");
+        probe.preload = "metadata";
+        probe.src = url;
+        duration = await new Promise<number>((resolve) => {
+          probe.onloadedmetadata = () => resolve(Number.isFinite(probe.duration) ? probe.duration : 5);
+          probe.onerror = () => resolve(5);
+        });
+        probe.removeAttribute("src");
+        probe.load();
+      }
+      window.dispatchEvent(new CustomEvent("aurora:import-media", { detail: { name: file.name, src: url, kind, duration } }));
     }
   };
   const activeVisual = [...doc.clips].filter((clip) => clip.src && clip.kind !== "audio" && time >= clip.start && time < clip.start + clip.duration)
     .sort((a, b) => a.track.localeCompare(b.track))[0] ?? null;
   const visual = activeVisual ?? (!playing ? selectedClip : null);
+  const look = LOOKS.find((item) => item.id === visual?.look || (visual?.effect === "vhs" && item.id === "vhs") || (visual?.effect === "bw" && item.id === "noir"));
+  const previewFilter = look ? cssFilter({ ...DEFAULT_ADJUST, ...look.adjust }) : visual?.effect === "blur" ? "blur(2px)" : undefined;
   const audioClips = doc.clips.filter((clip) => clip.src && clip.kind === "audio");
 
   useEffect(() => {
@@ -155,12 +171,12 @@ function TimelinePage() {
               ))}
             </div>
             <div className="aurora-editor-section-title">Media library <span>PROJECT</span></div>
-            <input ref={fileRef} type="file" accept="video/*,audio/*,image/*" multiple hidden onChange={(event) => importMedia(event.target.files)} />
+            <input ref={fileRef} type="file" accept="video/*,audio/*,image/*" multiple hidden onChange={(event) => void importMedia(event.target.files)} />
             <Button type="button" variant="outline" className="aurora-editor-import" onClick={() => fileRef.current?.click()}>＋ Import media to timeline</Button>
           </aside>
           <section className="aurora-editor-monitor">
             <div className="aurora-editor-monitor-bar"><span>Program monitor</span><span>{fmtTime(time)} / {fmtTime(doc.seconds)}</span></div>
-            <div className="aurora-editor-screen">{visual?.src ? visual.kind === "video" ? <video key={visual.id} ref={videoRef} src={visual.src} playsInline /> : <img src={visual.src} alt={visual.name} /> : <div className="aurora-editor-screen-copy"><strong>Program monitor</strong><small>Import media or select a clip to preview</small></div>}</div>
+            <div className={`aurora-editor-screen${visual?.effect === "glitch" ? " has-glitch" : ""}`}>{visual?.src ? visual.kind === "video" ? <video key={visual.id} ref={videoRef} src={visual.src} style={{ filter: previewFilter }} playsInline /> : <img src={visual.src} style={{ filter: previewFilter }} alt={visual.name} /> : <div className="aurora-editor-screen-copy"><strong>Program monitor</strong><small>Import media or select a clip to preview</small></div>}</div>
             <div className="aurora-editor-transport" aria-label="Timeline playback">
               <Button size="icon" variant="ghost" title="Back to start" aria-label="Back to start" onClick={() => { setPlaying(false); setTime(0); }}><SkipBack /></Button>
               <Button size="icon" variant="ghost" title={playing ? "Pause" : "Play"} aria-label={playing ? "Pause" : "Play"} onClick={() => { if (time >= doc.seconds) setTime(0); setPlaying((value) => !value); }}>{playing ? <Pause /> : <Play />}</Button>

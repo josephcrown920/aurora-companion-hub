@@ -84,7 +84,7 @@ export function MultiTrackTimeline() {
       const clip: Clip = { id: newId(), track, start: media.start ?? 0, duration: media.duration ?? 5, name: media.name, kind: media.kind === "audio" ? "audio" : media.kind === "image" ? "image" : "video", src: media.src };
       setDoc((current) => {
         setPast((history) => [...history.slice(-49), current]);
-        return { ...current, clips: [...current.clips, clip] };
+        return { ...current, seconds: Math.max(current.seconds, Math.ceil(clip.start + clip.duration)), clips: [...current.clips, clip] };
       });
       setSelected(clip.id);
     };
