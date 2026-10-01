@@ -125,6 +125,7 @@ import { Route as CreatorDashboardRouteImport } from './routes/creator.dashboard
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesSlugRouteImport } from './routes/guides.$slug'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
+import { Route as LibraryVideoIdRouteImport } from './routes/library.$videoId'
 import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as SoulGenerateRouteImport } from './routes/soul.generate'
 import { Route as SoulLibraryRouteImport } from './routes/soul.library'
@@ -844,6 +845,11 @@ const LegalSlugRoute = LegalSlugRouteImport.update({
   path: '/legal/$slug',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/legal.$slug.lazy').then((d) => d.Route))
+const LibraryVideoIdRoute = LibraryVideoIdRouteImport.update({
+  id: '/$videoId',
+  path: '/$videoId',
+  getParentRoute: () => LibraryRoute,
+} as any)
 const RTokenRoute = RTokenRouteImport.update({
   id: '/r/$token',
   path: '/r/$token',
@@ -1375,7 +1381,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof JobsRoute
   '/kids': typeof KidsRoute
   '/layers': typeof LayersRoute
-  '/library': typeof LibraryRoute
+  '/library': typeof LibraryRouteWithChildren
   '/likeness': typeof LikenessRoute
   '/lipsync': typeof LipsyncRoute
   '/live-studio': typeof LiveStudioRoute
@@ -1450,6 +1456,7 @@ export interface FileRoutesByFullPath {
   '/creator/dashboard': typeof CreatorDashboardRoute
   '/guides/$slug': typeof GuidesSlugRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/library/$videoId': typeof LibraryVideoIdRoute
   '/r/$token': typeof RTokenRoute
   '/soul/generate': typeof SoulGenerateRouteWithChildren
   '/soul/library': typeof SoulLibraryRoute
@@ -1587,7 +1594,7 @@ export interface FileRoutesByTo {
   '/jobs': typeof JobsRoute
   '/kids': typeof KidsRoute
   '/layers': typeof LayersRoute
-  '/library': typeof LibraryRoute
+  '/library': typeof LibraryRouteWithChildren
   '/likeness': typeof LikenessRoute
   '/lipsync': typeof LipsyncRoute
   '/live-studio': typeof LiveStudioRoute
@@ -1662,6 +1669,7 @@ export interface FileRoutesByTo {
   '/creator/dashboard': typeof CreatorDashboardRoute
   '/guides/$slug': typeof GuidesSlugRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/library/$videoId': typeof LibraryVideoIdRoute
   '/r/$token': typeof RTokenRoute
   '/soul/generate': typeof SoulGenerateRouteWithChildren
   '/soul/library': typeof SoulLibraryRoute
@@ -1801,7 +1809,7 @@ export interface FileRoutesById {
   '/jobs': typeof JobsRoute
   '/kids': typeof KidsRoute
   '/layers': typeof LayersRoute
-  '/library': typeof LibraryRoute
+  '/library': typeof LibraryRouteWithChildren
   '/likeness': typeof LikenessRoute
   '/lipsync': typeof LipsyncRoute
   '/live-studio': typeof LiveStudioRoute
@@ -1876,6 +1884,7 @@ export interface FileRoutesById {
   '/creator/dashboard': typeof CreatorDashboardRoute
   '/guides/$slug': typeof GuidesSlugRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/library/$videoId': typeof LibraryVideoIdRoute
   '/r/$token': typeof RTokenRoute
   '/soul/generate': typeof SoulGenerateRouteWithChildren
   '/soul/library': typeof SoulLibraryRoute
@@ -2091,6 +2100,7 @@ export interface FileRouteTypes {
     | '/creator/dashboard'
     | '/guides/$slug'
     | '/legal/$slug'
+    | '/library/$videoId'
     | '/r/$token'
     | '/soul/generate'
     | '/soul/library'
@@ -2303,6 +2313,7 @@ export interface FileRouteTypes {
     | '/creator/dashboard'
     | '/guides/$slug'
     | '/legal/$slug'
+    | '/library/$videoId'
     | '/r/$token'
     | '/soul/generate'
     | '/soul/library'
@@ -2516,6 +2527,7 @@ export interface FileRouteTypes {
     | '/creator/dashboard'
     | '/guides/$slug'
     | '/legal/$slug'
+    | '/library/$videoId'
     | '/r/$token'
     | '/soul/generate'
     | '/soul/library'
@@ -2655,7 +2667,7 @@ export interface RootRouteChildren {
   JobsRoute: typeof JobsRoute
   KidsRoute: typeof KidsRoute
   LayersRoute: typeof LayersRoute
-  LibraryRoute: typeof LibraryRoute
+  LibraryRoute: typeof LibraryRouteWithChildren
   LikenessRoute: typeof LikenessRoute
   LipsyncRoute: typeof LipsyncRoute
   LiveStudioRoute: typeof LiveStudioRoute
@@ -3629,6 +3641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/library/$videoId': {
+      id: '/library/$videoId'
+      path: '/$videoId'
+      fullPath: '/library/$videoId'
+      preLoaderRoute: typeof LibraryVideoIdRouteImport
+      parentRoute: typeof LibraryRoute
+    }
     '/r/$token': {
       id: '/r/$token'
       path: '/r/$token'
@@ -4330,6 +4349,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface LibraryRouteChildren {
+  LibraryVideoIdRoute: typeof LibraryVideoIdRoute
+}
+
+const LibraryRouteChildren: LibraryRouteChildren = {
+  LibraryVideoIdRoute: LibraryVideoIdRoute,
+}
+
+const LibraryRouteWithChildren =
+  LibraryRoute._addFileChildren(LibraryRouteChildren)
+
 interface SoulGenerateRouteChildren {
   SoulGenerateVideoRoute: typeof SoulGenerateVideoRoute
 }
@@ -4409,7 +4439,7 @@ const rootRouteChildren: RootRouteChildren = {
   JobsRoute: JobsRoute,
   KidsRoute: KidsRoute,
   LayersRoute: LayersRoute,
-  LibraryRoute: LibraryRoute,
+  LibraryRoute: LibraryRouteWithChildren,
   LikenessRoute: LikenessRoute,
   LipsyncRoute: LipsyncRoute,
   LiveStudioRoute: LiveStudioRoute,
