@@ -74,6 +74,8 @@ const STUDIO_FEATURES: Feature[] = [
   { to: "/previs",          label: "Previs Workspace",      icon: Clapperboard, previewImg: "/nav-previews/music-video.jpg", badge: "New" },
   { to: "/likeness",        label: "Locked Likeness Shoot", icon: Camera,   previewImg: "/nav-previews/avatar.jpg",        badge: "New" },
   { to: "/reshoot",         label: "Multi-Angle Photoshoot", icon: Camera,  previewImg: "/nav-previews/avatar.jpg",        badge: "New" },
+  { to: "/video-agent/music-video", label: "Music Video Builder", icon: Camera, badge: "New" },
+  { to: "/library",         label: "My Video Library", icon: Camera },
   { to: "/scene-builder",   label: "Scene Builder",         icon: Layers,   previewImg: "/nav-previews/scene-builder.jpg" },
   { to: "/agent",           label: "Video Agent",           icon: Film,     badge: "New" },
   { to: "/comfy",           label: "ComfyUI Workflow Studio", icon: Workflow, badge: "New" },
