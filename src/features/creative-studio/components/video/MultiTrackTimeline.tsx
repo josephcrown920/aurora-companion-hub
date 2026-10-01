@@ -69,10 +69,10 @@ export function MultiTrackTimeline() {
 
   useEffect(() => {
     const importMedia = (event: Event) => {
-      const media = (event as CustomEvent<{ name: string; src: string; kind: string }>).detail;
+      const media = (event as CustomEvent<{ name: string; src: string; kind: string; start?: number; duration?: number }>).detail;
       if (!media?.src) return;
       const track: TrackId = media.kind === "audio" ? "A1" : "V1";
-      const clip: Clip = { id: newId(), track, start: 0, duration: 5, name: media.name, kind: media.kind === "audio" ? "audio" : media.kind === "image" ? "image" : "video", src: media.src };
+      const clip: Clip = { id: newId(), track, start: media.start ?? 0, duration: media.duration ?? 5, name: media.name, kind: media.kind === "audio" ? "audio" : media.kind === "image" ? "image" : "video", src: media.src };
       setDoc((current) => {
         setPast((history) => [...history.slice(-49), current]);
         return { ...current, clips: [...current.clips, clip] };

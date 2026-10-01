@@ -33,6 +33,18 @@ function TimelinePage() {
     window.addEventListener("aurora:select-clip", select);
     return () => window.removeEventListener("aurora:select-clip", select);
   }, []);
+  useEffect(() => {
+    // Hand-off from the Music Video flow: scenes + song queued for editing.
+    const raw = localStorage.getItem("aurora_pending_imports");
+    if (!raw) return;
+    localStorage.removeItem("aurora_pending_imports");
+    try {
+      const items = JSON.parse(raw) as Array<{ name: string; src: string; kind: string; start?: number; duration?: number }>;
+      for (const item of items) window.dispatchEvent(new CustomEvent("aurora:import-media", { detail: item }));
+      const first = items.find((i) => i.kind === "video");
+      if (first) { setPreviewUrl(first.src); setPreviewKind("video"); }
+    } catch { /* ignore bad hand-off */ }
+  }, []);
   const importMedia = (files: FileList | null) => {
     if (!files) return;
     for (const file of Array.from(files)) {
