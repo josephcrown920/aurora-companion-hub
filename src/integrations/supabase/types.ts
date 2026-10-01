@@ -4226,6 +4226,39 @@ export type Database = {
         }
         Relationships: []
       }
+      video_studio_projects: {
+        Row: {
+          activity: Json
+          brief: string
+          context_notes: Json
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity?: Json
+          brief?: string
+          context_notes?: Json
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: Json
+          brief?: string
+          context_notes?: Json
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       waitlist: {
         Row: {
           created_at: string
