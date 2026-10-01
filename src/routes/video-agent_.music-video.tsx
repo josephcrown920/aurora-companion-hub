@@ -33,6 +33,7 @@ function MusicVideoPage() {
   const [performer, setPerformer] = useState<{ path: string; url: string; mime: string } | null>(null);
   const [brief, setBrief] = useState("");
   const [count, setCount] = useState(3);
+  const [mvType, setMvType] = useState<"Narrative" | "Lyrics" | "Visualizer">("Narrative");
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +68,7 @@ function MusicVideoPage() {
     try {
       const next: Scene[] = [];
       for (let i = 0; i < count; i++) {
-        const r = await start({ data: { imagePath: performer.path, imageMime: performer.mime as "image/jpeg", brief: brief.trim(), sceneIndex: i, sceneCount: count } });
+        const r = await start({ data: { imagePath: performer.path, imageMime: performer.mime as "image/jpeg", brief: `${mvType === "Narrative" ? "Narrative: cinematic scenes and performance cut to the rhythm" : mvType === "Lyrics" ? "Lyrics video: lyric moments become part of each scene" : "Visualizer: abstract audio-reactive visuals moving with every beat"}. ${brief.trim()}`, sceneIndex: i, sceneCount: count } });
         next.push({ jobId: r.jobId, status: r.status, progress: 0 });
         setScenes([...next]);
       }
@@ -120,7 +121,8 @@ function MusicVideoPage() {
           </Step>
         </section>
 
-        <Step n={3} title="Creative brief" icon={<Film className="h-4 w-4" />}>
+        <Step n={3} title="Video type & creative brief" icon={<Film className="h-4 w-4" />}>
+          <div className="flex gap-2">{(["Narrative", "Lyrics", "Visualizer"] as const).map((t) => <Button key={t} size="sm" variant={mvType === t ? "default" : "outline"} onClick={() => setMvType(t)}>{t}</Button>)}</div>
           <textarea rows={4} className="w-full rounded-md border border-input bg-background p-3 text-sm" placeholder="e.g. Sunny 1950s seaside town, pastel outfits, friends dancing on the boardwalk, golden hour…" value={brief} onChange={(e) => setBrief(e.target.value)} />
           <label className="flex items-center gap-2 text-sm">Scenes
             <select className="rounded-md border border-input bg-background p-1" value={count} onChange={(e) => setCount(Number(e.target.value))}>
