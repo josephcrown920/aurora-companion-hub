@@ -10,6 +10,7 @@ import "@/features/creative-studio/editor-workstation.css";
 import { StudioNav } from "@/features/creative-studio/components/studio/StudioNav";
 import { MultiTrackTimeline } from "@/features/creative-studio/components/video/MultiTrackTimeline";
 import { LayersEditor } from "@/features/creative-studio/components/video/LayersEditor";
+import { StudioDirectorPanel } from "@/features/creative-studio/components/video/StudioDirectorPanel";
 
 export const Route = createFileRoute("/video-agent_/timeline")({
   head: () => ({
@@ -186,6 +187,7 @@ function TimelinePage() {
           </section>
           <aside className="aurora-editor-pane orchestrator">
             <div className="aurora-editor-tabs"><span className="aurora-editor-tab active">AI editor</span></div>
+            <StudioDirectorPanel />
             <div className="aurora-editor-section-title">Agent-assisted editing</div>
             <div className="aurora-agent-stack">
               {agents.map(([name, note]) => <div className="aurora-agent-card" key={name}><i /><span><b>{name}</b><small>{note}</small></span></div>)}
