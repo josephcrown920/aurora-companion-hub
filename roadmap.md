@@ -16,3 +16,4 @@
 - [x] Hide hidden features from sidebar
 - [ ] Real human faces with Seedance (authorized asset route)
 - [ ] Add Apple sign-in button to sign-in page
+- [ ] Implement the uploaded Video Studio specification in stages; track individual functional requirements and honest limitations in `docs/VIDEO_STUDIO_CHECKLIST.md`.
