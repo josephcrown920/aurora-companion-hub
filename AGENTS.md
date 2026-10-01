@@ -13,3 +13,4 @@
 - Use `/canvas` as the single Aurora Canvas: a node-and-connector workspace powered by the existing production workflow engine; redirect legacy `/aurora-canvas` links there to avoid two competing editors.
 - Keep `/video-agent/timeline` as the desktop-style agent editor, reusing `MultiTrackTimeline` and `LayersEditor`; effects and presets must operate on that shared timeline so manual and AI edits stay reversible.
 - Keep the agent editor's layers and multi-track timeline synchronized; imported local media uses temporary browser URLs and needs reimport after refresh.
+- Drive the Video Agent program monitor from the shared timeline document and source offsets, not a separate playlist; this keeps scrub/playback aligned with manual and agent edits.

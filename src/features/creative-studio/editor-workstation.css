@@ -49,6 +49,7 @@
 .aurora-editor-screen-copy small { display: block; margin-top: 5px; color: var(--editor-muted); font-size: 10px; }
 .aurora-editor-transport { display: flex; align-items: center; justify-content: center; gap: 14px; height: 38px; color: var(--editor-muted); font-size: 11px; }
 .aurora-editor-transport b { color: var(--editor-ink); font-size: 16px; }
+.aurora-editor-transport input[type="range"] { flex: 1; min-width: 80px; accent-color: var(--editor-accent); }
 
 .aurora-agent-stack { display: grid; gap: 7px; }
 .aurora-agent-card { display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 8px; padding: 9px; border: 1px solid var(--editor-line); border-radius: 6px; background: color-mix(in oklab, var(--editor-raised) 75%, transparent); }

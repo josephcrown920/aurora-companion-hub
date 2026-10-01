@@ -22,6 +22,8 @@ export type Clip = {
   track: TrackId;
   start: number;
   duration: number;
+  /** Offset in seconds into the original media after a left trim or split. */
+  sourceOffset?: number;
   name: string;
   kind: ClipKind;
   prompt?: string;
