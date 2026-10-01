@@ -21,7 +21,7 @@ export const Route = createFileRoute("/video-agent_/music-video")({
   component: MusicVideoPage,
 });
 
-type Scene = { jobId: string; status: string; progress: number; url?: string; error?: string };
+type Scene = { jobId: string; status: string; progress: number; url?: string; videoId?: string; error?: string };
 const SCENE_SECONDS = 3;
 
 function MusicVideoPage() {
@@ -140,7 +140,7 @@ function MusicVideoPage() {
             {scenes.map((s, i) => (
               <div key={s.jobId} className="space-y-1 rounded-md border border-border p-2 text-xs">
                 <div>Scene {i + 1} · {s.status}{s.status !== "completed" && s.status !== "failed" ? ` ${Math.round(s.progress)}%` : ""}</div>
-                {s.url ? <video src={s.url} controls playsInline className="w-full rounded" /> : s.error ? <p className="text-destructive">{s.error}</p> : <div className="flex aspect-[9/16] items-center justify-center rounded bg-muted"><Loader2 className="h-4 w-4 animate-spin" /></div>}
+                {s.url ? <><video src={s.url} controls playsInline className="w-full rounded" />{s.videoId && <Link to="/library/$videoId" params={{ videoId: s.videoId }} className="text-primary underline">Open in My Video Library</Link>}</> : s.error ? <p className="text-destructive">{s.error}</p> : <div className="flex aspect-[9/16] items-center justify-center rounded bg-muted"><Loader2 className="h-4 w-4 animate-spin" /></div>}
               </div>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,11 @@ type Item = { name: string; path: string; url: string };
 
 function LibraryPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generated, setGenerated] = useState<Item[]>([]);
   const folder = user ? `${user.id}/library` : "";
 
   const load = useCallback(async () => {
@@ -39,6 +41,13 @@ function LibraryPage() {
       return { name: f.name.replace(/^\d+-/, ""), path, url: s?.signedUrl ?? "" };
     }));
     setItems(signed);
+    const { data: scenes, error: sceneError } = await supabase.storage.from("studio").list(`${user.id}/music-video/scenes`, { sortBy: { column: "created_at", order: "desc" } });
+    if (sceneError) setError(sceneError.message);
+    else setGenerated(await Promise.all((scenes ?? []).filter((f) => f.id && f.name.endsWith(".mp4")).map(async (f) => {
+      const path = `${user.id}/music-video/scenes/${f.name}`;
+      const { data: signedScene } = await supabase.storage.from("studio").createSignedUrl(path, 3600);
+      return { name: `Music video scene · ${f.name.slice(0, -4)}`, path, url: signedScene?.signedUrl ?? "" };
+    })));
   }, [user, folder]);
 
   useEffect(() => { void load(); }, [load]);
@@ -81,6 +90,7 @@ function LibraryPage() {
         {!user && <p className="rounded-lg border border-border p-4 text-sm">Sign in to see your library.</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}
         {user && items.length === 0 && !busy && <p className="text-sm text-muted-foreground">No videos yet — upload your first music video.</p>}
+        {generated.length > 0 && <section className="space-y-3"><h2 className="text-xl font-semibold">Generated scenes</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{generated.map((it) => <div key={it.path} className="space-y-2 rounded-md border border-border bg-card p-3"><video src={it.url} controls playsInline className="w-full bg-muted" /><Button variant="link" className="p-0" onClick={() => void navigate({ to: "/library/$videoId", params: { videoId: it.path.split("/").pop()?.replace(/\.mp4$/, "") ?? "" } })}>Watch scene →</Button></div>)}</div></section>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((it) => (
             <div key={it.path} className="space-y-2 rounded-xl border border-border bg-card p-3">

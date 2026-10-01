@@ -70,19 +70,19 @@ export async function createMusicScene(userId: string, imagePath: string, brief:
 }
 
 export async function readColorsPreview(userId: string, jobId: string) {
-  const { data: row, error } = await table().select("id, gateway_job_id, result_path").eq("user_id", userId).eq("gateway_job_id", jobId).maybeSingle();
+  const { data: row, error } = await table().select("id, gateway_job_id, result_path, scene").eq("user_id", userId).eq("gateway_job_id", jobId).maybeSingle();
   if (error || !row) throw new Error("Preview not found");
   if (row.result_path) {
     const { data, error: signError } = await supabaseAdmin.storage.from("studio").createSignedUrl(row.result_path, 3600);
     if (signError || !data) throw new Error("Could not load saved preview");
-    return { status: "completed", url: data.signedUrl, progress: 100 };
+    return { status: "completed", url: data.signedUrl, progress: 100, videoId: row.id };
   }
   const key = process.env["LOVABLE_API_KEY"];
   if (!key) throw new Error("AI video generation is not configured");
   const job = await (await gateway(`/${encodeURIComponent(jobId)}`, key)).json() as { status: string; progress?: number; error?: { message?: string } };
   if (job.status === "failed") return { status: "failed", error: job.error?.message ?? "The video could not be generated", progress: job.progress ?? 0 };
   if (job.status !== "completed") return { status: job.status, progress: job.progress ?? 0 };
-  const path = `${userId}/colors-previews/${row.id}.mp4`;
+  const path = row.scene === "music" ? `${userId}/music-video/scenes/${row.id}.mp4` : `${userId}/colors-previews/${row.id}.mp4`;
   const { data: existing } = await supabaseAdmin.storage.from("studio").info(path);
   if (!existing) {
     const file = await (await gateway(`/${encodeURIComponent(jobId)}/content`, key)).arrayBuffer();
@@ -92,5 +92,5 @@ export async function readColorsPreview(userId: string, jobId: string) {
   await table().update({ result_path: path }).eq("id", row.id).eq("user_id", userId);
   const { data, error: signError } = await supabaseAdmin.storage.from("studio").createSignedUrl(path, 3600);
   if (signError || !data) throw new Error("Could not load completed preview");
-  return { status: "completed", url: data.signedUrl, progress: 100 };
+  return { status: "completed", url: data.signedUrl, progress: 100, videoId: row.id };
 }

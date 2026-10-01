@@ -9,7 +9,7 @@ Source: creator-supplied **AI Video Editor Technical Specification** (October 20
 - [ ] Tag uploaded audio, performer and other references in the brief with `@` bindings.
 - [ ] Analyze actual song beats and drive cuts, effects and sound cues from that analysis (manual BPM is available now).
 - [ ] Render timed lyrics and genuine audio-reactive graphics for their respective modes.
-- [ ] Save each finished generated scene into the creator's private library with its own video page.
+- [x] Save each finished generated scene into the creator's private library with its own video page (once its generation finishes and polling saves it).
 - [ ] Assemble/export a finished music video with the uploaded song; generated scenes currently have no song audio.
 
 ## Editor and VFX
