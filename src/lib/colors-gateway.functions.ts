@@ -17,3 +17,17 @@ export const pollColorsGatewayPreview = createServerFn({ method: "POST" })
     const { readColorsPreview } = await import("./colors-gateway.server");
     return readColorsPreview(context.userId, data.jobId);
   });
+
+export const startMusicScene = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => z.object({
+    imagePath: z.string().min(1).max(500),
+    imageMime: z.enum(["image/jpeg", "image/png", "image/webp"]),
+    brief: z.string().min(10).max(2000),
+    sceneIndex: z.number().int().min(0).max(5),
+    sceneCount: z.number().int().min(1).max(6),
+  }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { createMusicScene } = await import("./colors-gateway.server");
+    return createMusicScene(context.userId, data.imagePath, data.brief, data.sceneIndex, data.sceneCount, data.imageMime);
+  });

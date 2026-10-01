@@ -49,6 +49,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as KidsRouteImport } from './routes/kids'
 import { Route as LayersRouteImport } from './routes/layers'
+import { Route as LibraryRouteImport } from './routes/library'
 import { Route as LikenessRouteImport } from './routes/likeness'
 import { Route as LipsyncRouteImport } from './routes/lipsync'
 import { Route as LiveStudioRouteImport } from './routes/live-studio'
@@ -130,6 +131,7 @@ import { Route as SoulLibraryRouteImport } from './routes/soul.library'
 import { Route as SoulTrainRouteImport } from './routes/soul.train'
 import { Route as SoulVibeRouteImport } from './routes/soul.vibe'
 import { Route as VideoAgentBeatDirectorRouteImport } from './routes/video-agent_.beat-director'
+import { Route as VideoAgentMusicVideoRouteImport } from './routes/video-agent_.music-video'
 import { Route as VideoAgentPhotoLabRouteImport } from './routes/video-agent_.photo-lab'
 import { Route as VideoAgentTimelineRouteImport } from './routes/video-agent_.timeline'
 import { Route as VideoAgentWorkflowsRouteImport } from './routes/video-agent_.workflows'
@@ -425,6 +427,11 @@ const LayersRoute = LayersRouteImport.update({
   path: '/layers',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/layers.lazy').then((d) => d.Route))
+const LibraryRoute = LibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LikenessRoute = LikenessRouteImport.update({
   id: '/likeness',
   path: '/likeness',
@@ -865,6 +872,11 @@ const SoulVibeRoute = SoulVibeRouteImport.update({
 const VideoAgentBeatDirectorRoute = VideoAgentBeatDirectorRouteImport.update({
   id: '/video-agent_/beat-director',
   path: '/video-agent/beat-director',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideoAgentMusicVideoRoute = VideoAgentMusicVideoRouteImport.update({
+  id: '/video-agent_/music-video',
+  path: '/video-agent/music-video',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VideoAgentPhotoLabRoute = VideoAgentPhotoLabRouteImport.update({
@@ -1363,6 +1375,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof JobsRoute
   '/kids': typeof KidsRoute
   '/layers': typeof LayersRoute
+  '/library': typeof LibraryRoute
   '/likeness': typeof LikenessRoute
   '/lipsync': typeof LipsyncRoute
   '/live-studio': typeof LiveStudioRoute
@@ -1443,6 +1456,7 @@ export interface FileRoutesByFullPath {
   '/soul/train': typeof SoulTrainRoute
   '/soul/vibe': typeof SoulVibeRoute
   '/video-agent/beat-director': typeof VideoAgentBeatDirectorRoute
+  '/video-agent/music-video': typeof VideoAgentMusicVideoRoute
   '/video-agent/photo-lab': typeof VideoAgentPhotoLabRoute
   '/video-agent/timeline': typeof VideoAgentTimelineRoute
   '/video-agent/workflows': typeof VideoAgentWorkflowsRoute
@@ -1573,6 +1587,7 @@ export interface FileRoutesByTo {
   '/jobs': typeof JobsRoute
   '/kids': typeof KidsRoute
   '/layers': typeof LayersRoute
+  '/library': typeof LibraryRoute
   '/likeness': typeof LikenessRoute
   '/lipsync': typeof LipsyncRoute
   '/live-studio': typeof LiveStudioRoute
@@ -1653,6 +1668,7 @@ export interface FileRoutesByTo {
   '/soul/train': typeof SoulTrainRoute
   '/soul/vibe': typeof SoulVibeRoute
   '/video-agent/beat-director': typeof VideoAgentBeatDirectorRoute
+  '/video-agent/music-video': typeof VideoAgentMusicVideoRoute
   '/video-agent/photo-lab': typeof VideoAgentPhotoLabRoute
   '/video-agent/timeline': typeof VideoAgentTimelineRoute
   '/video-agent/workflows': typeof VideoAgentWorkflowsRoute
@@ -1785,6 +1801,7 @@ export interface FileRoutesById {
   '/jobs': typeof JobsRoute
   '/kids': typeof KidsRoute
   '/layers': typeof LayersRoute
+  '/library': typeof LibraryRoute
   '/likeness': typeof LikenessRoute
   '/lipsync': typeof LipsyncRoute
   '/live-studio': typeof LiveStudioRoute
@@ -1865,6 +1882,7 @@ export interface FileRoutesById {
   '/soul/train': typeof SoulTrainRoute
   '/soul/vibe': typeof SoulVibeRoute
   '/video-agent_/beat-director': typeof VideoAgentBeatDirectorRoute
+  '/video-agent_/music-video': typeof VideoAgentMusicVideoRoute
   '/video-agent_/photo-lab': typeof VideoAgentPhotoLabRoute
   '/video-agent_/timeline': typeof VideoAgentTimelineRoute
   '/video-agent_/workflows': typeof VideoAgentWorkflowsRoute
@@ -1998,6 +2016,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/kids'
     | '/layers'
+    | '/library'
     | '/likeness'
     | '/lipsync'
     | '/live-studio'
@@ -2078,6 +2097,7 @@ export interface FileRouteTypes {
     | '/soul/train'
     | '/soul/vibe'
     | '/video-agent/beat-director'
+    | '/video-agent/music-video'
     | '/video-agent/photo-lab'
     | '/video-agent/timeline'
     | '/video-agent/workflows'
@@ -2208,6 +2228,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/kids'
     | '/layers'
+    | '/library'
     | '/likeness'
     | '/lipsync'
     | '/live-studio'
@@ -2288,6 +2309,7 @@ export interface FileRouteTypes {
     | '/soul/train'
     | '/soul/vibe'
     | '/video-agent/beat-director'
+    | '/video-agent/music-video'
     | '/video-agent/photo-lab'
     | '/video-agent/timeline'
     | '/video-agent/workflows'
@@ -2419,6 +2441,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/kids'
     | '/layers'
+    | '/library'
     | '/likeness'
     | '/lipsync'
     | '/live-studio'
@@ -2499,6 +2522,7 @@ export interface FileRouteTypes {
     | '/soul/train'
     | '/soul/vibe'
     | '/video-agent_/beat-director'
+    | '/video-agent_/music-video'
     | '/video-agent_/photo-lab'
     | '/video-agent_/timeline'
     | '/video-agent_/workflows'
@@ -2631,6 +2655,7 @@ export interface RootRouteChildren {
   JobsRoute: typeof JobsRoute
   KidsRoute: typeof KidsRoute
   LayersRoute: typeof LayersRoute
+  LibraryRoute: typeof LibraryRoute
   LikenessRoute: typeof LikenessRoute
   LipsyncRoute: typeof LipsyncRoute
   LiveStudioRoute: typeof LiveStudioRoute
@@ -2693,6 +2718,7 @@ export interface RootRouteChildren {
   LegalSlugRoute: typeof LegalSlugRoute
   RTokenRoute: typeof RTokenRoute
   VideoAgentBeatDirectorRoute: typeof VideoAgentBeatDirectorRoute
+  VideoAgentMusicVideoRoute: typeof VideoAgentMusicVideoRoute
   VideoAgentPhotoLabRoute: typeof VideoAgentPhotoLabRoute
   VideoAgentTimelineRoute: typeof VideoAgentTimelineRoute
   VideoAgentWorkflowsRoute: typeof VideoAgentWorkflowsRoute
@@ -3055,6 +3081,13 @@ declare module '@tanstack/react-router' {
       path: '/layers'
       fullPath: '/layers'
       preLoaderRoute: typeof LayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/likeness': {
@@ -3636,6 +3669,13 @@ declare module '@tanstack/react-router' {
       path: '/video-agent/beat-director'
       fullPath: '/video-agent/beat-director'
       preLoaderRoute: typeof VideoAgentBeatDirectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/video-agent_/music-video': {
+      id: '/video-agent_/music-video'
+      path: '/video-agent/music-video'
+      fullPath: '/video-agent/music-video'
+      preLoaderRoute: typeof VideoAgentMusicVideoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/video-agent_/photo-lab': {
@@ -4369,6 +4409,7 @@ const rootRouteChildren: RootRouteChildren = {
   JobsRoute: JobsRoute,
   KidsRoute: KidsRoute,
   LayersRoute: LayersRoute,
+  LibraryRoute: LibraryRoute,
   LikenessRoute: LikenessRoute,
   LipsyncRoute: LipsyncRoute,
   LiveStudioRoute: LiveStudioRoute,
@@ -4432,6 +4473,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalSlugRoute: LegalSlugRoute,
   RTokenRoute: RTokenRoute,
   VideoAgentBeatDirectorRoute: VideoAgentBeatDirectorRoute,
+  VideoAgentMusicVideoRoute: VideoAgentMusicVideoRoute,
   VideoAgentPhotoLabRoute: VideoAgentPhotoLabRoute,
   VideoAgentTimelineRoute: VideoAgentTimelineRoute,
   VideoAgentWorkflowsRoute: VideoAgentWorkflowsRoute,

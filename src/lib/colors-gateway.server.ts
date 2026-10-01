@@ -50,6 +50,25 @@ export async function createColorsPreview(userId: string, imagePath: string, vid
   return { jobId: job.id, status: job.status ?? "queued" };
 }
 
+export async function createMusicScene(userId: string, imagePath: string, brief: string, sceneIndex: number, sceneCount: number, imageMime: string) {
+  ownPath(imagePath, userId);
+  const key = process.env["LOVABLE_API_KEY"];
+  if (!key) throw new Error("AI video generation is not configured");
+  const image = await media(imagePath, imageMime, 12 * 1024 * 1024);
+  const beat = sceneIndex === 0 ? "opening shot that establishes the world" : sceneIndex === sceneCount - 1 ? "closing shot that lands the emotion" : "middle performance shot with energy";
+  const prompt = `[# Sources <IMAGE_REF_0>@Image1] Music video scene ${sceneIndex + 1} of ${sceneCount}: the ${beat}. Use Image1 as the performer's identity and wardrobe reference; preserve face, hair, clothes and proportions. Creative brief: ${brief}. Wholesome, warm, family-friendly tone. Vertical 9:16 cinematic shot, one continuous take, performer moving and lip-syncing to music. No subtitles or on-screen words. Audio: none, the song is added in the editor.`;
+  const response = await gateway("", key, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: MODEL, input: [{ type: "text", text: prompt }, { type: "image", ...image }], response_format: { type: "video", resolution: "360p", duration: "3s" } }),
+  });
+  const job = await response.json() as { id?: string; status?: string };
+  if (!job.id) throw new Error("Video service did not return a job");
+  const { error } = await table().insert({ user_id: userId, gateway_job_id: job.id, image_path: imagePath, video_path: "", scene: "music" });
+  if (error) throw new Error(error.message);
+  return { jobId: job.id, status: job.status ?? "queued" };
+}
+
 export async function readColorsPreview(userId: string, jobId: string) {
   const { data: row, error } = await table().select("id, gateway_job_id, result_path").eq("user_id", userId).eq("gateway_job_id", jobId).maybeSingle();
   if (error || !row) throw new Error("Preview not found");
