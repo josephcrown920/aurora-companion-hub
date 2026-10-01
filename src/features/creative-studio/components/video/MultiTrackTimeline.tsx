@@ -72,8 +72,18 @@ export function MultiTrackTimeline() {
         }, current.seconds)) };
       });
     };
+    const applyDoc = (event: Event) => {
+      const next = (event as CustomEvent<TimelineDoc>).detail;
+      if (!next || !Array.isArray(next.clips)) return;
+      setDoc((current) => {
+        setPast((history) => [...history.slice(-49), current]);
+        setFuture([]);
+        return { ...next, clips: next.clips.map((clip) => clampClip(clip, next.seconds)) };
+      });
+    };
     window.addEventListener("aurora:apply-layers", applyLayers);
-    return () => window.removeEventListener("aurora:apply-layers", applyLayers);
+    window.addEventListener("aurora:apply-doc", applyDoc);
+    return () => { window.removeEventListener("aurora:apply-layers", applyLayers); window.removeEventListener("aurora:apply-doc", applyDoc); };
   }, []);
 
   useEffect(() => {
