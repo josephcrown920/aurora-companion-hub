@@ -763,40 +763,7 @@ function LandingPage() {
         />
       </section>
 
-      {/* ── Featured Tools ───────────────────────────────────────────────── */}
-      <section id="services" className="border-t border-white/5 px-5 py-12">
-        <div className="mb-7">
-          <span className="text-xs font-bold uppercase tracking-[0.3em] text-[#8b5cf6]">
-            Every tool
-          </span>
-          <h2 className="mt-2 text-3xl font-semibold leading-tight">
-            <EditableCopy copyKey="landing_tools_heading" fallback="The full studio." />
-            <br />
-            <span className="bg-gradient-to-r from-violet-200 via-violet-400 to-fuchsia-300 bg-clip-text font-sans font-semibold text-transparent">
-              <EditableCopy copyKey="landing_tools_subheading" fallback="Pay only for what you make." />
-            </span>
-          </h2>
-          <p className="mt-2 max-w-[48ch] text-xs leading-relaxed text-zinc-400">
-            <EditableCopy copyKey="landing_tools_blurb" fallback={`Every feature is credit based. No subscriptions required to start. ${ONBOARDING_BONUS_AURA} free Aura when you complete setup.`} />
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredTools.map((tool) => (
-            <FeaturedToolRow key={tool.label} tool={tool} />
-          ))}
-        </div>
-        <div className="mt-5 text-center">
-          <Link
-            to="/tools"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-200 transition-colors no-underline"
-          >
-            See all tools <ArrowUpRight className="size-4" />
-          </Link>
-        </div>
-      </section>
 
-      {/* ── Frontier Model Spotlight ───────────────────────────────────── */}
-      <ScrollReveal><Suspense fallback={null}><ModelSpotlight /></Suspense></ScrollReveal>
 
       {/* ── App Screenshots — "Inside Aurora" ────────────────────────── */}
       <ScrollReveal><Suspense fallback={null}><AppScreenshotsSection /></Suspense></ScrollReveal>
@@ -915,51 +882,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── Gallery ─────────────────────────────────────────────────────── */}
-      <section id="gallery" className="bg-zinc-900/30 py-20 border-y border-white/5 overflow-hidden">
-        <div className="px-5 mb-10">
-          <span className="text-xs font-bold uppercase tracking-[0.3em] text-[#8b5cf6]">
-            Output gallery
-          </span>
-          <h2 className="mt-3 text-4xl font-semibold leading-tight">
-            <EditableCopy copyKey="landing_gallery_heading" fallback="Real artists. Real outputs. Zero stock." />
-          </h2>
-          <p className="mt-3 text-sm text-zinc-400">
-            <EditableCopy copyKey="landing_gallery_sub" fallback="A curated feed of recent generations across covers, promo, and motion." />
-          </p>
-        </div>
-        {/* Every card is tappable — lightbox with the full output + a
-            "Create something like this" deep link into the right tool. */}
-        <Suspense fallback={null}>
-          <PhotoStrip
-            rows={[
-              {
-                direction: "left",
-                duration: 38,
-                className: "mb-3",
-                items: [
-                  { src: "/josh-ref-1.png",         alt: "NBA Josh — artist promo",   tag: <EditableCopy copyKey="landing_marquee_r1_1_tag" fallback="Promo"     />, createTo: "/studio", prompt: "Artist promo shot, dramatic stage lighting, cinematic film grain" },
-                  { src: "/landing-client-2.png",   alt: "Editorial shoot",           tag: <EditableCopy copyKey="landing_marquee_r1_2_tag" fallback="Editorial" />, createTo: "/studio", prompt: "Editorial fashion shoot, deep shadows, magazine-quality styling" },
-                  { src: "/landing-client-4.png",   alt: "Backstage promo",           tag: <EditableCopy copyKey="landing_marquee_r1_3_tag" fallback="Promo"     />, createTo: "/studio", prompt: "Backstage promo photo, candid energy, warm tungsten light" },
-                  { src: "/landing-photo-3.jpeg",   alt: "Album artwork",             tag: <EditableCopy copyKey="landing_marquee_r1_4_tag" fallback="Cover art" />, createTo: "/studio", prompt: "Album cover artwork, bold graphic composition, moody color palette" },
-                  { src: "/spotlight/ski-selfie.jpeg", alt: "Ski day reference",      tag: <EditableCopy copyKey="landing_marquee_r1_5_tag" fallback="Ski day"   />, createTo: "/studio", prompt: "Ski day lifestyle shot, bright alpine light, candid selfie framing" },
-                ],
-              },
-              {
-                direction: "right",
-                duration: 30,
-                items: [
-                  { src: "/landing-client-5.png",   alt: "Concert energy",              tag: <EditableCopy copyKey="landing_marquee_r2_1_tag" fallback="Concert"   />, createTo: "/colors" },
-                  { src: "/josh-scene-still.jpeg",  alt: "NBA Josh — scene still",      tag: <EditableCopy copyKey="landing_marquee_r2_2_tag" fallback="Cinema"    />, createTo: "/music-video" },
-                  { src: "/landing-client-7.png",   alt: "Editorial glam",              tag: <EditableCopy copyKey="landing_marquee_r2_3_tag" fallback="Glam"      />, createTo: "/studio", prompt: "Editorial glam portrait, studio strobes, high-fashion retouch" },
-                  { src: "/landing-photo-5.jpeg",   alt: "Cinematic scene",             tag: <EditableCopy copyKey="landing_marquee_r2_4_tag" fallback="Cinema"    />, createTo: "/music-video" },
-                  { src: "/landing-photo-6.png",    alt: "Color grade",                 tag: <EditableCopy copyKey="landing_marquee_r2_5_tag" fallback="Color"     />, createTo: "/colors" },
-                ],
-              },
-            ]}
-          />
-        </Suspense>
-      </section>
 
       {/* ── Tool Directory ───────────────────────────────────────────────── */}
       <section className="border-b border-white/8 bg-[#0a0910] px-5 py-16 sm:px-8">
